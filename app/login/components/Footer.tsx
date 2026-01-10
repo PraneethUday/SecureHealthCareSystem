@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { UserRole, ThemeClasses } from "../types";
 
 interface FooterProps {
@@ -10,15 +11,15 @@ export default function Footer({ selectedRole, themeClasses }: FooterProps) {
 
   if (isPatient) {
     return (
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600">
+      <div className="mt-4 text-center">
+        <p className="text-xs text-gray-600">
           Don&apos;t have an account?{" "}
-          <a
-            href="#"
+          <Link
+            href="/register"
             className={`${themeClasses.link} font-semibold transition-colors duration-200`}
           >
             Create account
-          </a>
+          </Link>
         </p>
       </div>
     );

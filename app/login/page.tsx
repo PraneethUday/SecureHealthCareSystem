@@ -7,6 +7,7 @@ import Header from "./components/Header";
 import RoleSelector from "./components/RoleSelector";
 import LoginForm from "./components/LoginForm";
 import Footer from "./components/Footer";
+import InfoBanner from "./components/InfoBanner";
 
 export default function LoginPage() {
   const [selectedRole, setSelectedRole] = useState<UserRole>("patient");
@@ -27,31 +28,55 @@ export default function LoginPage() {
   };
 
   return (
-    <div
-      className={`min-h-screen flex items-center justify-center p-4 ${themeClasses.container} transition-colors duration-300`}
-    >
+    <div className="min-h-screen flex overflow-hidden">
+      {/* Left Side - Information Banner (Only for Patients) */}
       <div
-        className={`w-full max-w-md ${themeClasses.card} rounded-2xl p-8 transition-all duration-300`}
+        className={`transition-all duration-700 ease-in-out ${
+          selectedRole === "patient"
+            ? "w-1/2 opacity-100"
+            : "w-0 opacity-0 overflow-hidden"
+        }`}
       >
-        <Header themeClasses={themeClasses} />
+        <InfoBanner selectedRole={selectedRole} themeClasses={themeClasses} />
+      </div>
 
-        <RoleSelector
-          selectedRole={selectedRole}
-          onRoleChange={handleRoleChange}
-          themeClasses={themeClasses}
-        />
+      {/* Right Side - Login Form */}
+      <div
+        className={`flex ${
+          selectedRole === "patient" ? "items-center" : "items-start"
+        } justify-center min-h-screen py-8 ${
+          themeClasses.container
+        } transition-all duration-700 ease-in-out ${
+          selectedRole === "patient" ? "flex-1" : "flex-1 w-full"
+        }`}
+      >
+        <div
+          className={`w-full ${
+            selectedRole === "patient" 
+              ? `max-w-md p-6 ${themeClasses.card} rounded-2xl` 
+              : "max-w-xl"
+          } transition-all duration-500 ease-in-out`}
+        >
+          <Header themeClasses={themeClasses} selectedRole={selectedRole} />
 
-        <LoginForm
-          identifier={identifier}
-          password={password}
-          selectedRole={selectedRole}
-          onIdentifierChange={setIdentifier}
-          onPasswordChange={setPassword}
-          themeClasses={themeClasses}
-          onSubmit={handleSubmit}
-        />
+          <RoleSelector
+            selectedRole={selectedRole}
+            onRoleChange={handleRoleChange}
+            themeClasses={themeClasses}
+          />
 
-        <Footer selectedRole={selectedRole} themeClasses={themeClasses} />
+          <LoginForm
+            identifier={identifier}
+            password={password}
+            selectedRole={selectedRole}
+            onIdentifierChange={setIdentifier}
+            onPasswordChange={setPassword}
+            themeClasses={themeClasses}
+            onSubmit={handleSubmit}
+          />
+
+          <Footer selectedRole={selectedRole} themeClasses={themeClasses} />
+        </div>
       </div>
     </div>
   );
