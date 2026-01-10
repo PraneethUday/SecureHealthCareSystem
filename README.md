@@ -5,12 +5,14 @@ A secure, role-based healthcare management system built with Next.js, TypeScript
 ## Features
 
 ### 🔐 Role-Based Authentication
+
 - **Patient Portal**: Email-based login for patients
 - **Healthcare Staff**: ID-based login for doctors, nurses, staff, and administrators
 - Dynamic UI theming based on user role
 - Secure authentication flow
 
 ### 🎨 Modern UI/UX
+
 - Responsive design with Tailwind CSS
 - Smooth animations and transitions
 - Role-specific color schemes:
@@ -19,6 +21,7 @@ A secure, role-based healthcare management system built with Next.js, TypeScript
 - Lucide React icons for clean, modern iconography
 
 ### 🏗️ Well-Organized Architecture
+
 ```
 SecureHealthCareSystem/
 ├── app/
@@ -44,23 +47,27 @@ SecureHealthCareSystem/
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
+
+- Node.js 18+
 - npm or yarn
 
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/yourusername/SecureHealthCareSystem.git
 cd SecureHealthCareSystem
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Run the development server:
+
 ```bash
 npm run dev
 ```
@@ -76,21 +83,23 @@ npm start
 
 ## User Roles
 
-| Role | Login Method | Description |
-|------|--------------|-------------|
-| **Patient** | Email | General public access for patients |
-| **Doctor** | Staff ID | Medical practitioners |
-| **Nurse** | Staff ID | Nursing staff |
-| **Staff** | Staff ID | Administrative and support staff |
-| **Admin** | Staff ID | System administrators |
+| Role        | Login Method | Description                        |
+| ----------- | ------------ | ---------------------------------- |
+| **Patient** | Email        | General public access for patients |
+| **Doctor**  | Staff ID     | Medical practitioners              |
+| **Nurse**   | Staff ID     | Nursing staff                      |
+| **Staff**   | Staff ID     | Administrative and support staff   |
+| **Admin**   | Staff ID     | System administrators              |
 
 ## Login Credentials Format
 
 ### Patients
+
 - **Email**: Standard email format (e.g., patient@example.com)
 - **Password**: Secure password
 
 ### Healthcare Staff (Doctor/Nurse/Staff/Admin)
+
 - **Staff ID**: 6-12 alphanumeric characters (e.g., DOC123456)
 - **Password**: Secure password
 
@@ -105,30 +114,36 @@ npm start
 ## Project Structure
 
 ### `/app/login`
+
 The authentication module with role-based login functionality.
 
 **Components:**
+
 - `Header.tsx` - Logo and title
 - `RoleSelector.tsx` - Interactive role selection
 - `LoginForm.tsx` - Dynamic login form
 - `Footer.tsx` - Role-specific footer
 
 **Utilities:**
+
 - `validation.ts` - Input validation helpers
 
 **Configuration:**
+
 - `types.ts` - TypeScript type definitions
 - `constants.ts` - Theme and role configurations
 
 ## Development Guidelines
 
 ### Code Style
+
 - Use TypeScript for type safety
 - Follow React/Next.js best practices
 - Keep components small and focused
 - Use Tailwind CSS utility classes
 
 ### Component Structure
+
 - Separate concerns (UI, logic, types)
 - Make components reusable
 - Use proper TypeScript types
