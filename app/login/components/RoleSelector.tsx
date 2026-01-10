@@ -39,9 +39,9 @@ export default function RoleSelector({
       <button
         key={role}
         onClick={() => onRoleChange(role)}
-        className={`${themeClasses.roleButton(
-          role
-        )} ${isPatient ? "p-2" : "p-3"} rounded-lg font-medium text-sm transition-all duration-200 flex flex-col items-center gap-1`}
+        className={`${themeClasses.roleButton(role)} ${
+          isPatient ? "p-2" : "p-3"
+        } rounded-lg font-medium text-sm transition-all duration-200 flex flex-col items-center gap-1`}
       >
         <Icon className={`${isPatient ? "w-4 h-4" : "w-5 h-5"}`} />
         <span className="text-xs">{roleConfig.label}</span>
@@ -51,7 +51,11 @@ export default function RoleSelector({
 
   return (
     <div className={isPatient ? "mb-3" : "mb-4"}>
-      <label className={`block ${isPatient ? "text-xs" : "text-sm"} font-medium text-gray-700 ${isPatient ? "mb-2" : "mb-2.5"}`}>
+      <label
+        className={`block ${
+          isPatient ? "text-xs" : "text-sm"
+        } font-medium text-gray-700 ${isPatient ? "mb-2" : "mb-2.5"}`}
+      >
         Select Your Role
       </label>
       <div className="grid grid-cols-3 gap-2 mb-2">

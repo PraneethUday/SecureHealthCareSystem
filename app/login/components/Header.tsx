@@ -14,17 +14,29 @@ export default function Header({ themeClasses, selectedRole }: HeaderProps) {
       {/* Logo Placeholder */}
       <div className={`flex justify-center ${isPatient ? "mb-3" : "mb-4"}`}>
         <div
-          className={`${themeClasses.logoBg} rounded-full ${isPatient ? "p-3" : "p-4"} transition-colors duration-300`}
+          className={`${themeClasses.logoBg} rounded-full ${
+            isPatient ? "p-3" : "p-4"
+          } transition-colors duration-300`}
         >
-          <Activity className={`${isPatient ? "w-8 h-8" : "w-10 h-10"} text-white`} />
+          <Activity
+            className={`${isPatient ? "w-8 h-8" : "w-10 h-10"} text-white`}
+          />
         </div>
       </div>
 
       {/* Title */}
-      <h1 className={`${isPatient ? "text-xl" : "text-2xl"} font-bold text-center text-gray-800 mb-1`}>
+      <h1
+        className={`${
+          isPatient ? "text-xl" : "text-2xl"
+        } font-bold text-center text-gray-800 mb-1`}
+      >
         SecureHealthCare System
       </h1>
-      <p className={`text-center text-gray-500 ${isPatient ? "mb-3" : "mb-4"} text-sm`}>
+      <p
+        className={`text-center text-gray-500 ${
+          isPatient ? "mb-3" : "mb-4"
+        } text-sm`}
+      >
         Sign in to access your account
       </p>
     </>

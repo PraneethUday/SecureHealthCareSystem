@@ -39,4 +39,3 @@ export const getThemeClasses = (selectedRole: UserRole): ThemeClasses => {
       : "bg-gray-800",
   };
 };
-

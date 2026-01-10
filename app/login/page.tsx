@@ -52,8 +52,8 @@ export default function LoginPage() {
       >
         <div
           className={`w-full ${
-            selectedRole === "patient" 
-              ? `max-w-md p-6 ${themeClasses.card} rounded-2xl` 
+            selectedRole === "patient"
+              ? `max-w-md p-6 ${themeClasses.card} rounded-2xl`
               : "max-w-xl"
           } transition-all duration-500 ease-in-out`}
         >

@@ -120,7 +120,9 @@ export default function InfoBanner({
                 {feature.icon}
               </div>
               <div>
-                <h3 className="font-semibold text-base mb-0.5">{feature.title}</h3>
+                <h3 className="font-semibold text-base mb-0.5">
+                  {feature.title}
+                </h3>
                 <p className="text-white/80 text-xs">{feature.description}</p>
               </div>
             </div>

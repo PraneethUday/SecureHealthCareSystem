@@ -1,10 +1,4 @@
-import {
-  Shield,
-  Lock,
-  Eye,
-  UserCheck,
-  HeartPulse,
-} from "lucide-react";
+import { Shield, Lock, Eye, UserCheck, HeartPulse } from "lucide-react";
 
 export default function RegisterInfoBanner() {
   const features = [
@@ -60,9 +54,7 @@ export default function RegisterInfoBanner() {
 
         {/* Why Your Data is Important */}
         <div className="mb-6 bg-white/10 backdrop-blur-sm rounded-lg p-3">
-          <h3 className="font-semibold text-base mb-2">
-            Why Security Matters
-          </h3>
+          <h3 className="font-semibold text-base mb-2">Why Security Matters</h3>
           <ul className="space-y-1.5 text-xs text-white/90">
             <li className="flex items-start gap-2">
               <span className="text-white/60 mt-0.5">•</span>
