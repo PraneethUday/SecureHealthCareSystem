@@ -1,10 +1,4 @@
-import {
-  User,
-  Stethoscope,
-  UserCog,
-  Shield,
-  Activity,
-} from "lucide-react";
+import { User, Stethoscope, UserCog, Shield, Activity } from "lucide-react";
 
 export type UserRole = "patient" | "doctor" | "nurse" | "admin" | "staff";
 
