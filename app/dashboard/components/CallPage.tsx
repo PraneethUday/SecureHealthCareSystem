@@ -55,7 +55,7 @@ export function CallPage({
     if (hasInitializedRef.current) return;
     hasInitializedRef.current = true;
 
-    console.log("[CallPage] 🎬 Initializing call:", {
+    console.log("[CallPage] Initializing call:", {
       callId,
       userId,
       userRole,
@@ -65,18 +65,15 @@ export function CallPage({
 
     if (userRole === "doctor") {
       // Doctor accepts the existing call
-      console.log("[CallPage] 👨‍⚕️ Doctor accepting call:", callId);
+      console.log("[CallPage] Doctor accepting call");
       acceptCall(callId, remoteUserId);
     } else if (isInitiator) {
       // Patient is starting a new call - initiate WebRTC
-      console.log(
-        "[CallPage] 🤒 Patient initiating new call to:",
-        remoteUserId
-      );
+      console.log("[CallPage] Patient initiating new call");
       initiateCall(remoteUserId);
     } else {
       // Patient joining existing call (shouldn't normally happen)
-      console.log("[CallPage] ⚠️ Patient on existing call page");
+      console.log("[CallPage] Patient on existing call page");
     }
   }, [
     callId,
@@ -91,36 +88,16 @@ export function CallPage({
   // Attach local stream to video element
   useEffect(() => {
     if (localVideoRef.current && localStream) {
-      console.log("[CallPage] 📹 Attaching local stream", {
-        active: localStream.active,
-        videoTracks: localStream.getVideoTracks().length,
-        audioTracks: localStream.getAudioTracks().length,
-      });
       localVideoRef.current.srcObject = localStream;
-      console.log("[CallPage] ✅ Local stream attached to video element");
-    } else {
-      console.log("[CallPage] ⏳ Waiting for local stream...", {
-        hasVideoRef: !!localVideoRef.current,
-        hasStream: !!localStream,
-      });
+      console.log("[CallPage] Local stream attached");
     }
   }, [localStream]);
 
   // Attach remote stream to video element
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
-      console.log("[CallPage] 📺 Attaching remote stream", {
-        active: remoteStream.active,
-        videoTracks: remoteStream.getVideoTracks().length,
-        audioTracks: remoteStream.getAudioTracks().length,
-      });
       remoteVideoRef.current.srcObject = remoteStream;
-      console.log("[CallPage] ✅ Remote stream attached to video element");
-    } else {
-      console.log("[CallPage] ⏳ Waiting for remote stream...", {
-        hasVideoRef: !!remoteVideoRef.current,
-        hasStream: !!remoteStream,
-      });
+      console.log("[CallPage] Remote stream attached");
     }
   }, [remoteStream]);
 
