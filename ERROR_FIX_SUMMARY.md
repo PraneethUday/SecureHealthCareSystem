@@ -1,9 +1,11 @@
 # 🔧 Error Fixed: UUID vs Patient ID Issue
 
 ## Problem Identified
+
 The error `invalid input syntax for type uuid: "P004"` occurred because:
 
 1. **Database Schema**: The `appointments` table uses **UUID foreign keys**:
+
    ```sql
    patient_id UUID NOT NULL REFERENCES patients(id)
    doctor_id UUID NOT NULL REFERENCES doctors(id)
@@ -14,17 +16,21 @@ The error `invalid input syntax for type uuid: "P004"` occurred because:
 ## What Was Fixed
 
 ### Files Updated:
+
 1. **app/dashboard/patient/page.tsx**
+
    - Changed `user.patient_id` → `user.id` for all appointment operations
    - Fixed: `loadAppointments(user.id)` instead of `loadAppointments(user.patient_id)`
    - Fixed: `patientId={user.id}` when creating appointments
 
 2. **app/dashboard/doctor/page.tsx**
+
    - Changed `user.doctor_id` → `user.id` for all appointment operations
    - Fixed: `doctorId={user.id}` in appointment cards
    - Fixed: `loadAppointments(user.id)`
 
 3. **lib/appointments.ts**
+
    - Made `reason` parameter optional in `cancelAppointment()`
    - Default reason: "Cancelled by patient"
 
@@ -34,6 +40,7 @@ The error `invalid input syntax for type uuid: "P004"` occurred because:
 ## Database Structure Clarification
 
 ### Patients Table
+
 ```sql
 CREATE TABLE patients (
   id UUID PRIMARY KEY,              -- This is what appointments use
@@ -46,9 +53,10 @@ CREATE TABLE patients (
 ```
 
 ### Doctors Table
+
 ```sql
 CREATE TABLE doctors (
-  id UUID PRIMARY KEY,              -- This is what appointments use  
+  id UUID PRIMARY KEY,              -- This is what appointments use
   doctor_id TEXT UNIQUE,            -- Human-readable ID (D001, D002, etc.)
   first_name TEXT,
   last_name TEXT,
@@ -58,6 +66,7 @@ CREATE TABLE doctors (
 ```
 
 ### Appointments Table
+
 ```sql
 CREATE TABLE appointments (
   id UUID PRIMARY KEY,
@@ -74,6 +83,7 @@ CREATE TABLE appointments (
 ## Testing Performed
 
 ✅ **Schema Verification**: Confirmed schema deployed
+
 - 3 hospitals found in database
 - appointments table exists
 - appointment_logs table exists
@@ -85,6 +95,7 @@ CREATE TABLE appointments (
 ## Next Steps to Complete Testing
 
 ### 1. Test Patient Booking (Critical)
+
 ```
 URL: http://localhost:3000/login
 Email: praneethudayakumar227@gmail.com
@@ -102,6 +113,7 @@ Action:
 **Expected**: Appointment created successfully ✅
 
 ### 2. Test Doctor View
+
 ```
 URL: http://localhost:3000/login
 Email: john.doe@hospital.com
@@ -114,6 +126,7 @@ Action:
 ```
 
 ### 3. Test Admin Logs
+
 ```
 URL: http://localhost:3000/login
 Email: admin@hospital.com
@@ -128,22 +141,29 @@ Action:
 ## Common Issues & Solutions
 
 ### Issue: "No doctors found"
+
 **Solution**: Add doctors via SQL or create doctor accounts
 
 ### Issue: "No available time slots"
-**Solution**: 
+
+**Solution**:
+
 - Pick a future date (not past)
 - Doctor may be fully booked for that day
 - Try different doctor or date
 
 ### Issue: "Failed to create appointment"
+
 **Solution**:
+
 - Check browser console for specific error
 - Verify schema is fully deployed
 - Check RLS policies allow insert
 
 ### Issue: Appointment not showing in dashboard
+
 **Solution**:
+
 - Refresh the page
 - Check if using correct user UUID
 - Verify RLS policies allow SELECT
@@ -151,19 +171,22 @@ Action:
 ## Verification Commands
 
 ### Check Patient ID vs UUID
+
 ```sql
-SELECT id, patient_id, first_name, last_name, email 
-FROM patients 
+SELECT id, patient_id, first_name, last_name, email
+FROM patients
 LIMIT 5;
 ```
 
 Expected output:
+
 ```
 id (UUID): 123e4567-e89b-12d3-a456-426614174000
 patient_id: P001
 ```
 
 ### Check Appointments Reference
+
 ```sql
 SELECT a.id, a.patient_id, p.patient_id as human_id, p.first_name
 FROM appointments a

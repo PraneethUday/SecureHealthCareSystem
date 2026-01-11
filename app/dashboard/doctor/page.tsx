@@ -6,15 +6,26 @@ import { getSession, clearSession } from "@/lib/auth";
 import { logAction } from "@/lib/logging";
 import { getDoctorAppointments } from "@/lib/appointments";
 import { AppointmentWithDetails } from "@/lib/database.types";
-import { Stethoscope, Users, Calendar, FileText, LogOut, Loader2 } from "lucide-react";
+import {
+  Stethoscope,
+  Users,
+  Calendar,
+  FileText,
+  LogOut,
+  Loader2,
+} from "lucide-react";
 import DoctorAppointmentCard from "./components/DoctorAppointmentCard";
 
 export default function DoctorDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentWithDetails[]>(
+    []
+  );
   const [loadingAppointments, setLoadingAppointments] = useState(false);
-  const [activeTab, setActiveTab] = useState<'today' | 'upcoming' | 'past'>('today');
+  const [activeTab, setActiveTab] = useState<"today" | "upcoming" | "past">(
+    "today"
+  );
 
   useEffect(() => {
     const session = getSession();
@@ -55,16 +66,21 @@ export default function DoctorDashboard() {
 
   const today = new Date().toDateString();
   const todayAppointments = appointments.filter(
-    (apt) => new Date(apt.appointment_date).toDateString() === today && apt.status === 'scheduled'
+    (apt) =>
+      new Date(apt.appointment_date).toDateString() === today &&
+      apt.status === "scheduled"
   );
   const upcomingAppointments = appointments.filter(
-    (apt) => new Date(apt.appointment_date).toDateString() !== today &&
-            new Date(apt.appointment_date + 'T' + apt.appointment_time) >= new Date() &&
-            apt.status === 'scheduled'
+    (apt) =>
+      new Date(apt.appointment_date).toDateString() !== today &&
+      new Date(apt.appointment_date + "T" + apt.appointment_time) >=
+        new Date() &&
+      apt.status === "scheduled"
   );
   const pastAppointments = appointments.filter(
-    (apt) => new Date(apt.appointment_date + 'T' + apt.appointment_time) < new Date() ||
-            apt.status !== 'scheduled'
+    (apt) =>
+      new Date(apt.appointment_date + "T" + apt.appointment_time) <
+        new Date() || apt.status !== "scheduled"
   );
 
   if (!user) return null;
@@ -137,7 +153,9 @@ export default function DoctorDashboard() {
         {/* Appointments Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">My Appointments</h2>
+            <h2 className="text-xl font-semibold text-gray-800">
+              My Appointments
+            </h2>
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <Calendar className="w-4 h-4" />
               <span>Total: {appointments.length}</span>
@@ -147,31 +165,31 @@ export default function DoctorDashboard() {
           {/* Tabs */}
           <div className="flex gap-4 border-b border-gray-200 mb-6">
             <button
-              onClick={() => setActiveTab('today')}
+              onClick={() => setActiveTab("today")}
               className={`pb-2 px-1 font-medium transition-colors ${
-                activeTab === 'today'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                activeTab === "today"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               Today ({todayAppointments.length})
             </button>
             <button
-              onClick={() => setActiveTab('upcoming')}
+              onClick={() => setActiveTab("upcoming")}
               className={`pb-2 px-1 font-medium transition-colors ${
-                activeTab === 'upcoming'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                activeTab === "upcoming"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               Upcoming ({upcomingAppointments.length})
             </button>
             <button
-              onClick={() => setActiveTab('past')}
+              onClick={() => setActiveTab("past")}
               className={`pb-2 px-1 font-medium transition-colors ${
-                activeTab === 'past'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                activeTab === "past"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               Past ({pastAppointments.length})
@@ -186,7 +204,7 @@ export default function DoctorDashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {activeTab === 'today' ? (
+              {activeTab === "today" ? (
                 todayAppointments.length === 0 ? (
                   <div className="col-span-full text-center py-12 text-gray-500">
                     <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
@@ -202,7 +220,7 @@ export default function DoctorDashboard() {
                     />
                   ))
                 )
-              ) : activeTab === 'upcoming' ? (
+              ) : activeTab === "upcoming" ? (
                 upcomingAppointments.length === 0 ? (
                   <div className="col-span-full text-center py-12 text-gray-500">
                     <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
@@ -218,22 +236,20 @@ export default function DoctorDashboard() {
                     />
                   ))
                 )
+              ) : pastAppointments.length === 0 ? (
+                <div className="col-span-full text-center py-12 text-gray-500">
+                  <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>No past appointments</p>
+                </div>
               ) : (
-                pastAppointments.length === 0 ? (
-                  <div className="col-span-full text-center py-12 text-gray-500">
-                    <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No past appointments</p>
-                  </div>
-                ) : (
-                  pastAppointments.map((appointment) => (
-                    <DoctorAppointmentCard
-                      key={appointment.id}
-                      appointment={appointment}
-                      doctorId={user.id}
-                      onUpdate={() => loadAppointments(user.id)}
-                    />
-                  ))
-                )
+                pastAppointments.map((appointment) => (
+                  <DoctorAppointmentCard
+                    key={appointment.id}
+                    appointment={appointment}
+                    doctorId={user.id}
+                    onUpdate={() => loadAppointments(user.id)}
+                  />
+                ))
               )}
             </div>
           )}

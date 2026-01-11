@@ -6,17 +6,27 @@ import { getSession, clearSession } from "@/lib/auth";
 import { logAction } from "@/lib/logging";
 import { getPatientAppointments } from "@/lib/appointments";
 import { AppointmentWithDetails } from "@/lib/database.types";
-import { Heart, Calendar, FileText, LogOut, User, Plus, Loader2 } from "lucide-react";
+import {
+  Heart,
+  Calendar,
+  FileText,
+  LogOut,
+  User,
+  Plus,
+  Loader2,
+} from "lucide-react";
 import AppointmentCard from "./components/AppointmentCard";
 import NewAppointmentForm from "./components/NewAppointmentForm";
 
 export default function PatientDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentWithDetails[]>(
+    []
+  );
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [showNewAppointment, setShowNewAppointment] = useState(false);
-  const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
+  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
 
   useEffect(() => {
     const session = getSession();
@@ -56,13 +66,15 @@ export default function PatientDashboard() {
   };
 
   const upcomingAppointments = appointments.filter(
-    (apt) => new Date(apt.appointment_date + 'T' + apt.appointment_time) >= new Date() &&
-            apt.status === 'scheduled'
+    (apt) =>
+      new Date(apt.appointment_date + "T" + apt.appointment_time) >=
+        new Date() && apt.status === "scheduled"
   );
 
   const pastAppointments = appointments.filter(
-    (apt) => new Date(apt.appointment_date + 'T' + apt.appointment_time) < new Date() ||
-            apt.status !== 'scheduled'
+    (apt) =>
+      new Date(apt.appointment_date + "T" + apt.appointment_time) <
+        new Date() || apt.status !== "scheduled"
   );
 
   if (!user) return null;
@@ -111,7 +123,9 @@ export default function PatientDashboard() {
             </div>
             <div>
               <p className="text-sm text-gray-500">Phone</p>
-              <p className="font-medium">{user.phone_number || "Not provided"}</p>
+              <p className="font-medium">
+                {user.phone_number || "Not provided"}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Date of Birth</p>
@@ -129,7 +143,9 @@ export default function PatientDashboard() {
         {/* Appointments Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-red-100">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">My Appointments</h2>
+            <h2 className="text-xl font-semibold text-gray-800">
+              My Appointments
+            </h2>
             <button
               onClick={() => setShowNewAppointment(true)}
               className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
@@ -142,21 +158,21 @@ export default function PatientDashboard() {
           {/* Tabs */}
           <div className="flex gap-4 border-b border-gray-200 mb-6">
             <button
-              onClick={() => setActiveTab('upcoming')}
+              onClick={() => setActiveTab("upcoming")}
               className={`pb-2 px-1 font-medium transition-colors ${
-                activeTab === 'upcoming'
-                  ? 'text-red-600 border-b-2 border-red-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                activeTab === "upcoming"
+                  ? "text-red-600 border-b-2 border-red-600"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               Upcoming ({upcomingAppointments.length})
             </button>
             <button
-              onClick={() => setActiveTab('past')}
+              onClick={() => setActiveTab("past")}
               className={`pb-2 px-1 font-medium transition-colors ${
-                activeTab === 'past'
-                  ? 'text-red-600 border-b-2 border-red-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                activeTab === "past"
+                  ? "text-red-600 border-b-2 border-red-600"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               Past ({pastAppointments.length})
@@ -171,7 +187,7 @@ export default function PatientDashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {activeTab === 'upcoming' ? (
+              {activeTab === "upcoming" ? (
                 upcomingAppointments.length === 0 ? (
                   <div className="col-span-2 text-center py-12 text-gray-500">
                     <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
@@ -192,21 +208,19 @@ export default function PatientDashboard() {
                     />
                   ))
                 )
+              ) : pastAppointments.length === 0 ? (
+                <div className="col-span-2 text-center py-12 text-gray-500">
+                  <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>No past appointments</p>
+                </div>
               ) : (
-                pastAppointments.length === 0 ? (
-                  <div className="col-span-2 text-center py-12 text-gray-500">
-                    <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No past appointments</p>
-                  </div>
-                ) : (
-                  pastAppointments.map((appointment) => (
-                    <AppointmentCard
-                      key={appointment.id}
-                      appointment={appointment}
-                      onUpdate={() => loadAppointments(user.id)}
-                    />
-                  ))
-                )
+                pastAppointments.map((appointment) => (
+                  <AppointmentCard
+                    key={appointment.id}
+                    appointment={appointment}
+                    onUpdate={() => loadAppointments(user.id)}
+                  />
+                ))
               )}
             </div>
           )}
@@ -222,7 +236,7 @@ export default function PatientDashboard() {
             <p className="text-gray-600 text-sm mb-4">
               View and schedule your medical appointments
             </p>
-            <button 
+            <button
               onClick={() => setShowNewAppointment(true)}
               className="text-red-600 font-medium text-sm hover:underline"
             >

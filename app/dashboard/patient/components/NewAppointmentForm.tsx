@@ -1,9 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, User, X, Loader2 } from 'lucide-react';
-import { getHospitals, getDoctors, getAvailableTimeSlots, createAppointment } from '@/lib/appointments';
-import { Hospital } from '@/lib/database.types';
+import { useState, useEffect } from "react";
+import { Calendar, Clock, MapPin, User, X, Loader2 } from "lucide-react";
+import {
+  getHospitals,
+  getDoctors,
+  getAvailableTimeSlots,
+  createAppointment,
+} from "@/lib/appointments";
+import { Hospital } from "@/lib/database.types";
 
 interface NewAppointmentFormProps {
   patientId: string;
@@ -11,10 +16,14 @@ interface NewAppointmentFormProps {
   onSuccess: () => void;
 }
 
-export default function NewAppointmentForm({ patientId, onClose, onSuccess }: NewAppointmentFormProps) {
+export default function NewAppointmentForm({
+  patientId,
+  onClose,
+  onSuccess,
+}: NewAppointmentFormProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   // Data states
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
@@ -22,12 +31,12 @@ export default function NewAppointmentForm({ patientId, onClose, onSuccess }: Ne
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
 
   // Form states
-  const [selectedHospital, setSelectedHospital] = useState('');
-  const [selectedDoctor, setSelectedDoctor] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
-  const [reason, setReason] = useState('');
-  const [notes, setNotes] = useState('');
+  const [selectedHospital, setSelectedHospital] = useState("");
+  const [selectedDoctor, setSelectedDoctor] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [reason, setReason] = useState("");
+  const [notes, setNotes] = useState("");
 
   // Load hospitals on mount
   useEffect(() => {
@@ -70,7 +79,7 @@ export default function NewAppointmentForm({ patientId, onClose, onSuccess }: Ne
   };
 
   const handleSubmit = async () => {
-    setError('');
+    setError("");
     setLoading(true);
 
     const result = await createAppointment({
@@ -88,22 +97,29 @@ export default function NewAppointmentForm({ patientId, onClose, onSuccess }: Ne
     if (result.success) {
       onSuccess();
     } else {
-      setError(result.error || 'Failed to create appointment');
+      setError(result.error || "Failed to create appointment");
     }
   };
 
   const isStepValid = () => {
     switch (step) {
-      case 1: return selectedHospital !== '';
-      case 2: return selectedDoctor !== '';
-      case 3: return selectedDate !== '' && selectedTime !== '';
-      case 4: return true;
-      default: return false;
+      case 1:
+        return selectedHospital !== "";
+      case 2:
+        return selectedDoctor !== "";
+      case 3:
+        return selectedDate !== "" && selectedTime !== "";
+      case 4:
+        return true;
+      default:
+        return false;
     }
   };
 
-  const minDate = new Date().toISOString().split('T')[0];
-  const maxDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const minDate = new Date().toISOString().split("T")[0];
+  const maxDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -111,10 +127,16 @@ export default function NewAppointmentForm({ patientId, onClose, onSuccess }: Ne
         {/* Header */}
         <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Book New Appointment</h2>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Book New Appointment
+            </h2>
             <p className="text-sm text-gray-500">Step {step} of 4</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+            aria-label="Close"
+          >
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -124,13 +146,21 @@ export default function NewAppointmentForm({ patientId, onClose, onSuccess }: Ne
           <div className="flex items-center justify-between mb-2">
             {[1, 2, 3, 4].map((s) => (
               <div key={s} className="flex items-center flex-1">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  s <= step ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-500'
-                }`}>
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    s <= step
+                      ? "bg-red-500 text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                >
                   {s}
                 </div>
                 {s < 4 && (
-                  <div className={`flex-1 h-1 mx-2 ${s < step ? 'bg-red-500' : 'bg-gray-200'}`} />
+                  <div
+                    className={`flex-1 h-1 mx-2 ${
+                      s < step ? "bg-red-500" : "bg-gray-200"
+                    }`}
+                  />
                 )}
               </div>
             ))}
@@ -170,13 +200,19 @@ export default function NewAppointmentForm({ patientId, onClose, onSuccess }: Ne
                       onClick={() => setSelectedHospital(hospital.id)}
                       className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                         selectedHospital === hospital.id
-                          ? 'border-red-500 bg-red-50'
-                          : 'border-gray-200 hover:border-red-300'
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-200 hover:border-red-300"
                       }`}
                     >
-                      <h4 className="font-semibold text-gray-800">{hospital.name}</h4>
-                      <p className="text-sm text-gray-600">{hospital.address}, {hospital.city}, {hospital.state}</p>
-                      <p className="text-sm text-gray-500 mt-1">{hospital.phone}</p>
+                      <h4 className="font-semibold text-gray-800">
+                        {hospital.name}
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        {hospital.address}, {hospital.city}, {hospital.state}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {hospital.phone}
+                      </p>
                     </button>
                   ))}
                 </div>
@@ -203,16 +239,20 @@ export default function NewAppointmentForm({ patientId, onClose, onSuccess }: Ne
                       onClick={() => setSelectedDoctor(doctor.id)}
                       className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                         selectedDoctor === doctor.id
-                          ? 'border-red-500 bg-red-50'
-                          : 'border-gray-200 hover:border-red-300'
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-200 hover:border-red-300"
                       }`}
                     >
                       <h4 className="font-semibold text-gray-800">
                         Dr. {doctor.first_name} {doctor.last_name}
                       </h4>
-                      <p className="text-sm text-red-600">{doctor.specialization}</p>
+                      <p className="text-sm text-red-600">
+                        {doctor.specialization}
+                      </p>
                       {doctor.department && (
-                        <p className="text-sm text-gray-500">{doctor.department}</p>
+                        <p className="text-sm text-gray-500">
+                          {doctor.department}
+                        </p>
                       )}
                     </button>
                   ))}
@@ -228,9 +268,12 @@ export default function NewAppointmentForm({ patientId, onClose, onSuccess }: Ne
                 <Calendar className="w-5 h-5 text-red-500" />
                 Select Date & Time
               </h3>
-              
+
               <div className="mb-6">
-                <label htmlFor="appointment-date" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="appointment-date"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Appointment Date
                 </label>
                 <input
@@ -254,7 +297,9 @@ export default function NewAppointmentForm({ patientId, onClose, onSuccess }: Ne
                       <Loader2 className="w-8 h-8 animate-spin mx-auto text-red-500" />
                     </div>
                   ) : timeSlots.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8">No available slots for this date</p>
+                    <p className="text-center text-gray-500 py-8">
+                      No available slots for this date
+                    </p>
                   ) : (
                     <div className="grid grid-cols-4 gap-2">
                       {timeSlots.map((slot) => (
@@ -263,8 +308,8 @@ export default function NewAppointmentForm({ patientId, onClose, onSuccess }: Ne
                           onClick={() => setSelectedTime(slot)}
                           className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
                             selectedTime === slot
-                              ? 'border-red-500 bg-red-500 text-white'
-                              : 'border-gray-300 hover:border-red-300 text-gray-700'
+                              ? "border-red-500 bg-red-500 text-white"
+                              : "border-gray-300 hover:border-red-300 text-gray-700"
                           }`}
                         >
                           {slot}
@@ -283,10 +328,11 @@ export default function NewAppointmentForm({ patientId, onClose, onSuccess }: Ne
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 Appointment Details
               </h3>
-              
+
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reason for Visit <span className="text-gray-400">(Optional)</span>
+                  Reason for Visit{" "}
+                  <span className="text-gray-400">(Optional)</span>
                 </label>
                 <input
                   type="text"
@@ -299,7 +345,8 @@ export default function NewAppointmentForm({ patientId, onClose, onSuccess }: Ne
 
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Additional Notes <span className="text-gray-400">(Optional)</span>
+                  Additional Notes{" "}
+                  <span className="text-gray-400">(Optional)</span>
                 </label>
                 <textarea
                   value={notes}
@@ -312,21 +359,29 @@ export default function NewAppointmentForm({ patientId, onClose, onSuccess }: Ne
 
               {/* Summary */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-800 mb-3">Appointment Summary</h4>
+                <h4 className="font-semibold text-gray-800 mb-3">
+                  Appointment Summary
+                </h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Hospital:</span>
-                    <span className="font-medium">{hospitals.find(h => h.id === selectedHospital)?.name}</span>
+                    <span className="font-medium">
+                      {hospitals.find((h) => h.id === selectedHospital)?.name}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Doctor:</span>
                     <span className="font-medium">
-                      Dr. {doctors.find(d => d.id === selectedDoctor)?.first_name} {doctors.find(d => d.id === selectedDoctor)?.last_name}
+                      Dr.{" "}
+                      {doctors.find((d) => d.id === selectedDoctor)?.first_name}{" "}
+                      {doctors.find((d) => d.id === selectedDoctor)?.last_name}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Date:</span>
-                    <span className="font-medium">{new Date(selectedDate).toLocaleDateString()}</span>
+                    <span className="font-medium">
+                      {new Date(selectedDate).toLocaleDateString()}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Time:</span>

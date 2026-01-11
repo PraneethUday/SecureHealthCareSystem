@@ -111,8 +111,17 @@ export interface Hospital {
   updated_at?: string;
 }
 
-export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no_show';
-export type AppointmentActionType = 'created' | 'updated' | 'cancelled' | 'completed' | 'rescheduled';
+export type AppointmentStatus =
+  | "scheduled"
+  | "completed"
+  | "cancelled"
+  | "no_show";
+export type AppointmentActionType =
+  | "created"
+  | "updated"
+  | "cancelled"
+  | "completed"
+  | "rescheduled";
 
 export interface Appointment {
   id: string;

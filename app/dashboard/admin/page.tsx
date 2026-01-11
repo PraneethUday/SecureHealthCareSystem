@@ -24,7 +24,9 @@ export default function AdminDashboard() {
   const [appointmentLogs, setAppointmentLogs] = useState<AppointmentLog[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [loadingAppointmentLogs, setLoadingAppointmentLogs] = useState(true);
-  const [activeLogTab, setActiveLogTab] = useState<'system' | 'appointments'>('system');
+  const [activeLogTab, setActiveLogTab] = useState<"system" | "appointments">(
+    "system"
+  );
 
   useEffect(() => {
     const session = getSession();
@@ -239,22 +241,22 @@ export default function AdminDashboard() {
           {/* Tabs */}
           <div className="flex gap-4 border-b border-gray-200 mb-6">
             <button
-              onClick={() => setActiveLogTab('system')}
+              onClick={() => setActiveLogTab("system")}
               className={`pb-2 px-1 font-medium transition-colors flex items-center gap-2 ${
-                activeLogTab === 'system'
-                  ? 'text-gray-800 border-b-2 border-gray-800'
-                  : 'text-gray-500 hover:text-gray-700'
+                activeLogTab === "system"
+                  ? "text-gray-800 border-b-2 border-gray-800"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               <Activity className="w-4 h-4" />
               System Logs ({logs.length})
             </button>
             <button
-              onClick={() => setActiveLogTab('appointments')}
+              onClick={() => setActiveLogTab("appointments")}
               className={`pb-2 px-1 font-medium transition-colors flex items-center gap-2 ${
-                activeLogTab === 'appointments'
-                  ? 'text-gray-800 border-b-2 border-gray-800'
-                  : 'text-gray-500 hover:text-gray-700'
+                activeLogTab === "appointments"
+                  ? "text-gray-800 border-b-2 border-gray-800"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               <Calendar className="w-4 h-4" />
@@ -263,8 +265,8 @@ export default function AdminDashboard() {
           </div>
 
           {/* System Logs Table */}
-          {activeLogTab === 'system' && (
-            loadingLogs ? (
+          {activeLogTab === "system" &&
+            (loadingLogs ? (
               <div className="text-center py-8">
                 <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-800 border-r-transparent"></div>
                 <p className="mt-2 text-gray-600">Loading logs...</p>
@@ -347,15 +349,16 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
-            )
-          )}
+            ))}
 
           {/* Appointment Logs Table */}
-          {activeLogTab === 'appointments' && (
-            loadingAppointmentLogs ? (
+          {activeLogTab === "appointments" &&
+            (loadingAppointmentLogs ? (
               <div className="text-center py-8">
                 <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-800 border-r-transparent"></div>
-                <p className="mt-2 text-gray-600">Loading appointment logs...</p>
+                <p className="mt-2 text-gray-600">
+                  Loading appointment logs...
+                </p>
               </div>
             ) : appointmentLogs.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
@@ -430,15 +433,14 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
-                          {log.metadata ? JSON.stringify(log.metadata) : '-'}
+                          {log.metadata ? JSON.stringify(log.metadata) : "-"}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            )
-          )}
+            ))}
         </div>
       </main>
     </div>

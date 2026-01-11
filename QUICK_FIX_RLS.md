@@ -1,14 +1,17 @@
 # 🔧 Quick Fix: RLS Policy Issue
 
 ## Problem
+
 Error: **"new row violates row-level security policy for table 'appointments'"**
 
 ## Root Cause
+
 The appointments schema has RLS policies that use JWT authentication, but we're using session-based authentication. The policies are blocking INSERT operations.
 
 ## Solution (2 Steps - Takes 30 seconds)
 
 ### Step 1: Open Supabase Dashboard
+
 1. Go to: https://supabase.com/dashboard
 2. Select your project
 3. Click **SQL Editor** (left sidebar)
@@ -41,6 +44,7 @@ SELECT 'RLS policies fixed! You can now create appointments.' as message;
 ```
 
 ### Expected Output:
+
 ```
 message: "RLS policies fixed! You can now create appointments."
 ```
@@ -81,6 +85,7 @@ CREATE POLICY "Allow all logs" ON appointment_logs FOR ALL USING (true) WITH CHE
 ## Verification
 
 After the fix, you should be able to:
+
 - ✅ Book appointments as patient
 - ✅ View appointments in patient dashboard
 - ✅ View appointments in doctor dashboard

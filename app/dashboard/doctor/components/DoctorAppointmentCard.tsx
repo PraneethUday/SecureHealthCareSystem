@@ -1,9 +1,22 @@
-'use client';
+"use client";
 
-import { Calendar, Clock, MapPin, User, FileText, Phone, Mail, CheckCircle, XCircle } from 'lucide-react';
-import { AppointmentWithDetails } from '@/lib/database.types';
-import { completeAppointment, updateAppointmentStatus } from '@/lib/appointments';
-import { useState } from 'react';
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  User,
+  FileText,
+  Phone,
+  Mail,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
+import { AppointmentWithDetails } from "@/lib/database.types";
+import {
+  completeAppointment,
+  updateAppointmentStatus,
+} from "@/lib/appointments";
+import { useState } from "react";
 
 interface DoctorAppointmentCardProps {
   appointment: AppointmentWithDetails;
@@ -11,18 +24,27 @@ interface DoctorAppointmentCardProps {
   onUpdate: () => void;
 }
 
-export default function DoctorAppointmentCard({ appointment, doctorId, onUpdate }: DoctorAppointmentCardProps) {
+export default function DoctorAppointmentCard({
+  appointment,
+  doctorId,
+  onUpdate,
+}: DoctorAppointmentCardProps) {
   const [updating, setUpdating] = useState(false);
   const [showMarkComplete, setShowMarkComplete] = useState(false);
   const [showMarkNoShow, setShowMarkNoShow] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'scheduled': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'completed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-      case 'no_show': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "scheduled":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "completed":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "cancelled":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "no_show":
+        return "bg-gray-100 text-gray-800 border-gray-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -40,9 +62,9 @@ export default function DoctorAppointmentCard({ appointment, doctorId, onUpdate 
     setUpdating(true);
     const result = await updateAppointmentStatus(
       appointment.id,
-      'no_show',
+      "no_show",
       doctorId,
-      'Patient did not show up'
+      "Patient did not show up"
     );
     setUpdating(false);
     if (result.success) {
@@ -51,8 +73,10 @@ export default function DoctorAppointmentCard({ appointment, doctorId, onUpdate 
     }
   };
 
-  const isScheduled = appointment.status === 'scheduled';
-  const appointmentDate = new Date(appointment.appointment_date + 'T' + appointment.appointment_time);
+  const isScheduled = appointment.status === "scheduled";
+  const appointmentDate = new Date(
+    appointment.appointment_date + "T" + appointment.appointment_time
+  );
   const isToday = new Date().toDateString() === appointmentDate.toDateString();
 
   return (
@@ -70,8 +94,12 @@ export default function DoctorAppointmentCard({ appointment, doctorId, onUpdate 
             </span>
           )}
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(appointment.status)}`}>
-          {appointment.status.replace('_', ' ').toUpperCase()}
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+            appointment.status
+          )}`}
+        >
+          {appointment.status.replace("_", " ").toUpperCase()}
         </span>
       </div>
 
@@ -80,17 +108,22 @@ export default function DoctorAppointmentCard({ appointment, doctorId, onUpdate 
         <div className="flex items-center gap-2 text-gray-700">
           <Calendar className="w-4 h-4 text-gray-400" />
           <span className="text-sm">
-            {new Date(appointment.appointment_date).toLocaleDateString('en-US', {
-              weekday: 'short',
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric'
-            })}
+            {new Date(appointment.appointment_date).toLocaleDateString(
+              "en-US",
+              {
+                weekday: "short",
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              }
+            )}
           </span>
         </div>
         <div className="flex items-center gap-2 text-gray-700">
           <Clock className="w-4 h-4 text-gray-400" />
-          <span className="text-sm font-medium">{appointment.appointment_time}</span>
+          <span className="text-sm font-medium">
+            {appointment.appointment_time}
+          </span>
         </div>
       </div>
 
@@ -145,7 +178,7 @@ export default function DoctorAppointmentCard({ appointment, doctorId, onUpdate 
                   disabled={updating}
                   className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
                 >
-                  {updating ? 'Updating...' : 'Confirm'}
+                  {updating ? "Updating..." : "Confirm"}
                 </button>
               </div>
             </div>
@@ -164,7 +197,7 @@ export default function DoctorAppointmentCard({ appointment, doctorId, onUpdate 
                   disabled={updating}
                   className="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50"
                 >
-                  {updating ? 'Updating...' : 'Confirm'}
+                  {updating ? "Updating..." : "Confirm"}
                 </button>
               </div>
             </div>

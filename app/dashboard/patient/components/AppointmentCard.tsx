@@ -1,26 +1,34 @@
-'use client';
+"use client";
 
-import { Calendar, Clock, MapPin, User, FileText, X } from 'lucide-react';
-import { AppointmentWithDetails } from '@/lib/database.types';
-import { cancelAppointment } from '@/lib/appointments';
-import { useState } from 'react';
+import { Calendar, Clock, MapPin, User, FileText, X } from "lucide-react";
+import { AppointmentWithDetails } from "@/lib/database.types";
+import { cancelAppointment } from "@/lib/appointments";
+import { useState } from "react";
 
 interface AppointmentCardProps {
   appointment: AppointmentWithDetails;
   onUpdate: () => void;
 }
 
-export default function AppointmentCard({ appointment, onUpdate }: AppointmentCardProps) {
+export default function AppointmentCard({
+  appointment,
+  onUpdate,
+}: AppointmentCardProps) {
   const [cancelling, setCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'scheduled': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'completed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-      case 'no_show': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "scheduled":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "completed":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "cancelled":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "no_show":
+        return "bg-gray-100 text-gray-800 border-gray-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -29,7 +37,7 @@ export default function AppointmentCard({ appointment, onUpdate }: AppointmentCa
     const result = await cancelAppointment(
       appointment.id,
       appointment.patient_id,
-      'Cancelled by patient'
+      "Cancelled by patient"
     );
     setCancelling(false);
     if (result.success) {
@@ -38,8 +46,11 @@ export default function AppointmentCard({ appointment, onUpdate }: AppointmentCa
     }
   };
 
-  const isPast = new Date(appointment.appointment_date + 'T' + appointment.appointment_time) < new Date();
-  const canCancel = appointment.status === 'scheduled' && !isPast;
+  const isPast =
+    new Date(
+      appointment.appointment_date + "T" + appointment.appointment_time
+    ) < new Date();
+  const canCancel = appointment.status === "scheduled" && !isPast;
 
   return (
     <div className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-red-300 transition-all">
@@ -50,10 +61,16 @@ export default function AppointmentCard({ appointment, onUpdate }: AppointmentCa
             <User className="w-5 h-5 text-red-500" />
             Dr. {appointment.doctor_name}
           </h3>
-          <p className="text-sm text-gray-600 mt-1">{appointment.hospital_name}</p>
+          <p className="text-sm text-gray-600 mt-1">
+            {appointment.hospital_name}
+          </p>
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(appointment.status)}`}>
-          {appointment.status.replace('_', ' ').toUpperCase()}
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+            appointment.status
+          )}`}
+        >
+          {appointment.status.replace("_", " ").toUpperCase()}
         </span>
       </div>
 
@@ -62,12 +79,15 @@ export default function AppointmentCard({ appointment, onUpdate }: AppointmentCa
         <div className="flex items-center gap-2 text-gray-700">
           <Calendar className="w-4 h-4 text-gray-400" />
           <span className="text-sm">
-            {new Date(appointment.appointment_date).toLocaleDateString('en-US', {
-              weekday: 'short',
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric'
-            })}
+            {new Date(appointment.appointment_date).toLocaleDateString(
+              "en-US",
+              {
+                weekday: "short",
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              }
+            )}
           </span>
         </div>
         <div className="flex items-center gap-2 text-gray-700">
@@ -111,7 +131,9 @@ export default function AppointmentCard({ appointment, onUpdate }: AppointmentCa
         <div className="pt-4 border-t border-gray-200">
           {showCancelConfirm ? (
             <div className="flex items-center justify-between bg-red-50 p-3 rounded-lg">
-              <span className="text-sm text-red-700">Cancel this appointment?</span>
+              <span className="text-sm text-red-700">
+                Cancel this appointment?
+              </span>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowCancelConfirm(false)}
@@ -124,7 +146,7 @@ export default function AppointmentCard({ appointment, onUpdate }: AppointmentCa
                   disabled={cancelling}
                   className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
                 >
-                  {cancelling ? 'Cancelling...' : 'Yes, Cancel'}
+                  {cancelling ? "Cancelling..." : "Yes, Cancel"}
                 </button>
               </div>
             </div>
@@ -139,7 +161,7 @@ export default function AppointmentCard({ appointment, onUpdate }: AppointmentCa
         </div>
       )}
 
-      {isPast && appointment.status === 'scheduled' && (
+      {isPast && appointment.status === "scheduled" && (
         <div className="pt-4 border-t border-gray-200 text-center text-sm text-gray-500">
           Past appointment - no actions available
         </div>
