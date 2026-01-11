@@ -1,14 +1,13 @@
 -- ==========================================
--- MEDICAL RECORDS SYSTEM V2
--- Electronic Health Records (EHR) for patients
--- Rebuilt with proper column handling
+-- FIX MEDICAL RECORDS - COMPLETE REBUILD
+-- Recreate table with proper structure + RLS
 -- ==========================================
 
--- Drop existing tables to rebuild
+-- Drop and recreate medical records tables
 DROP TABLE IF EXISTS medical_record_logs CASCADE;
 DROP TABLE IF EXISTS medical_records CASCADE;
 
--- Medical Records Table (FRESH CREATE)
+-- Medical Records Table (PROPER STRUCTURE)
 CREATE TABLE medical_records (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   appointment_id UUID,
@@ -51,33 +50,26 @@ CREATE TABLE medical_records (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
 
+-- Add foreign key for appointments if table exists
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'appointments') THEN
+    ALTER TABLE medical_records ADD CONSTRAINT fk_medical_records_appointment 
+      FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE CASCADE;
+  END IF;
+END $$;
+
 -- Indexes for performance
 CREATE INDEX idx_medical_records_patient ON medical_records(patient_id);
 CREATE INDEX idx_medical_records_doctor ON medical_records(doctor_id);
 CREATE INDEX idx_medical_records_appointment ON medical_records(appointment_id);
 CREATE INDEX idx_medical_records_date ON medical_records(record_date DESC);
 
--- Add foreign key constraint for appointments (with error handling)
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'appointments') THEN
-    BEGIN
-      ALTER TABLE medical_records ADD CONSTRAINT fk_medical_records_appointment 
-        FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE CASCADE;
-      RAISE NOTICE 'Foreign key constraint added for appointments';
-    EXCEPTION WHEN duplicate_object THEN
-      RAISE NOTICE 'Foreign key constraint already exists';
-    END;
-  ELSE
-    RAISE NOTICE 'Appointments table does not exist yet, skipping foreign key';
-  END IF;
-END $$;
-
 -- Medical Records Audit Log
 CREATE TABLE medical_record_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   medical_record_id UUID NOT NULL REFERENCES medical_records(id) ON DELETE CASCADE,
-  action_type TEXT NOT NULL, -- created, updated, viewed, downloaded
+  action_type TEXT NOT NULL,
   performed_by_user_id TEXT NOT NULL,
   performed_by_role TEXT NOT NULL,
   old_data JSONB,
@@ -86,46 +78,28 @@ CREATE TABLE medical_record_logs (
   timestamp TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
 
--- Indexes for audit logs
 CREATE INDEX idx_medical_record_logs_record ON medical_record_logs(medical_record_id);
 CREATE INDEX idx_medical_record_logs_user ON medical_record_logs(performed_by_user_id);
 CREATE INDEX idx_medical_record_logs_timestamp ON medical_record_logs(timestamp DESC);
-
--- ==========================================
--- ROW LEVEL SECURITY
--- ==========================================
 
 -- Enable RLS
 ALTER TABLE medical_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE medical_record_logs ENABLE ROW LEVEL SECURITY;
 
--- Medical Records Policies
-CREATE POLICY "Patients can view their own medical records"
-  ON medical_records FOR SELECT
-  USING (true); -- App handles authorization
-
-CREATE POLICY "Doctors can create medical records"
-  ON medical_records FOR INSERT
-  WITH CHECK (true); -- App handles authorization
-
-CREATE POLICY "Doctors can update their medical records"
-  ON medical_records FOR UPDATE
-  USING (true); -- App handles authorization
-
--- Medical Record Logs Policies
-CREATE POLICY "Allow medical record log viewing"
-  ON medical_record_logs FOR SELECT
-  USING (true);
-
-CREATE POLICY "Allow medical record log insertion"
-  ON medical_record_logs FOR INSERT
+-- Create permissive policies (allow all - app handles authorization)
+CREATE POLICY "Allow all medical record operations"
+  ON medical_records
+  FOR ALL
+  USING (true)
   WITH CHECK (true);
 
--- ==========================================
--- TRIGGERS
--- ==========================================
+CREATE POLICY "Allow all medical record log operations"
+  ON medical_record_logs
+  FOR ALL
+  USING (true)
+  WITH CHECK (true);
 
--- Update updated_at timestamp
+-- Update trigger
 CREATE OR REPLACE FUNCTION update_medical_record_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -139,7 +113,4 @@ CREATE TRIGGER update_medical_record_timestamp_trigger
   FOR EACH ROW
   EXECUTE FUNCTION update_medical_record_timestamp();
 
--- ==========================================
--- SUCCESS MESSAGE
--- ==========================================
-SELECT 'Medical Records system (v2) created successfully!' as message;
+SELECT '✅ Medical records system rebuilt successfully!' as message;

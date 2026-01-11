@@ -276,11 +276,10 @@ export async function updateAppointmentStatus(
     console.log("Updating appointment:", { appointmentId, status, userId });
 
     // Get current appointment to log the change
-    const { data: currentAppointment, error: fetchError } = await supabase
+    const { data: currentAppointments, error: fetchError } = await supabase
       .from("appointments")
       .select("*")
-      .eq("id", appointmentId)
-      .single();
+      .eq("id", appointmentId);
 
     if (fetchError) {
       console.error("Error fetching appointment:", fetchError);
@@ -292,9 +291,11 @@ export async function updateAppointmentStatus(
       };
     }
 
-    if (!currentAppointment) {
+    if (!currentAppointments || currentAppointments.length === 0) {
       return { success: false, error: "Appointment not found" };
     }
+
+    const currentAppointment = currentAppointments[0];
 
     const updateData: any = {
       status,

@@ -59,6 +59,8 @@ export async function getPatientMedicalRecords(
   patientId: string
 ): Promise<MedicalRecordWithDetails[]> {
   try {
+    console.log("🏥 Fetching medical records for patient UUID:", patientId);
+    
     const { data, error } = await supabase
       .from("medical_records")
       .select(
@@ -79,8 +81,14 @@ export async function getPatientMedicalRecords(
       .order("record_date", { ascending: false });
 
     if (error) {
-      console.error("Error fetching medical records:", error);
+      console.error("❌ Error fetching medical records:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
       return [];
+    }
+
+    console.log(`✅ Found ${data?.length || 0} medical records`);
+    if (data && data.length > 0) {
+      console.log("First record sample:", JSON.stringify(data[0], null, 2));
     }
 
     return (data || []).map((record: any) => ({
@@ -93,7 +101,7 @@ export async function getPatientMedicalRecords(
       appointment_time: record.appointments?.appointment_time,
     }));
   } catch (error) {
-    console.error("Error in getPatientMedicalRecords:", error);
+    console.error("❌ Caught error in getPatientMedicalRecords:", error);
     return [];
   }
 }
