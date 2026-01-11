@@ -9,6 +9,8 @@ interface LoginFormProps {
   onPasswordChange: (value: string) => void;
   themeClasses: ThemeClasses;
   onSubmit: (e: React.FormEvent) => void;
+  isLoading?: boolean;
+  error?: string;
 }
 
 export default function LoginForm({
@@ -19,6 +21,8 @@ export default function LoginForm({
   onPasswordChange,
   themeClasses,
   onSubmit,
+  isLoading = false,
+  error = "",
 }: LoginFormProps) {
   const isPatient = selectedRole === "patient";
   const inputLabel = isPatient ? "Email Address" : "Staff/Employee ID";
@@ -28,7 +32,12 @@ export default function LoginForm({
 
   return (
     <form onSubmit={onSubmit} className={isPatient ? "space-y-3" : "space-y-5"}>
-      {/* Email/ID Input */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
+
       <div>
         <label
           htmlFor="identifier"
@@ -62,7 +71,6 @@ export default function LoginForm({
         </div>
       </div>
 
-      {/* Password Input */}
       <div>
         <label
           htmlFor="password"
@@ -96,7 +104,6 @@ export default function LoginForm({
         </div>
       </div>
 
-      {/* Forgot Password */}
       <div className="flex justify-end">
         <a
           href="#"
@@ -106,14 +113,14 @@ export default function LoginForm({
         </a>
       </div>
 
-      {/* Login Button */}
       <button
         type="submit"
+        disabled={isLoading}
         className={`w-full ${themeClasses.button} ${
           isPatient ? "py-2.5" : "py-3"
-        } rounded-lg font-semibold text-sm transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]`}
+        } rounded-lg font-semibold text-sm transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
       >
-        Sign In
+        {isLoading ? "Signing In..." : "Sign In"}
       </button>
     </form>
   );

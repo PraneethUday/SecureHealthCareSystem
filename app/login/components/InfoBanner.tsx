@@ -20,49 +20,53 @@ export default function InfoBanner({
 }: InfoBannerProps) {
   const isPatient = selectedRole === "patient";
 
+  /* ============================
+     ROLE-BASED FEATURE CONTENT
+     ============================ */
+
   const patientFeatures = [
     {
-      icon: <Clock className="w-5 h-5" />,
-      title: "24/7 Access",
-      description: "View your records anytime, anywhere",
+      icon: <Shield className="w-5 h-5" />,
+      title: "Role-Based Access Control",
+      description: "Only authorized doctors can access your records",
     },
     {
       icon: <Heart className="w-5 h-5" />,
-      title: "Personal Health",
-      description: "Track your health journey",
+      title: "Sensitive Medical Data",
+      description: "Your health information is securely stored",
+    },
+    {
+      icon: <Clock className="w-5 h-5" />,
+      title: "Secure Anytime Access",
+      description: "View your records when needed with full protection",
     },
     {
       icon: <Users className="w-5 h-5" />,
-      title: "Expert Care",
-      description: "Connect with healthcare professionals",
-    },
-    {
-      icon: <Shield className="w-5 h-5" />,
-      title: "Secure & Private",
-      description: "Your data is encrypted and protected",
+      title: "Trusted Care Providers",
+      description: "Access limited to verified healthcare professionals",
     },
   ];
 
   const staffFeatures = [
     {
-      icon: <HeartPulse className="w-5 h-5" />,
-      title: "Patient Management",
-      description: "Efficient patient care coordination",
+      icon: <CheckCircle className="w-5 h-5" />,
+      title: "Role-Based Authentication",
+      description: "Access permissions based on your clinical role",
     },
     {
-      icon: <CheckCircle className="w-5 h-5" />,
-      title: "Real-time Updates",
-      description: "Instant access to patient records",
+      icon: <HeartPulse className="w-5 h-5" />,
+      title: "Authorized Patient Records",
+      description: "View only assigned and permitted patient data",
     },
     {
       icon: <Award className="w-5 h-5" />,
-      title: "Quality Care",
-      description: "Tools for better patient outcomes",
+      title: "Clinical Data Integrity",
+      description: "Accurate, auditable, and tamper-resistant records",
     },
     {
       icon: <Shield className="w-5 h-5" />,
-      title: "HIPAA Compliant",
-      description: "Enterprise-grade security",
+      title: "Compliance & Security",
+      description: "HIPAA-aligned healthcare data protection",
     },
   ];
 
@@ -76,20 +80,20 @@ export default function InfoBanner({
           : "bg-gradient-to-br from-gray-800 via-gray-900 to-black"
       } text-white p-8 flex-col justify-between transition-all duration-300`}
     >
-      {/* Top Section */}
+      {/* ================= TOP SECTION ================= */}
       <div>
-        {/* Logo and Title */}
+        {/* Logo & Platform Title */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
               <HeartPulse className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">SecureHealthCare</h1>
+              <h1 className="text-2xl font-bold">Secure HealthCare</h1>
               <p className="text-white/80 text-xs">
                 {isPatient
-                  ? "Your Health, Our Priority"
-                  : "Professional Healthcare Platform"}
+                  ? "Your Medical Data, Your Control"
+                  : "Role-Based Secure Healthcare Platform"}
               </p>
             </div>
           </div>
@@ -99,17 +103,17 @@ export default function InfoBanner({
         <div className="mb-8">
           <h2 className="text-3xl font-bold mb-3 leading-tight">
             {isPatient
-              ? "Welcome to Your Healthcare Portal"
-              : "Healthcare Staff Portal"}
+              ? "Secure Access to Your Medical Records"
+              : "Secure Healthcare Data Management"}
           </h2>
           <p className="text-white/90 text-base">
             {isPatient
-              ? "Access your medical records, schedule appointments, and stay connected with your healthcare team."
-              : "Secure access to patient management systems and healthcare resources."}
+              ? "Your health records are protected using role-based access control, ensuring privacy and trusted medical care."
+              : "Access patient data securely based on professional role, authorization level, and compliance policies."}
           </p>
         </div>
 
-        {/* Features Grid */}
+        {/* Features */}
         <div className="grid grid-cols-1 gap-4">
           {features.map((feature, index) => (
             <div
@@ -130,31 +134,33 @@ export default function InfoBanner({
         </div>
       </div>
 
-      {/* Bottom Section - Stats or Info */}
+      {/* ================= BOTTOM STATS ================= */}
       <div className="mt-8 pt-6 border-t border-white/20">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="text-2xl font-bold mb-1">
-              {isPatient ? "50K+" : "500+"}
+              {isPatient ? "100%" : "RBAC"}
             </div>
             <div className="text-white/70 text-xs">
-              {isPatient ? "Patients" : "Healthcare Staff"}
+              {isPatient ? "Data Privacy" : "Access Control"}
             </div>
           </div>
+
           <div>
             <div className="text-2xl font-bold mb-1">
-              {isPatient ? "24/7" : "99.9%"}
+              {isPatient ? "Encrypted" : "Audit Logs"}
             </div>
             <div className="text-white/70 text-xs">
-              {isPatient ? "Support" : "Uptime"}
+              {isPatient ? "Medical Records" : "All Actions Tracked"}
             </div>
           </div>
+
           <div>
             <div className="text-2xl font-bold mb-1">
-              {isPatient ? "100%" : "HIPAA"}
+              {isPatient ? "Trusted" : "HIPAA"}
             </div>
             <div className="text-white/70 text-xs">
-              {isPatient ? "Secure" : "Compliant"}
+              {isPatient ? "Healthcare System" : "Compliant"}
             </div>
           </div>
         </div>

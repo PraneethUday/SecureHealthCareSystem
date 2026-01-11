@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { UserRole } from "./types";
 import { getThemeClasses } from "./constants";
 import Header from "./components/Header";
@@ -8,23 +9,46 @@ import RoleSelector from "./components/RoleSelector";
 import LoginForm from "./components/LoginForm";
 import Footer from "./components/Footer";
 import InfoBanner from "./components/InfoBanner";
+import { login, saveSession } from "@/lib/auth";
 
 export default function LoginPage() {
   const [selectedRole, setSelectedRole] = useState<UserRole>("patient");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
 
   const themeClasses = getThemeClasses(selectedRole);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login submitted:", { selectedRole, identifier, password });
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const result = await login(identifier, password, selectedRole);
+
+      if (result.success && result.user && result.role) {
+        // Save session
+        saveSession(result.user, result.role);
+
+        // Redirect to appropriate dashboard
+        router.push(`/dashboard/${result.role}`);
+      } else {
+        setError(result.message || "Login failed");
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRoleChange = (role: UserRole) => {
     setSelectedRole(role);
     setIdentifier(""); // Clear identifier when switching roles
+    setError(""); // Clear error
   };
 
   return (
@@ -73,6 +97,8 @@ export default function LoginPage() {
             onPasswordChange={setPassword}
             themeClasses={themeClasses}
             onSubmit={handleSubmit}
+            isLoading={isLoading}
+            error={error}
           />
 
           <Footer selectedRole={selectedRole} themeClasses={themeClasses} />
