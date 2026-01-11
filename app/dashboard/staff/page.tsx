@@ -11,11 +11,14 @@ import {
   Settings,
   LogOut,
   UserCog,
+  Pill,
 } from "lucide-react";
+import { PharmacyManager } from "./components/PharmacyManager";
 
 export default function StaffDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<"overview" | "pharmacy">("pharmacy");
 
   useEffect(() => {
     const session = getSession();
@@ -80,76 +83,115 @@ export default function StaffDashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* Profile Card */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Staff Information
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <p className="text-sm text-gray-500">Staff ID</p>
-              <p className="font-medium">{user.staff_id}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Role</p>
-              <p className="font-medium">{user.role}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Department</p>
-              <p className="font-medium">{user.department}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Email</p>
-              <p className="font-medium">{user.email}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Phone</p>
-              <p className="font-medium">{user.phone || "Not provided"}</p>
-            </div>
-          </div>
+        {/* Navigation Tabs */}
+        <div className="mb-6 border-b border-gray-200">
+          <nav className="flex gap-4">
+            <button
+              onClick={() => setActiveTab("pharmacy")}
+              className={`px-4 py-3 font-medium transition-colors relative ${
+                activeTab === "pharmacy"
+                  ? "text-purple-600 border-b-2 border-purple-600"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Pill className="w-5 h-5" />
+                Pharmacy Management
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`px-4 py-3 font-medium transition-colors relative ${
+                activeTab === "overview"
+                  ? "text-purple-600 border-b-2 border-purple-600"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <UserCog className="w-5 h-5" />
+                Overview
+              </div>
+            </button>
+          </nav>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-            <FileText className="w-12 h-12 text-purple-500 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              Records Management
-            </h3>
-            <p className="text-gray-600 text-sm mb-4">
-              Manage medical records and documentation
-            </p>
-            <button className="text-purple-600 font-medium text-sm hover:underline">
-              View Records →
-            </button>
-          </div>
+        {/* Tab Content */}
+        {activeTab === "pharmacy" ? (
+          <PharmacyManager staffId={user.staff_id} />
+        ) : (
+          <>
+            {/* Profile Card */}
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                Staff Information
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Staff ID</p>
+                  <p className="font-medium">{user.staff_id}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Role</p>
+                  <p className="font-medium">{user.role}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Department</p>
+                  <p className="font-medium">{user.department}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="font-medium">{user.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Phone</p>
+                  <p className="font-medium">{user.phone || "Not provided"}</p>
+                </div>
+              </div>
+            </div>
 
-          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-            <Calendar className="w-12 h-12 text-purple-500 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              Appointments
-            </h3>
-            <p className="text-gray-600 text-sm mb-4">
-              Schedule and manage appointments
-            </p>
-            <button className="text-purple-600 font-medium text-sm hover:underline">
-              View Appointments →
-            </button>
-          </div>
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                <FileText className="w-12 h-12 text-purple-500 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                  Records Management
+                </h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Manage medical records and documentation
+                </p>
+                <button className="text-purple-600 font-medium text-sm hover:underline">
+                  View Records →
+                </button>
+              </div>
 
-          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-            <Users className="w-12 h-12 text-purple-500 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              Patient Directory
-            </h3>
-            <p className="text-gray-600 text-sm mb-4">
-              Access patient information and contacts
-            </p>
-            <button className="text-purple-600 font-medium text-sm hover:underline">
-              View Directory →
-            </button>
-          </div>
-        </div>
+              <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                <Calendar className="w-12 h-12 text-purple-500 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                  Appointments
+                </h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Schedule and manage appointments
+                </p>
+                <button className="text-purple-600 font-medium text-sm hover:underline">
+                  View Appointments →
+                </button>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                <Users className="w-12 h-12 text-purple-500 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                  Patient Directory
+                </h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Access patient information and contacts
+                </p>
+                <button className="text-purple-600 font-medium text-sm hover:underline">
+                  View Directory →
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

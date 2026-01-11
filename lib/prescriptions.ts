@@ -472,3 +472,86 @@ export async function getVideoCallLogs(filters?: {
     return [];
   }
 }
+
+// Pharmacy Management Functions
+
+// Search prescriptions for pharmacy (staff role)
+export async function searchPrescriptionsForPharmacy(filters: {
+  patientId?: string;
+  patientName?: string;
+  status?: "active" | "completed" | "discontinued" | "all";
+}): Promise<{ success: boolean; data?: any[]; error?: string }> {
+  try {
+    const params = new URLSearchParams();
+    if (filters.patientId) params.append("patientId", filters.patientId);
+    if (filters.patientName) params.append("patientName", filters.patientName);
+    if (filters.status) params.append("status", filters.status);
+
+    const response = await fetch(`/api/prescriptions/search?${params}`);
+    const result = await response.json();
+
+    if (!response.ok) {
+      return { success: false, error: result.error || "Failed to search prescriptions" };
+    }
+
+    return { success: true, data: result.prescriptions || [] };
+  } catch (error: any) {
+    console.error("Error searching prescriptions:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Mark prescription as dispensed (pharmacy staff)
+export async function markPrescriptionDispensed(
+  prescriptionId: string,
+  staffId: string,
+  notes?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Get current prescription
+    const { data: oldData } = await supabase
+      .from("prescriptions")
+      .select("*")
+      .eq("id", prescriptionId)
+      .single();
+
+    const updateData: any = { 
+      status: "completed",
+      updated_at: new Date().toISOString()
+    };
+    
+    if (notes) {
+      updateData.notes = oldData?.notes 
+        ? `${oldData.notes}\n[Pharmacy] ${notes}` 
+        : `[Pharmacy] ${notes}`;
+    }
+
+    const { error } = await supabase
+      .from("prescriptions")
+      .update(updateData)
+      .eq("id", prescriptionId);
+
+    if (error) {
+      console.error("Error marking prescription as dispensed:", error);
+      return { success: false, error: error.message };
+    }
+
+    // Log the dispensing action
+    if (oldData) {
+      await supabase.from("prescription_logs").insert({
+        prescription_id: prescriptionId,
+        action_type: "updated",
+        performed_by_user_id: staffId,
+        performed_by_role: "staff",
+        old_data: oldData,
+        new_data: { ...oldData, ...updateData },
+        metadata: { action: "dispensed", notes },
+      });
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error marking prescription as dispensed:", error);
+    return { success: false, error: error.message };
+  }
+}
