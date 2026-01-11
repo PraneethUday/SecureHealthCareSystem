@@ -584,11 +584,6 @@ export function useWebRTC(options: UseWebRTCOptions) {
             "[Hook] 🧊 Processing ICE candidate from:",
             message.from_user_role
           );
-        } else if (message.signal_type === "ice-candidate") {
-          console.log(
-            "[Hook] 🧊 Processing ICE candidate from:",
-            message.from_user_role
-          );
           try {
             if (peerConnectionRef.current.getConnectionState() === "closed") {
               console.warn(
