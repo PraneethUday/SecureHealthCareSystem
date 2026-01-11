@@ -18,7 +18,9 @@ import { PharmacyManager } from "./components/PharmacyManager";
 export default function StaffDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "pharmacy">("pharmacy");
+  const [activeTab, setActiveTab] = useState<"overview" | "pharmacy">(
+    "pharmacy"
+  );
 
   useEffect(() => {
     const session = getSession();

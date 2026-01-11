@@ -491,7 +491,10 @@ export async function searchPrescriptionsForPharmacy(filters: {
     const result = await response.json();
 
     if (!response.ok) {
-      return { success: false, error: result.error || "Failed to search prescriptions" };
+      return {
+        success: false,
+        error: result.error || "Failed to search prescriptions",
+      };
     }
 
     return { success: true, data: result.prescriptions || [] };
@@ -515,14 +518,14 @@ export async function markPrescriptionDispensed(
       .eq("id", prescriptionId)
       .single();
 
-    const updateData: any = { 
+    const updateData: any = {
       status: "completed",
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
-    
+
     if (notes) {
-      updateData.notes = oldData?.notes 
-        ? `${oldData.notes}\n[Pharmacy] ${notes}` 
+      updateData.notes = oldData?.notes
+        ? `${oldData.notes}\n[Pharmacy] ${notes}`
         : `[Pharmacy] ${notes}`;
     }
 

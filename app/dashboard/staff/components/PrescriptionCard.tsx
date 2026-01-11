@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Pill, 
-  Calendar, 
-  User, 
-  Clock, 
-  FileText, 
+import {
+  Pill,
+  Calendar,
+  User,
+  Clock,
+  FileText,
   CheckCircle,
   AlertCircle,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
 } from "lucide-react";
 import { markPrescriptionDispensed } from "@/lib/prescriptions";
 
@@ -38,7 +38,11 @@ interface PrescriptionCardProps {
   onStatusUpdate: () => void;
 }
 
-export function PrescriptionCard({ prescription, staffId, onStatusUpdate }: PrescriptionCardProps) {
+export function PrescriptionCard({
+  prescription,
+  staffId,
+  onStatusUpdate,
+}: PrescriptionCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDispensing, setIsDispensing] = useState(false);
   const [dispensingNotes, setDispensingNotes] = useState("");
@@ -108,7 +112,9 @@ export function PrescriptionCard({ prescription, staffId, onStatusUpdate }: Pres
               </div>
               <div className="flex items-center gap-1">
                 <span className="text-gray-400">|</span>
-                <span className="font-medium">ID: {prescription.patient_id}</span>
+                <span className="font-medium">
+                  ID: {prescription.patient_id}
+                </span>
               </div>
             </div>
           </div>
@@ -135,7 +141,9 @@ export function PrescriptionCard({ prescription, staffId, onStatusUpdate }: Pres
           </div>
           <div>
             <p className="text-xs text-gray-500 mb-1">Frequency</p>
-            <p className="font-medium text-gray-900">{prescription.frequency}</p>
+            <p className="font-medium text-gray-900">
+              {prescription.frequency}
+            </p>
           </div>
           <div>
             <p className="text-xs text-gray-500 mb-1">Duration</p>
@@ -155,19 +163,27 @@ export function PrescriptionCard({ prescription, staffId, onStatusUpdate }: Pres
             {/* Doctor Information */}
             <div>
               <p className="text-xs text-gray-500 mb-1">Prescribed By</p>
-              <p className="font-medium text-gray-900">{prescription.doctor_name}</p>
-              <p className="text-sm text-gray-600">{prescription.doctor_specialization}</p>
+              <p className="font-medium text-gray-900">
+                {prescription.doctor_name}
+              </p>
+              <p className="text-sm text-gray-600">
+                {prescription.doctor_specialization}
+              </p>
             </div>
 
             {/* Patient Contact */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-xs text-gray-500 mb-1">Patient Email</p>
-                <p className="text-sm text-gray-900">{prescription.patient_email || "N/A"}</p>
+                <p className="text-sm text-gray-900">
+                  {prescription.patient_email || "N/A"}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Patient Phone</p>
-                <p className="text-sm text-gray-900">{prescription.patient_phone || "N/A"}</p>
+                <p className="text-sm text-gray-900">
+                  {prescription.patient_phone || "N/A"}
+                </p>
               </div>
             </div>
 

@@ -3,7 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 
 // Create a server-side Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!;
+const supabaseServiceKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function GET(request: NextRequest) {
@@ -13,7 +15,11 @@ export async function GET(request: NextRequest) {
     const patientName = searchParams.get("patientName");
     const status = searchParams.get("status");
 
-    console.log("🔍 [Prescription Search] Params:", { patientId, patientName, status });
+    console.log("🔍 [Prescription Search] Params:", {
+      patientId,
+      patientName,
+      status,
+    });
 
     // Build the query
     let query = supabase
@@ -52,7 +58,10 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ prescriptions: [] });
       }
 
-      console.log("✅ [Prescription Search] Found patient UUID:", patientData.id);
+      console.log(
+        "✅ [Prescription Search] Found patient UUID:",
+        patientData.id
+      );
       query = query.eq("patient_id", patientData.id);
     }
 
@@ -67,7 +76,10 @@ export async function GET(request: NextRequest) {
         );
 
       if (patientError) {
-        console.error("❌ [Prescription Search] Error searching patients:", patientError);
+        console.error(
+          "❌ [Prescription Search] Error searching patients:",
+          patientError
+        );
         return NextResponse.json(
           { error: "Failed to search patients" },
           { status: 500 }
@@ -76,11 +88,18 @@ export async function GET(request: NextRequest) {
 
       if (patients && patients.length > 0) {
         const patientUUIDs = patients.map((p) => p.id);
-        console.log("✅ [Prescription Search] Found", patients.length, "matching patients");
+        console.log(
+          "✅ [Prescription Search] Found",
+          patients.length,
+          "matching patients"
+        );
         query = query.in("patient_id", patientUUIDs);
       } else {
         // No patients found with that name
-        console.log("⚠️ [Prescription Search] No patients found with name:", patientName);
+        console.log(
+          "⚠️ [Prescription Search] No patients found with name:",
+          patientName
+        );
         return NextResponse.json({ prescriptions: [] });
       }
     }
@@ -100,7 +119,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log("✅ [Prescription Search] Found:", data?.length || 0, "prescriptions");
+    console.log(
+      "✅ [Prescription Search] Found:",
+      data?.length || 0,
+      "prescriptions"
+    );
 
     // Transform the data to include doctor and patient details
     const prescriptions = (data || []).map((rx: any) => ({
@@ -126,4 +149,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

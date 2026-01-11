@@ -12,7 +12,9 @@ interface PharmacyManagerProps {
 export function PharmacyManager({ staffId }: PharmacyManagerProps) {
   const [searchType, setSearchType] = useState<"id" | "name">("id");
   const [searchValue, setSearchValue] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed" | "discontinued">("active");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "completed" | "discontinued"
+  >("active");
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,8 +80,12 @@ export function PharmacyManager({ staffId }: PharmacyManagerProps) {
           <Pill className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Pharmacy Management</h2>
-          <p className="text-sm text-gray-600">Search and dispense prescriptions</p>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Pharmacy Management
+          </h2>
+          <p className="text-sm text-gray-600">
+            Search and dispense prescriptions
+          </p>
         </div>
       </div>
 
@@ -127,7 +133,7 @@ export function PharmacyManager({ staffId }: PharmacyManagerProps) {
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
-            
+
             {/* Status Filter */}
             <div className="relative">
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
@@ -192,7 +198,8 @@ export function PharmacyManager({ staffId }: PharmacyManagerProps) {
               Search Results
               {!isLoading && (
                 <span className="ml-2 text-sm font-normal text-gray-600">
-                  ({prescriptions.length} prescription{prescriptions.length !== 1 ? "s" : ""} found)
+                  ({prescriptions.length} prescription
+                  {prescriptions.length !== 1 ? "s" : ""} found)
                 </span>
               )}
             </h3>
@@ -237,8 +244,9 @@ export function PharmacyManager({ staffId }: PharmacyManagerProps) {
             Start Searching for Prescriptions
           </h3>
           <p className="text-gray-600 max-w-md mx-auto">
-            Use the search bar above to find patient prescriptions by ID or name.
-            You can filter by prescription status to find active, completed, or discontinued prescriptions.
+            Use the search bar above to find patient prescriptions by ID or
+            name. You can filter by prescription status to find active,
+            completed, or discontinued prescriptions.
           </p>
         </div>
       )}
