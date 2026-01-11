@@ -110,7 +110,8 @@ export default function DoctorDashboard() {
   );
   const pastAppointments = appointments.filter(
     (apt) =>
-      new Date(apt.appointment_date + "T" + apt.appointment_time) < new Date() ||
+      new Date(apt.appointment_date + "T" + apt.appointment_time) <
+        new Date() ||
       apt.status === "completed" ||
       apt.status === "cancelled" ||
       apt.status === "no_show"

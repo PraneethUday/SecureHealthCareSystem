@@ -60,7 +60,7 @@ export async function getPatientMedicalRecords(
 ): Promise<MedicalRecordWithDetails[]> {
   try {
     console.log("🏥 Fetching medical records for patient UUID:", patientId);
-    
+
     const { data, error } = await supabase
       .from("medical_records")
       .select(
