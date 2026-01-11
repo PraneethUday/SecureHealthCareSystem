@@ -50,7 +50,10 @@ export default function PatientDashboard() {
       router.push("/login");
     } else {
       setUser(session.user);
-      loadAppointments(session.user.id);
+      // Use the UUID id field, not the TEXT patient_id field
+      const patientUUID = session.user.id;
+      console.log("🔍 Patient UUID:", patientUUID, "| patient_id (text):", session.user.patient_id, "| email:", session.user.email);
+      loadAppointments(patientUUID);
       // Log dashboard access
       logAction({
         userId: session.user.patient_id || session.user.email,
@@ -62,6 +65,7 @@ export default function PatientDashboard() {
   }, [router]);
 
   const loadAppointments = async (patientId: string) => {
+    console.log("📞 Calling getPatientAppointments with UUID:", patientId);
     setLoadingAppointments(true);
     const data = await getPatientAppointments(patientId);
     setAppointments(data);
@@ -89,8 +93,7 @@ export default function PatientDashboard() {
 
   const pastAppointments = appointments.filter(
     (apt) =>
-      new Date(apt.appointment_date + "T" + apt.appointment_time) <
-        new Date() || apt.status !== "scheduled"
+      new Date(apt.appointment_date + "T" + apt.appointment_time) < new Date()
   );
 
   const normalizedAppointmentSearch = appointmentSearchTerm

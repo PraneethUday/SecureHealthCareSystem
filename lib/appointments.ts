@@ -152,83 +152,113 @@ export async function createAppointment(appointmentData: {
 export async function getPatientAppointments(
   patientId: string
 ): Promise<AppointmentWithDetails[]> {
-  const { data, error } = await supabase
-    .from("appointments")
-    .select(
+  try {
+    console.log("🔍 Fetching appointments for patient:", patientId);
+    
+    const { data, error } = await supabase
+      .from("appointments")
+      .select(
+        `
+        *,
+        doctors (
+          id,
+          first_name,
+          last_name,
+          specialization
+        ),
+        hospitals (
+          id,
+          name,
+          address
+        )
       `
-      *,
-      doctors (
-        id,
-        first_name,
-        last_name,
-        specialization
-      ),
-      hospitals (
-        id,
-        name,
-        address
       )
-    `
-    )
-    .eq("patient_id", patientId)
-    .order("appointment_date", { ascending: false })
-    .order("appointment_time", { ascending: false });
+      .eq("patient_id", patientId)
+      .order("appointment_date", { ascending: false })
+      .order("appointment_time", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching patient appointments:", error);
+    if (error) {
+      console.error("❌ Supabase error fetching patient appointments:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        patientId,
+      });
+      return [];
+    }
+
+    console.log("✅ Successfully fetched appointments:", data?.length || 0);
+
+    // Transform the data
+    return (data || []).map((apt) => ({
+      ...apt,
+      doctor_name: apt.doctors ? `${apt.doctors.first_name} ${apt.doctors.last_name}` : "Unknown",
+      specialization: apt.doctors?.specialization || "N/A",
+      hospital_name: apt.hospitals?.name || "N/A",
+      hospital_address: apt.hospitals?.address || "N/A",
+    }));
+  } catch (err) {
+    console.error("❌ Exception fetching patient appointments:", err);
     return [];
   }
-
-  // Transform the data
-  return (data || []).map((apt) => ({
-    ...apt,
-    doctor_name: `${apt.doctors.first_name} ${apt.doctors.last_name}`,
-    specialization: apt.doctors.specialization,
-    hospital_name: apt.hospitals.name,
-    hospital_address: apt.hospitals.address,
-  }));
 }
 
 // Get doctor appointments
 export async function getDoctorAppointments(
   doctorId: string
 ): Promise<AppointmentWithDetails[]> {
-  const { data, error } = await supabase
-    .from("appointments")
-    .select(
+  try {
+    console.log("🔍 Fetching appointments for doctor:", doctorId);
+    
+    const { data, error } = await supabase
+      .from("appointments")
+      .select(
+        `
+        *,
+        patients (
+          id,
+          first_name,
+          last_name,
+          email,
+          phone_number
+        ),
+        hospitals (
+          id,
+          name,
+          address
+        )
       `
-      *,
-      patients (
-        id,
-        first_name,
-        last_name,
-        email,
-        phone_number
-      ),
-      hospitals (
-        id,
-        name,
-        address
       )
-    `
-    )
-    .eq("doctor_id", doctorId)
-    .order("appointment_date", { ascending: true })
-    .order("appointment_time", { ascending: true });
+      .eq("doctor_id", doctorId)
+      .order("appointment_date", { ascending: true })
+      .order("appointment_time", { ascending: true });
 
-  if (error) {
-    console.error("Error fetching doctor appointments:", error);
+    if (error) {
+      console.error("❌ Supabase error fetching doctor appointments:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        doctorId,
+      });
+      return [];
+    }
+
+    console.log("✅ Successfully fetched appointments:", data?.length || 0);
+
+    // Transform the data
+    return (data || []).map((apt) => ({
+      ...apt,
+      patient_name: apt.patients ? `${apt.patients.first_name} ${apt.patients.last_name}` : "Unknown",
+      patient_email: apt.patients?.email || "N/A",
+      hospital_name: apt.hospitals?.name || "N/A",
+      hospital_address: apt.hospitals?.address || "N/A",
+    }));
+  } catch (err) {
+    console.error("❌ Exception fetching doctor appointments:", err);
     return [];
   }
-
-  // Transform the data
-  return (data || []).map((apt) => ({
-    ...apt,
-    patient_name: `${apt.patients.first_name} ${apt.patients.last_name}`,
-    patient_email: apt.patients.email,
-    hospital_name: apt.hospitals.name,
-    hospital_address: apt.hospitals.address,
-  }));
 }
 
 // Update appointment status

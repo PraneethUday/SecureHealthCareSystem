@@ -16,7 +16,7 @@ import {
   Search,
 } from "lucide-react";
 import DoctorAppointmentCard from "./components/DoctorAppointmentCard";
-import VideoCallInterface from "../components/VideoCallInterface";
+import { IncomingCallModal } from "./components/IncomingCallModal";
 import PrescriptionForm from "./components/PrescriptionForm";
 import MedicalRecordForm from "./components/MedicalRecordForm";
 
@@ -30,8 +30,6 @@ export default function DoctorDashboard() {
   const [activeTab, setActiveTab] = useState<"today" | "upcoming" | "past">(
     "today"
   );
-  const [selectedAppointmentForVideo, setSelectedAppointmentForVideo] =
-    useState<AppointmentWithDetails | null>(null);
   const [
     selectedAppointmentForPrescription,
     setSelectedAppointmentForPrescription,
@@ -49,23 +47,30 @@ export default function DoctorDashboard() {
   >("all");
 
   useEffect(() => {
-    const session = getSession();
-    if (!session || session.role !== "doctor") {
-      router.push("/login");
-    } else {
-      setUser(session.user);
-      loadAppointments(session.user.id);
-      // Log dashboard access
-      logAction({
-        userId: session.user.doctor_id,
-        userRole: "doctor",
-        action: "dashboard_access",
-        details: "Doctor accessed dashboard",
-      });
-    }
+    const checkSession = async () => {
+      const session = await getSession();
+      if (!session || session.role !== "doctor") {
+        router.push("/login");
+      } else {
+        setUser(session.user);
+        // Use the UUID id field, not the TEXT doctor_id field
+        const doctorUUID = session.user.id;
+        console.log("🔍 Doctor UUID:", doctorUUID, "| doctor_id (text):", session.user.doctor_id);
+        loadAppointments(doctorUUID);
+        // Log dashboard access
+        logAction({
+          userId: session.user.doctor_id,
+          userRole: "doctor",
+          action: "dashboard_access",
+          details: "Doctor accessed dashboard",
+        });
+      }
+    };
+    checkSession();
   }, [router]);
 
   const loadAppointments = async (doctorId: string) => {
+    console.log("📞 Calling getDoctorAppointments with UUID:", doctorId);
     setLoadingAppointments(true);
     const data = await getDoctorAppointments(doctorId);
     setAppointments(data);
@@ -100,8 +105,7 @@ export default function DoctorDashboard() {
   );
   const pastAppointments = appointments.filter(
     (apt) =>
-      new Date(apt.appointment_date + "T" + apt.appointment_time) <
-        new Date() || apt.status !== "scheduled"
+      new Date(apt.appointment_date + "T" + apt.appointment_time) < new Date()
   );
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -324,9 +328,9 @@ export default function DoctorDashboard() {
                         appointment={appointment}
                         doctorId={user.id}
                         onUpdate={() => loadAppointments(user.id)}
-                        onStartVideoCall={() =>
-                          setSelectedAppointmentForVideo(appointment)
-                        }
+                        onStartVideoCall={() => {
+                          alert("Please wait for patient to initiate the video call. You'll receive a notification.");
+                        }}
                         onPrescribe={() =>
                           setSelectedAppointmentForPrescription(appointment)
                         }
@@ -353,9 +357,9 @@ export default function DoctorDashboard() {
                         appointment={appointment}
                         doctorId={user.id}
                         onUpdate={() => loadAppointments(user.id)}
-                        onStartVideoCall={() =>
-                          setSelectedAppointmentForVideo(appointment)
-                        }
+                        onStartVideoCall={() => {
+                          alert("Please wait for patient to initiate the video call. You'll receive a notification.");
+                        }}
                         onPrescribe={() =>
                           setSelectedAppointmentForPrescription(appointment)
                         }
@@ -381,9 +385,9 @@ export default function DoctorDashboard() {
                       appointment={appointment}
                       doctorId={user.id}
                       onUpdate={() => loadAppointments(user.id)}
-                      onStartVideoCall={() =>
-                        setSelectedAppointmentForVideo(appointment)
-                      }
+                      onStartVideoCall={() => {
+                        alert("Please wait for patient to initiate the video call. You'll receive a notification.");
+                      }}
                       onPrescribe={() =>
                         setSelectedAppointmentForPrescription(appointment)
                       }
@@ -442,16 +446,16 @@ export default function DoctorDashboard() {
         </div>
       </main>
 
-      {/* Video Call Modal */}
-      {selectedAppointmentForVideo && (
-        <VideoCallInterface
-          appointment={selectedAppointmentForVideo}
-          userId={user.id}
-          userRole="doctor"
-          onClose={() => setSelectedAppointmentForVideo(null)}
-          onCallEnded={() => {
-            setSelectedAppointmentForVideo(null);
-            loadAppointments(user.id);
+      {/* Incoming Call Modal - Only render when user is loaded */}
+      {user && (
+        <IncomingCallModal
+          doctorId={user.id}
+          onCallAccepted={(call) => {
+            console.log('[Dashboard] Call accepted, navigating to call page');
+            router.push(`/dashboard/call/${call.id}`);
+          }}
+          onCallRejected={(callId) => {
+            console.log('[Dashboard] Call rejected:', callId);
           }}
         />
       )}
