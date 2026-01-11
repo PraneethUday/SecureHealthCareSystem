@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import DoctorAppointmentCard from "./components/DoctorAppointmentCard";
 import { IncomingCallModal } from "./components/IncomingCallModal";
-import PrescriptionForm from "./components/PrescriptionForm";
+import PrescribeModal from "./components/PrescribeModal";
 import MedicalRecordForm from "./components/MedicalRecordForm";
 
 export default function DoctorDashboard() {
@@ -473,14 +473,15 @@ export default function DoctorDashboard() {
 
       {/* Prescription Modal */}
       {selectedAppointmentForPrescription && (
-        <PrescriptionForm
-          appointment={selectedAppointmentForPrescription}
-          doctorId={user.id}
-          onClose={() => setSelectedAppointmentForPrescription(null)}
-          onSuccess={() => {
+        <PrescribeModal
+          appointment={{
+            id: selectedAppointmentForPrescription.id,
+            patient_id: selectedAppointmentForPrescription.patient_id,
+            doctor_id: user.id,
+          }}
+          onClose={() => {
             setSelectedAppointmentForPrescription(null);
             loadAppointments(user.id);
-            alert("Prescription issued successfully!");
           }}
         />
       )}
