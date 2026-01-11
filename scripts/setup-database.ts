@@ -246,10 +246,12 @@ async function setupDatabase() {
     console.log('📝 Sample Login Credentials (all passwords are "admin"):\n');
     console.log("Admin:");
     console.log("  ID: admin | Password: admin\n");
-    console.log('Patients (use EMAIL to login):');
-    console.log('  Email: john.doe@email.com | Password: admin (John Doe)');
-    console.log('  Email: jane.smith@email.com | Password: admin (Jane Smith)');
-    console.log('  Email: michael.j@email.com | Password: admin (Michael Johnson)\n');
+    console.log("Patients (use EMAIL to login):");
+    console.log("  Email: john.doe@email.com | Password: admin (John Doe)");
+    console.log("  Email: jane.smith@email.com | Password: admin (Jane Smith)");
+    console.log(
+      "  Email: michael.j@email.com | Password: admin (Michael Johnson)\n"
+    );
     console.log("Doctors:");
     console.log("  ID: D001 | Password: admin (Dr. Sarah Williams)");
     console.log("  ID: D002 | Password: admin (Dr. Robert Brown)");

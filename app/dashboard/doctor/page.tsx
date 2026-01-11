@@ -19,9 +19,9 @@ export default function DoctorDashboard() {
       // Log dashboard access
       logAction({
         userId: session.user.doctor_id,
-        userRole: 'doctor',
-        action: 'dashboard_access',
-        details: 'Doctor accessed dashboard',
+        userRole: "doctor",
+        action: "dashboard_access",
+        details: "Doctor accessed dashboard",
       });
     }
   }, [router]);
@@ -30,9 +30,9 @@ export default function DoctorDashboard() {
     if (user) {
       logAction({
         userId: user.doctor_id,
-        userRole: 'doctor',
-        action: 'logout',
-        details: 'Doctor logged out',
+        userRole: "doctor",
+        action: "logout",
+        details: "Doctor logged out",
       });
     }
     clearSession();

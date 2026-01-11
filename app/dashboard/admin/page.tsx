@@ -4,7 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSession, clearSession } from "@/lib/auth";
 import { logAction, getAllLogs } from "@/lib/logging";
-import { Shield, Users, Activity, Settings, LogOut, Database, FileText } from "lucide-react";
+import {
+  Shield,
+  Users,
+  Activity,
+  Settings,
+  LogOut,
+  Database,
+  FileText,
+} from "lucide-react";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -21,9 +29,9 @@ export default function AdminDashboard() {
       // Log dashboard access
       logAction({
         userId: session.user.id,
-        userRole: 'admin',
-        action: 'dashboard_access',
-        details: 'Admin accessed dashboard',
+        userRole: "admin",
+        action: "dashboard_access",
+        details: "Admin accessed dashboard",
       });
       // Fetch logs
       fetchLogs();
@@ -35,7 +43,7 @@ export default function AdminDashboard() {
       const fetchedLogs = await getAllLogs(50);
       setLogs(fetchedLogs);
     } catch (error) {
-      console.error('Failed to fetch logs:', error);
+      console.error("Failed to fetch logs:", error);
     } finally {
       setLoadingLogs(false);
     }
@@ -45,9 +53,9 @@ export default function AdminDashboard() {
     if (user) {
       logAction({
         userId: user.id,
-        userRole: 'admin',
-        action: 'logout',
-        details: 'Admin logged out',
+        userRole: "admin",
+        action: "logout",
+        details: "Admin logged out",
       });
     }
     clearSession();
@@ -192,8 +200,12 @@ export default function AdminDashboard() {
         <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-semibold text-gray-800">System Access Logs</h2>
-              <p className="text-sm text-gray-500 mt-1">Real-time monitoring of all system activities</p>
+              <h2 className="text-xl font-semibold text-gray-800">
+                System Access Logs
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Real-time monitoring of all system activities
+              </p>
             </div>
             <button
               onClick={fetchLogs}
@@ -218,12 +230,24 @@ export default function AdminDashboard() {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b-2 border-gray-200">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Timestamp</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">User ID</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Role</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Action</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Details</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                      Timestamp
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                      User ID
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                      Role
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                      Action
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                      Details
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                      Status
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -236,13 +260,19 @@ export default function AdminDashboard() {
                         {log.user_id}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                          log.user_role === 'admin' ? 'bg-gray-100 text-gray-800' :
-                          log.user_role === 'doctor' ? 'bg-blue-100 text-blue-800' :
-                          log.user_role === 'nurse' ? 'bg-purple-100 text-purple-800' :
-                          log.user_role === 'staff' ? 'bg-orange-100 text-orange-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
+                        <span
+                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                            log.user_role === "admin"
+                              ? "bg-gray-100 text-gray-800"
+                              : log.user_role === "doctor"
+                              ? "bg-blue-100 text-blue-800"
+                              : log.user_role === "nurse"
+                              ? "bg-purple-100 text-purple-800"
+                              : log.user_role === "staff"
+                              ? "bg-orange-100 text-orange-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
                           {log.user_role}
                         </span>
                       </td>
@@ -250,13 +280,17 @@ export default function AdminDashboard() {
                         {log.action}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {log.details || '-'}
+                        {log.details || "-"}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                          log.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {log.status || 'success'}
+                        <span
+                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                            log.status === "success"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {log.status || "success"}
                         </span>
                       </td>
                     </tr>

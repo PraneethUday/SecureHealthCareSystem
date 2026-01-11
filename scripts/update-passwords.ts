@@ -13,31 +13,70 @@ async function updatePasswords() {
   try {
     // Update Admin
     console.log("Updating admin password...");
-    await supabase.from("admins").update({ password: "admin123" }).eq("id", "admin");
+    await supabase
+      .from("admins")
+      .update({ password: "admin123" })
+      .eq("id", "admin");
 
     // Update Patients
     console.log("Updating patient passwords...");
-    await supabase.from("patients").update({ password: "patient1" }).eq("patient_id", "P001");
-    await supabase.from("patients").update({ password: "patient2" }).eq("patient_id", "P002");
-    await supabase.from("patients").update({ password: "patient3" }).eq("patient_id", "P003");
+    await supabase
+      .from("patients")
+      .update({ password: "patient1" })
+      .eq("patient_id", "P001");
+    await supabase
+      .from("patients")
+      .update({ password: "patient2" })
+      .eq("patient_id", "P002");
+    await supabase
+      .from("patients")
+      .update({ password: "patient3" })
+      .eq("patient_id", "P003");
 
     // Update Doctors
     console.log("Updating doctor passwords...");
-    await supabase.from("doctors").update({ password: "doctor1" }).eq("doctor_id", "D001");
-    await supabase.from("doctors").update({ password: "doctor2" }).eq("doctor_id", "D002");
-    await supabase.from("doctors").update({ password: "doctor3" }).eq("doctor_id", "D003");
+    await supabase
+      .from("doctors")
+      .update({ password: "doctor1" })
+      .eq("doctor_id", "D001");
+    await supabase
+      .from("doctors")
+      .update({ password: "doctor2" })
+      .eq("doctor_id", "D002");
+    await supabase
+      .from("doctors")
+      .update({ password: "doctor3" })
+      .eq("doctor_id", "D003");
 
     // Update Nurses
     console.log("Updating nurse passwords...");
-    await supabase.from("nurses").update({ password: "nurse1" }).eq("nurse_id", "N001");
-    await supabase.from("nurses").update({ password: "nurse2" }).eq("nurse_id", "N002");
-    await supabase.from("nurses").update({ password: "nurse3" }).eq("nurse_id", "N003");
+    await supabase
+      .from("nurses")
+      .update({ password: "nurse1" })
+      .eq("nurse_id", "N001");
+    await supabase
+      .from("nurses")
+      .update({ password: "nurse2" })
+      .eq("nurse_id", "N002");
+    await supabase
+      .from("nurses")
+      .update({ password: "nurse3" })
+      .eq("nurse_id", "N003");
 
     // Update Staff
     console.log("Updating staff passwords...");
-    await supabase.from("staff").update({ password: "staff1" }).eq("staff_id", "S001");
-    await supabase.from("staff").update({ password: "staff2" }).eq("staff_id", "S002");
-    await supabase.from("staff").update({ password: "staff3" }).eq("staff_id", "S003");
+    await supabase
+      .from("staff")
+      .update({ password: "staff1" })
+      .eq("staff_id", "S001");
+    await supabase
+      .from("staff")
+      .update({ password: "staff2" })
+      .eq("staff_id", "S002");
+    await supabase
+      .from("staff")
+      .update({ password: "staff3" })
+      .eq("staff_id", "S003");
 
     console.log("\n✅ All passwords updated successfully!\n");
     console.log("📝 New Login Credentials:\n");

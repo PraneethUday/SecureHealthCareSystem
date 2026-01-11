@@ -19,9 +19,9 @@ export default function NurseDashboard() {
       // Log dashboard access
       logAction({
         userId: session.user.nurse_id,
-        userRole: 'nurse',
-        action: 'dashboard_access',
-        details: 'Nurse accessed dashboard',
+        userRole: "nurse",
+        action: "dashboard_access",
+        details: "Nurse accessed dashboard",
       });
     }
   }, [router]);
@@ -30,9 +30,9 @@ export default function NurseDashboard() {
     if (user) {
       logAction({
         userId: user.nurse_id,
-        userRole: 'nurse',
-        action: 'logout',
-        details: 'Nurse logged out',
+        userRole: "nurse",
+        action: "logout",
+        details: "Nurse logged out",
       });
     }
     clearSession();
@@ -56,7 +56,8 @@ export default function NurseDashboard() {
                   Nurse Dashboard
                 </h1>
                 <p className="text-sm text-gray-500">
-                  {user.first_name} {user.last_name} - {user.department} ({user.shift} Shift)
+                  {user.first_name} {user.last_name} - {user.department} (
+                  {user.shift} Shift)
                 </p>
               </div>
             </div>

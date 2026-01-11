@@ -19,9 +19,9 @@ export default function PatientDashboard() {
       // Log dashboard access
       logAction({
         userId: session.user.patient_id || session.user.email,
-        userRole: 'patient',
-        action: 'dashboard_access',
-        details: 'Patient accessed dashboard',
+        userRole: "patient",
+        action: "dashboard_access",
+        details: "Patient accessed dashboard",
       });
     }
   }, [router]);
@@ -30,9 +30,9 @@ export default function PatientDashboard() {
     if (user) {
       logAction({
         userId: user.patient_id || user.email,
-        userRole: 'patient',
-        action: 'logout',
-        details: 'Patient logged out',
+        userRole: "patient",
+        action: "logout",
+        details: "Patient logged out",
       });
     }
     clearSession();

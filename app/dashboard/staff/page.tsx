@@ -19,9 +19,9 @@ export default function StaffDashboard() {
       // Log dashboard access
       logAction({
         userId: session.user.staff_id,
-        userRole: 'staff',
-        action: 'dashboard_access',
-        details: 'Staff accessed dashboard',
+        userRole: "staff",
+        action: "dashboard_access",
+        details: "Staff accessed dashboard",
       });
     }
   }, [router]);
@@ -30,9 +30,9 @@ export default function StaffDashboard() {
     if (user) {
       logAction({
         userId: user.staff_id,
-        userRole: 'staff',
-        action: 'logout',
-        details: 'Staff logged out',
+        userRole: "staff",
+        action: "logout",
+        details: "Staff logged out",
       });
     }
     clearSession();
