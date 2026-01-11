@@ -105,8 +105,12 @@ export async function createAppointment(appointmentData: {
 
     if (error) {
       console.error("Error creating appointment:", error);
-      const errorMessage = error.message || error.details || JSON.stringify(error);
-      return { success: false, error: `Failed to create appointment: ${errorMessage}` };
+      const errorMessage =
+        error.message || error.details || JSON.stringify(error);
+      return {
+        success: false,
+        error: `Failed to create appointment: ${errorMessage}`,
+      };
     }
 
     if (!data) {
@@ -116,7 +120,7 @@ export async function createAppointment(appointmentData: {
     console.log("Appointment created successfully:", data);
 
     // Log the appointment creation
-    const actionType: 'created' = 'created';
+    const actionType: "created" = "created";
     const logResult = await supabase.from("appointment_logs").insert({
       appointment_id: data.id,
       action_type: actionType,
@@ -138,7 +142,8 @@ export async function createAppointment(appointmentData: {
     return { success: true, appointment: data };
   } catch (error: any) {
     console.error("Caught error in createAppointment:", error);
-    const errorMessage = error.message || error.toString() || "Unknown error occurred";
+    const errorMessage =
+      error.message || error.toString() || "Unknown error occurred";
     return { success: false, error: errorMessage };
   }
 }
@@ -245,16 +250,21 @@ export async function updateAppointmentStatus(
 
     if (fetchError) {
       console.error("Error fetching appointment:", fetchError);
-      return { success: false, error: `Failed to fetch appointment: ${fetchError.message || JSON.stringify(fetchError)}` };
+      return {
+        success: false,
+        error: `Failed to fetch appointment: ${
+          fetchError.message || JSON.stringify(fetchError)
+        }`,
+      };
     }
 
     if (!currentAppointment) {
       return { success: false, error: "Appointment not found" };
     }
 
-    const updateData: any = { 
+    const updateData: any = {
       status,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
     if (cancellationReason) {
       updateData.cancellation_reason = cancellationReason;
@@ -271,8 +281,12 @@ export async function updateAppointmentStatus(
 
     if (error) {
       console.error("Error updating appointment:", error);
-      const errorMessage = error.message || error.details || JSON.stringify(error);
-      return { success: false, error: `Failed to update appointment: ${errorMessage}` };
+      const errorMessage =
+        error.message || error.details || JSON.stringify(error);
+      return {
+        success: false,
+        error: `Failed to update appointment: ${errorMessage}`,
+      };
     }
 
     if (!updatedData) {
@@ -284,7 +298,12 @@ export async function updateAppointmentStatus(
     // Log the status change if userId provided
     if (userId && currentAppointment) {
       // Determine action type based on status change
-      let actionType: 'created' | 'updated' | 'cancelled' | 'completed' | 'rescheduled';
+      let actionType:
+        | "created"
+        | "updated"
+        | "cancelled"
+        | "completed"
+        | "rescheduled";
       if (status === "cancelled") {
         actionType = "cancelled";
       } else if (status === "completed") {
@@ -313,7 +332,8 @@ export async function updateAppointmentStatus(
     return { success: true, data: updatedData };
   } catch (error: any) {
     console.error("Caught error in updateAppointmentStatus:", error);
-    const errorMessage = error.message || error.toString() || "Unknown error occurred";
+    const errorMessage =
+      error.message || error.toString() || "Unknown error occurred";
     return { success: false, error: errorMessage };
   }
 }

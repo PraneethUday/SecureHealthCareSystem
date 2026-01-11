@@ -1,6 +1,15 @@
 "use client";
 
-import { Calendar, Clock, MapPin, User, FileText, X, CheckCircle, Pill } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  User,
+  FileText,
+  X,
+  CheckCircle,
+  Pill,
+} from "lucide-react";
 import { AppointmentWithDetails } from "@/lib/database.types";
 import { cancelAppointment } from "@/lib/appointments";
 import { getAppointmentPrescriptionCount } from "@/lib/prescriptions";
@@ -86,7 +95,8 @@ export default function AppointmentCard({
             {prescriptionCount > 0 && (
               <span className="px-3 py-1 rounded-full text-xs font-medium border bg-green-100 text-green-800 border-green-200 flex items-center gap-1.5">
                 <CheckCircle className="w-3.5 h-3.5" />
-                {prescriptionCount} Medication{prescriptionCount > 1 ? 's' : ''} Prescribed
+                {prescriptionCount} Medication{prescriptionCount > 1 ? "s" : ""}{" "}
+                Prescribed
               </span>
             )}
           </div>

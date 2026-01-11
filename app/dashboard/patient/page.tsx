@@ -30,8 +30,12 @@ export default function PatientDashboard() {
   );
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [showNewAppointment, setShowNewAppointment] = useState(false);
-  const [activeTab, setActiveTab] = useState<"appointments" | "prescriptions" | "records">("appointments");
-  const [appointmentSubTab, setAppointmentSubTab] = useState<"upcoming" | "past">("upcoming");
+  const [activeTab, setActiveTab] = useState<
+    "appointments" | "prescriptions" | "records"
+  >("appointments");
+  const [appointmentSubTab, setAppointmentSubTab] = useState<
+    "upcoming" | "past"
+  >("upcoming");
   const [appointmentSearchTerm, setAppointmentSearchTerm] = useState("");
   const [upcomingAppointmentFilter, setUpcomingAppointmentFilter] = useState<
     "all" | "telemedicine" | "in_person"
@@ -415,7 +419,7 @@ export default function PatientDashboard() {
             <p className="text-gray-600 text-sm mb-4">
               Access your medical history and records
             </p>
-            <button 
+            <button
               onClick={() => setActiveTab("records")}
               className="text-red-600 font-medium text-sm hover:underline"
             >

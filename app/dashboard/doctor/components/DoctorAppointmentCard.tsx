@@ -49,7 +49,7 @@ export default function DoctorAppointmentCard({
     async function loadData() {
       const count = await getAppointmentPrescriptionCount(appointment.id);
       setPrescriptionCount(count);
-      
+
       const hasRecord = await hasAppointmentMedicalRecord(appointment.id);
       setHasMedicalRecord(hasRecord);
     }
@@ -79,7 +79,7 @@ export default function DoctorAppointmentCard({
       setShowMarkComplete(false);
       onUpdate();
     } else {
-      alert(`Error completing appointment: ${result.error || 'Unknown error'}`);
+      alert(`Error completing appointment: ${result.error || "Unknown error"}`);
     }
   };
 
@@ -96,7 +96,7 @@ export default function DoctorAppointmentCard({
       setShowMarkNoShow(false);
       onUpdate();
     } else {
-      alert(`Error marking no-show: ${result.error || 'Unknown error'}`);
+      alert(`Error marking no-show: ${result.error || "Unknown error"}`);
     }
   };
 
@@ -202,69 +202,73 @@ export default function DoctorAppointmentCard({
 
           {isScheduled && (
             <>
-          {/* Video Call & Prescription buttons for telemedicine */}
-          {appointment.is_telemedicine && onStartVideoCall && onPrescribe && (
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <button
-                onClick={onStartVideoCall}
-                className="flex items-center justify-center gap-2 px-3 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all active:scale-95 text-sm font-semibold shadow-sm"
-              >
-                <Video className="w-4 h-4" />
-                <span>Video Call</span>
-              </button>
-              <button
-                onClick={onPrescribe}
-                className={`flex items-center justify-center gap-2 px-3 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold shadow-sm ${
-                  prescriptionCount > 0
-                    ? "text-white bg-green-600 hover:bg-green-700"
-                    : "text-white bg-purple-600 hover:bg-purple-700"
-                }`}
-              >
-                {prescriptionCount > 0 ? (
-                  <>
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Prescribed</span>
-                  </>
-                ) : (
-                  <>
-                    <Pill className="w-4 h-4" />
-                    <span>Prescribe</span>
-                  </>
+              {/* Video Call & Prescription buttons for telemedicine */}
+              {appointment.is_telemedicine &&
+                onStartVideoCall &&
+                onPrescribe && (
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <button
+                      onClick={onStartVideoCall}
+                      className="flex items-center justify-center gap-2 px-3 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all active:scale-95 text-sm font-semibold shadow-sm"
+                    >
+                      <Video className="w-4 h-4" />
+                      <span>Video Call</span>
+                    </button>
+                    <button
+                      onClick={onPrescribe}
+                      className={`flex items-center justify-center gap-2 px-3 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold shadow-sm ${
+                        prescriptionCount > 0
+                          ? "text-white bg-green-600 hover:bg-green-700"
+                          : "text-white bg-purple-600 hover:bg-purple-700"
+                      }`}
+                    >
+                      {prescriptionCount > 0 ? (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          <span>Prescribed</span>
+                        </>
+                      ) : (
+                        <>
+                          <Pill className="w-4 h-4" />
+                          <span>Prescribe</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 )}
-              </button>
-            </div>
-          )}
 
-          {/* For in-person appointments, show prescribe button only */}
-          {!appointment.is_telemedicine && isToday && onPrescribe && (
-            <button
-              onClick={onPrescribe}
-              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm ${
-                prescriptionCount > 0
-                  ? "text-white bg-green-600 hover:bg-green-700"
-                  : "text-white bg-purple-600 hover:bg-purple-700"
-              }`}
-            >
-              {prescriptionCount > 0 ? (
-                <>
-                  <CheckCircle className="w-4 h-4" />
-                  <span>Prescribed</span>
-                </>
-              ) : (
-                <>
-                  <Pill className="w-4 h-4" />
-                  <span>Prescribe</span>
-                </>
+              {/* For in-person appointments, show prescribe button only */}
+              {!appointment.is_telemedicine && isToday && onPrescribe && (
+                <button
+                  onClick={onPrescribe}
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm ${
+                    prescriptionCount > 0
+                      ? "text-white bg-green-600 hover:bg-green-700"
+                      : "text-white bg-purple-600 hover:bg-purple-700"
+                  }`}
+                >
+                  {prescriptionCount > 0 ? (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Prescribed</span>
+                    </>
+                  ) : (
+                    <>
+                      <Pill className="w-4 h-4" />
+                      <span>Prescribe</span>
+                    </>
+                  )}
+                </button>
               )}
-            </button>
-          )}
             </>
           )}
 
           {/* Medical Record Button */}
           {showMedicalRecordButton && (
             <button
-              onClick={medicalRecordButtonDisabled ? undefined : onCreateMedicalRecord}
+              onClick={
+                medicalRecordButtonDisabled ? undefined : onCreateMedicalRecord
+              }
               disabled={medicalRecordButtonDisabled}
               className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm border-2 ${
                 medicalRecordButtonDisabled
@@ -286,10 +290,12 @@ export default function DoctorAppointmentCard({
             </button>
           )}
 
-          {isScheduled && (
-            showMarkComplete ? (
+          {isScheduled &&
+            (showMarkComplete ? (
               <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
-                <span className="text-sm text-green-700">Mark as completed?</span>
+                <span className="text-sm text-green-700">
+                  Mark as completed?
+                </span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowMarkComplete(false)}
@@ -342,8 +348,7 @@ export default function DoctorAppointmentCard({
                   <span>No Show</span>
                 </button>
               </div>
-            )
-          )}
+            ))}
         </div>
       )}
     </div>

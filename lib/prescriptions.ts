@@ -1,9 +1,13 @@
 import { supabase } from "./supabase";
-import { Prescription, PrescriptionWithDetails, PrescriptionLog } from "./database.types";
+import {
+  Prescription,
+  PrescriptionWithDetails,
+  PrescriptionLog,
+} from "./database.types";
 
 // Create a new prescription
 export async function createPrescription(
-  prescriptionData: Omit<Prescription, 'id' | 'created_at' | 'updated_at'>,
+  prescriptionData: Omit<Prescription, "id" | "created_at" | "updated_at">,
   doctorId: string
 ): Promise<{ success: boolean; data?: Prescription; error?: string }> {
   try {
@@ -87,14 +91,16 @@ export async function getPatientPrescriptions(
   try {
     const { data, error } = await supabase
       .from("prescriptions")
-      .select(`
+      .select(
+        `
         *,
         doctors (
           first_name,
           last_name,
           specialization
         )
-      `)
+      `
+      )
       .eq("patient_id", patientId)
       .order("prescribed_date", { ascending: false });
 
@@ -121,7 +127,8 @@ export async function getAppointmentPrescriptions(
   try {
     const { data, error } = await supabase
       .from("prescriptions")
-      .select(`
+      .select(
+        `
         *,
         doctors (
           first_name,
@@ -132,7 +139,8 @@ export async function getAppointmentPrescriptions(
           first_name,
           last_name
         )
-      `)
+      `
+      )
       .eq("appointment_id", appointmentId)
       .order("prescribed_date", { ascending: false });
 
@@ -156,7 +164,7 @@ export async function getAppointmentPrescriptions(
 // Update prescription status
 export async function updatePrescriptionStatus(
   prescriptionId: string,
-  status: 'active' | 'completed' | 'discontinued',
+  status: "active" | "completed" | "discontinued",
   doctorId: string,
   notes?: string
 ): Promise<{ success: boolean; error?: string }> {
@@ -187,7 +195,7 @@ export async function updatePrescriptionStatus(
     if (oldData) {
       await supabase.from("prescription_logs").insert({
         prescription_id: prescriptionId,
-        action_type: status === 'discontinued' ? 'discontinued' : 'updated',
+        action_type: status === "discontinued" ? "discontinued" : "updated",
         performed_by_user_id: doctorId,
         performed_by_role: "doctor",
         old_data: oldData,
@@ -252,7 +260,7 @@ export async function startVideoCall(
   try {
     // Generate a unique video call link (in production, use actual video service API)
     const callLink = `https://videocall.securehealthcare.com/room/${appointmentId}`;
-    
+
     const { error: appointmentError } = await supabase
       .from("appointments")
       .update({
@@ -267,15 +275,13 @@ export async function startVideoCall(
     }
 
     // Log the video call start
-    const { error: logError } = await supabase
-      .from("video_call_logs")
-      .insert({
-        appointment_id: appointmentId,
-        patient_id: patientId,
-        doctor_id: doctorId,
-        call_started_at: new Date().toISOString(),
-        call_status: "completed",
-      });
+    const { error: logError } = await supabase.from("video_call_logs").insert({
+      appointment_id: appointmentId,
+      patient_id: patientId,
+      doctor_id: doctorId,
+      call_started_at: new Date().toISOString(),
+      call_status: "completed",
+    });
 
     if (logError) {
       console.error("Error logging video call:", logError);
@@ -341,7 +347,8 @@ export async function getVideoCallLogs(filters?: {
   try {
     let query = supabase
       .from("video_call_logs")
-      .select(`
+      .select(
+        `
         *,
         appointments (
           appointment_date,
@@ -358,7 +365,8 @@ export async function getVideoCallLogs(filters?: {
           last_name,
           specialization
         )
-      `)
+      `
+      )
       .order("call_started_at", { ascending: false });
 
     if (filters?.appointmentId) {

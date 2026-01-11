@@ -20,34 +20,39 @@ Visit: http://localhost:3000
 
 ## 📋 Essential Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run lint` | Run code linter |
-| `npm run setup-db` | Setup database |
-| `npm run check-schema` | Validate database schema |
-| `npm run test-db` | Test database connection |
-| `npm run test-appointments` | Test appointment system |
+| Command                     | Description              |
+| --------------------------- | ------------------------ |
+| `npm run dev`               | Start development server |
+| `npm run build`             | Build for production     |
+| `npm run start`             | Start production server  |
+| `npm run lint`              | Run code linter          |
+| `npm run setup-db`          | Setup database           |
+| `npm run check-schema`      | Validate database schema |
+| `npm run test-db`           | Test database connection |
+| `npm run test-appointments` | Test appointment system  |
 
 ## 🔑 Test Credentials
 
 ### Admin
+
 - ID: `admin` | Password: `admin123`
 
 ### Patients (use EMAIL)
+
 - Email: `john.doe@email.com` | Password: `patient1`
 - Email: `jane.smith@email.com` | Password: `patient2`
 
 ### Doctors (use ID)
+
 - ID: `D001` | Password: `doctor1`
 - ID: `D002` | Password: `doctor2`
 
 ### Nurses
+
 - ID: `N001` | Password: `nurse1`
 
 ### Staff
+
 - ID: `S001` | Password: `staff1`
 
 ## 📁 Project Structure
@@ -67,24 +72,27 @@ SecureHealthCareSystem/
 
 ## 📚 Documentation
 
-| Document | Purpose |
-|----------|---------|
-| [README.md](../README.md) | Project overview & setup |
-| [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md) | Database setup |
-| [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) | Complete structure guide |
-| [DEVELOPMENT.md](DEVELOPMENT.md) | Development guidelines |
-| [CLEANUP_SUMMARY.md](CLEANUP_SUMMARY.md) | What was cleaned up |
+| Document                                       | Purpose                  |
+| ---------------------------------------------- | ------------------------ |
+| [README.md](../README.md)                      | Project overview & setup |
+| [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md) | Database setup           |
+| [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)   | Complete structure guide |
+| [DEVELOPMENT.md](DEVELOPMENT.md)               | Development guidelines   |
+| [CLEANUP_SUMMARY.md](CLEANUP_SUMMARY.md)       | What was cleaned up      |
 
 ## 🗄️ Database Setup
 
 1. **Go to Supabase Dashboard**
+
    - URL: https://supabase.com/dashboard
    - Select your project
 
 2. **Open SQL Editor**
+
    - Click "SQL Editor" in sidebar
 
 3. **Run Scripts (in order)**
+
    ```
    1. supabase/schema.sql          (main tables)
    2. supabase/seed.sql            (sample data)
@@ -98,18 +106,21 @@ SecureHealthCareSystem/
 ## 🎯 Common Tasks
 
 ### Adding a New Dashboard
+
 1. Create `app/dashboard/[role]/page.tsx`
 2. Add authentication check
 3. Implement role-specific UI
 4. Test with role credentials
 
 ### Adding an API Endpoint
+
 1. Create `app/api/[endpoint]/route.ts`
 2. Implement GET/POST/etc handlers
 3. Add error handling
 4. Test with Postman/curl
 
 ### Modifying Database
+
 1. Edit SQL in `supabase/schema.sql`
 2. Run in Supabase SQL Editor
 3. Update types in `lib/database.types.ts`
@@ -140,6 +151,7 @@ git push origin feature/my-feature
 ## 🐛 Debugging
 
 ### Check Logs
+
 - Browser Console (F12)
 - Supabase Dashboard > Logs
 - Terminal output
@@ -147,29 +159,32 @@ git push origin feature/my-feature
 ### Common Issues
 
 **"Invalid credentials"**
+
 - Verify user exists in correct table
 - Check password matches
 - Use email for patients, ID for staff
 
 **"Database error"**
+
 - Check Supabase connection
 - Verify environment variables
 - Check SQL syntax in queries
 
 **"Page not loading"**
+
 - Check session storage has user data
 - Verify user has correct role
 - Check browser console for errors
 
 ## 📱 User Roles & Features
 
-| Role | Login | Features |
-|------|-------|----------|
-| **Patient** | Email | Book appointments, view records |
-| **Doctor** | ID | Manage appointments, view patients |
-| **Nurse** | ID | View schedules, patient care |
-| **Staff** | ID | Scheduling, admin tasks |
-| **Admin** | ID | Full access, audit logs |
+| Role        | Login | Features                           |
+| ----------- | ----- | ---------------------------------- |
+| **Patient** | Email | Book appointments, view records    |
+| **Doctor**  | ID    | Manage appointments, view patients |
+| **Nurse**   | ID    | View schedules, patient care       |
+| **Staff**   | ID    | Scheduling, admin tasks            |
+| **Admin**   | ID    | Full access, audit logs            |
 
 ## 🔐 Environment Variables
 
@@ -185,26 +200,29 @@ Get these from: Supabase Dashboard > Settings > API
 ## 🎨 UI Components
 
 ### Colors by Role
+
 - **Patient**: Teal/Blue gradient
 - **Staff**: Professional gray
 - **Admin**: Dark theme
 
 ### Icons
+
 Using Lucide React: https://lucide.dev/icons
 
 ### Styling
+
 Tailwind CSS utility classes
 
 ## 📊 Key Tables
 
-| Table | Purpose |
-|-------|---------|
-| `patients` | Patient profiles |
-| `doctors` | Doctor profiles |
-| `appointments` | Appointment records |
-| `appointment_logs` | Audit trail |
-| `hospitals` | Hospital locations |
-| `access_logs` | System access logs |
+| Table              | Purpose             |
+| ------------------ | ------------------- |
+| `patients`         | Patient profiles    |
+| `doctors`          | Doctor profiles     |
+| `appointments`     | Appointment records |
+| `appointment_logs` | Audit trail         |
+| `hospitals`        | Hospital locations  |
+| `access_logs`      | System access logs  |
 
 ## 🔗 Useful Links
 

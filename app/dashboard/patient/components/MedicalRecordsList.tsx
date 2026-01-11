@@ -12,7 +12,10 @@ import {
   Eye,
   AlertCircle,
 } from "lucide-react";
-import { getPatientMedicalRecords, logMedicalRecordDownload } from "@/lib/medicalRecords";
+import {
+  getPatientMedicalRecords,
+  logMedicalRecordDownload,
+} from "@/lib/medicalRecords";
 import { MedicalRecordWithDetails } from "@/lib/database.types";
 import jsPDF from "jspdf";
 
@@ -20,10 +23,13 @@ interface MedicalRecordsListProps {
   patientId: string;
 }
 
-export default function MedicalRecordsList({ patientId }: MedicalRecordsListProps) {
+export default function MedicalRecordsList({
+  patientId,
+}: MedicalRecordsListProps) {
   const [records, setRecords] = useState<MedicalRecordWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRecord, setSelectedRecord] = useState<MedicalRecordWithDetails | null>(null);
+  const [selectedRecord, setSelectedRecord] =
+    useState<MedicalRecordWithDetails | null>(null);
 
   useEffect(() => {
     loadRecords();
@@ -38,16 +44,20 @@ export default function MedicalRecordsList({ patientId }: MedicalRecordsListProp
 
   const downloadAsPDF = async (record: MedicalRecordWithDetails) => {
     const pdf = new jsPDF();
-    
+
     // Header
     pdf.setFontSize(20);
     pdf.setTextColor(34, 139, 34);
     pdf.text("Medical Record", 20, 20);
-    
+
     pdf.setFontSize(10);
     pdf.setTextColor(100, 100, 100);
-    pdf.text(`Record Date: ${new Date(record.record_date).toLocaleDateString()}`, 20, 28);
-    
+    pdf.text(
+      `Record Date: ${new Date(record.record_date).toLocaleDateString()}`,
+      20,
+      28
+    );
+
     // Patient & Doctor Info
     let y = 40;
     pdf.setFontSize(12);
@@ -62,23 +72,26 @@ export default function MedicalRecordsList({ patientId }: MedicalRecordsListProp
     } else {
       y += 2;
     }
-    
+
     // Chief Complaint & Diagnosis
     y += 5;
     pdf.setFontSize(14);
     pdf.setTextColor(220, 38, 38);
     pdf.text("Chief Complaint & Diagnosis", 20, y);
     y += 8;
-    
+
     pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
     pdf.text(`Chief Complaint: ${record.chief_complaint}`, 20, y);
     y += 6;
-    
-    const diagnosisLines = pdf.splitTextToSize(`Diagnosis: ${record.diagnosis}`, 170);
+
+    const diagnosisLines = pdf.splitTextToSize(
+      `Diagnosis: ${record.diagnosis}`,
+      170
+    );
     pdf.text(diagnosisLines, 20, y);
     y += diagnosisLines.length * 5 + 5;
-    
+
     // Vital Signs
     if (record.blood_pressure || record.heart_rate || record.temperature) {
       y += 5;
@@ -86,7 +99,7 @@ export default function MedicalRecordsList({ patientId }: MedicalRecordsListProp
       pdf.setTextColor(59, 130, 246);
       pdf.text("Vital Signs", 20, y);
       y += 8;
-      
+
       pdf.setFontSize(10);
       pdf.setTextColor(0, 0, 0);
       if (record.blood_pressure) {
@@ -110,24 +123,28 @@ export default function MedicalRecordsList({ patientId }: MedicalRecordsListProp
         y += 6;
       }
     }
-    
+
     // Add new page if needed
     if (y > 250) {
       pdf.addPage();
       y = 20;
     }
-    
+
     // Clinical Notes
-    if (record.symptoms || record.examination_findings || record.treatment_plan) {
+    if (
+      record.symptoms ||
+      record.examination_findings ||
+      record.treatment_plan
+    ) {
       y += 5;
       pdf.setFontSize(14);
       pdf.setTextColor(34, 139, 34);
       pdf.text("Clinical Notes", 20, y);
       y += 8;
-      
+
       pdf.setFontSize(10);
       pdf.setTextColor(0, 0, 0);
-      
+
       if (record.symptoms) {
         pdf.text("Symptoms:", 20, y);
         y += 5;
@@ -135,12 +152,12 @@ export default function MedicalRecordsList({ patientId }: MedicalRecordsListProp
         pdf.text(symptomsLines, 20, y);
         y += symptomsLines.length * 5 + 3;
       }
-      
+
       if (y > 250) {
         pdf.addPage();
         y = 20;
       }
-      
+
       if (record.examination_findings) {
         pdf.text("Examination Findings:", 20, y);
         y += 5;
@@ -148,12 +165,12 @@ export default function MedicalRecordsList({ patientId }: MedicalRecordsListProp
         pdf.text(examLines, 20, y);
         y += examLines.length * 5 + 3;
       }
-      
+
       if (y > 250) {
         pdf.addPage();
         y = 20;
       }
-      
+
       if (record.treatment_plan) {
         pdf.text("Treatment Plan:", 20, y);
         y += 5;
@@ -162,56 +179,61 @@ export default function MedicalRecordsList({ patientId }: MedicalRecordsListProp
         y += treatmentLines.length * 5 + 3;
       }
     }
-    
+
     // Recommendations
     if (record.recommendations) {
       if (y > 250) {
         pdf.addPage();
         y = 20;
       }
-      
+
       y += 5;
       pdf.setFontSize(14);
       pdf.setTextColor(234, 88, 12);
       pdf.text("Recommendations", 20, y);
       y += 8;
-      
+
       pdf.setFontSize(10);
       pdf.setTextColor(0, 0, 0);
       const recLines = pdf.splitTextToSize(record.recommendations, 170);
       pdf.text(recLines, 20, y);
       y += recLines.length * 5 + 3;
     }
-    
+
     // Follow-up
     if (record.follow_up_instructions) {
       if (y > 250) {
         pdf.addPage();
         y = 20;
       }
-      
+
       y += 5;
       pdf.setFontSize(14);
       pdf.setTextColor(147, 51, 234);
       pdf.text("Follow-up Instructions", 20, y);
       y += 8;
-      
+
       pdf.setFontSize(10);
       pdf.setTextColor(0, 0, 0);
-      const followUpLines = pdf.splitTextToSize(record.follow_up_instructions, 170);
+      const followUpLines = pdf.splitTextToSize(
+        record.follow_up_instructions,
+        170
+      );
       pdf.text(followUpLines, 20, y);
     }
-    
+
     // Footer
     pdf.setFontSize(8);
     pdf.setTextColor(150, 150, 150);
     pdf.text("This is a computer-generated medical record.", 20, 285);
     pdf.text(`Generated on ${new Date().toLocaleString()}`, 20, 290);
-    
+
     // Save PDF
-    const fileName = `Medical_Record_${new Date(record.record_date).toISOString().split('T')[0]}.pdf`;
+    const fileName = `Medical_Record_${
+      new Date(record.record_date).toISOString().split("T")[0]
+    }.pdf`;
     pdf.save(fileName);
-    
+
     // Log the download (only if record has ID)
     if (record.id) {
       await logMedicalRecordDownload(record.id, patientId, "patient");
@@ -229,7 +251,9 @@ export default function MedicalRecordsList({ patientId }: MedicalRecordsListProp
         <div className="text-center py-12 text-gray-500">
           <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
           <p>No medical records found</p>
-          <p className="text-sm mt-1">Medical records from completed appointments will appear here</p>
+          <p className="text-sm mt-1">
+            Medical records from completed appointments will appear here
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -254,7 +278,9 @@ export default function MedicalRecordsList({ patientId }: MedicalRecordsListProp
                     <User className="w-4 h-4" />
                     <span>Dr. {record.doctor_name}</span>
                     {record.doctor_specialization && (
-                      <span className="text-green-600">• {record.doctor_specialization}</span>
+                      <span className="text-green-600">
+                        • {record.doctor_specialization}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -280,11 +306,17 @@ export default function MedicalRecordsList({ patientId }: MedicalRecordsListProp
               <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-gray-500 font-semibold mb-1">Chief Complaint</p>
-                    <p className="text-sm text-gray-800">{record.chief_complaint}</p>
+                    <p className="text-xs text-gray-500 font-semibold mb-1">
+                      Chief Complaint
+                    </p>
+                    <p className="text-sm text-gray-800">
+                      {record.chief_complaint}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 font-semibold mb-1">Diagnosis</p>
+                    <p className="text-xs text-gray-500 font-semibold mb-1">
+                      Diagnosis
+                    </p>
                     <p className="text-sm text-gray-800">{record.diagnosis}</p>
                   </div>
                 </div>
@@ -299,7 +331,9 @@ export default function MedicalRecordsList({ patientId }: MedicalRecordsListProp
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full my-8">
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">Medical Record Details</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Medical Record Details
+              </h2>
               <button
                 onClick={() => setSelectedRecord(null)}
                 className="text-gray-400 hover:text-gray-600"
@@ -313,31 +347,54 @@ export default function MedicalRecordsList({ patientId }: MedicalRecordsListProp
               {/* Full record details - similar to PDF layout */}
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-red-600 mb-2">Chief Complaint & Diagnosis</h3>
-                  <p className="text-sm text-gray-700"><strong>Chief Complaint:</strong> {selectedRecord.chief_complaint}</p>
-                  <p className="text-sm text-gray-700 mt-2"><strong>Diagnosis:</strong> {selectedRecord.diagnosis}</p>
+                  <h3 className="text-lg font-semibold text-red-600 mb-2">
+                    Chief Complaint & Diagnosis
+                  </h3>
+                  <p className="text-sm text-gray-700">
+                    <strong>Chief Complaint:</strong>{" "}
+                    {selectedRecord.chief_complaint}
+                  </p>
+                  <p className="text-sm text-gray-700 mt-2">
+                    <strong>Diagnosis:</strong> {selectedRecord.diagnosis}
+                  </p>
                 </div>
 
-                {(selectedRecord.blood_pressure || selectedRecord.heart_rate || selectedRecord.temperature) && (
+                {(selectedRecord.blood_pressure ||
+                  selectedRecord.heart_rate ||
+                  selectedRecord.temperature) && (
                   <div>
-                    <h3 className="text-lg font-semibold text-blue-600 mb-2">Vital Signs</h3>
+                    <h3 className="text-lg font-semibold text-blue-600 mb-2">
+                      Vital Signs
+                    </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {selectedRecord.blood_pressure && (
                         <div className="bg-blue-50 p-3 rounded-lg">
-                          <p className="text-xs text-blue-600 font-semibold">Blood Pressure</p>
-                          <p className="text-sm text-blue-900 font-bold">{selectedRecord.blood_pressure}</p>
+                          <p className="text-xs text-blue-600 font-semibold">
+                            Blood Pressure
+                          </p>
+                          <p className="text-sm text-blue-900 font-bold">
+                            {selectedRecord.blood_pressure}
+                          </p>
                         </div>
                       )}
                       {selectedRecord.heart_rate && (
                         <div className="bg-blue-50 p-3 rounded-lg">
-                          <p className="text-xs text-blue-600 font-semibold">Heart Rate</p>
-                          <p className="text-sm text-blue-900 font-bold">{selectedRecord.heart_rate} bpm</p>
+                          <p className="text-xs text-blue-600 font-semibold">
+                            Heart Rate
+                          </p>
+                          <p className="text-sm text-blue-900 font-bold">
+                            {selectedRecord.heart_rate} bpm
+                          </p>
                         </div>
                       )}
                       {selectedRecord.temperature && (
                         <div className="bg-blue-50 p-3 rounded-lg">
-                          <p className="text-xs text-blue-600 font-semibold">Temperature</p>
-                          <p className="text-sm text-blue-900 font-bold">{selectedRecord.temperature}°F</p>
+                          <p className="text-xs text-blue-600 font-semibold">
+                            Temperature
+                          </p>
+                          <p className="text-sm text-blue-900 font-bold">
+                            {selectedRecord.temperature}°F
+                          </p>
                         </div>
                       )}
                     </div>
@@ -346,22 +403,34 @@ export default function MedicalRecordsList({ patientId }: MedicalRecordsListProp
 
                 {selectedRecord.treatment_plan && (
                   <div>
-                    <h3 className="text-lg font-semibold text-green-600 mb-2">Treatment Plan</h3>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedRecord.treatment_plan}</p>
+                    <h3 className="text-lg font-semibold text-green-600 mb-2">
+                      Treatment Plan
+                    </h3>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {selectedRecord.treatment_plan}
+                    </p>
                   </div>
                 )}
 
                 {selectedRecord.recommendations && (
                   <div>
-                    <h3 className="text-lg font-semibold text-orange-600 mb-2">Recommendations</h3>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedRecord.recommendations}</p>
+                    <h3 className="text-lg font-semibold text-orange-600 mb-2">
+                      Recommendations
+                    </h3>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {selectedRecord.recommendations}
+                    </p>
                   </div>
                 )}
 
                 {selectedRecord.follow_up_instructions && (
                   <div>
-                    <h3 className="text-lg font-semibold text-purple-600 mb-2">Follow-up Instructions</h3>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedRecord.follow_up_instructions}</p>
+                    <h3 className="text-lg font-semibold text-purple-600 mb-2">
+                      Follow-up Instructions
+                    </h3>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {selectedRecord.follow_up_instructions}
+                    </p>
                   </div>
                 )}
               </div>

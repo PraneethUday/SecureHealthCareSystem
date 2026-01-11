@@ -1,9 +1,11 @@
 # Medical Records System - Deployment Guide
 
 ## Overview
+
 This guide will help you deploy the complete medical records system that allows doctors to document patient encounters after completing appointments, and patients to view and download their medical records as PDFs.
 
 ## Prerequisites
+
 ✅ Supabase database is configured and running
 ✅ Next.js application is set up
 ✅ jsPDF library is installed (should already be done)
@@ -11,6 +13,7 @@ This guide will help you deploy the complete medical records system that allows 
 ## Step 1: Deploy Database Schema
 
 ### 1.1 Run the Medical Records Schema
+
 1. Open Supabase Dashboard
 2. Navigate to **SQL Editor**
 3. Open `supabase/medical-records-schema.sql`
@@ -20,11 +23,13 @@ This guide will help you deploy the complete medical records system that allows 
 7. Verify success message: "Medical Records system created successfully!"
 
 ### 1.2 Verify Tables Created
+
 Run this query to verify:
+
 ```sql
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
 AND table_name IN ('medical_records', 'medical_record_logs');
 ```
 
@@ -35,15 +40,18 @@ You should see both tables listed.
 All necessary files have been created. Verify these exist:
 
 ### Backend Files
+
 - ✅ `lib/medicalRecords.ts` - All CRUD operations
 - ✅ `lib/database.types.ts` - TypeScript interfaces updated
 
 ### Doctor Dashboard Files
+
 - ✅ `app/dashboard/doctor/components/MedicalRecordForm.tsx` - Form component
 - ✅ `app/dashboard/doctor/components/DoctorAppointmentCard.tsx` - Updated with medical record indicator
 - ✅ `app/dashboard/doctor/page.tsx` - Integrated medical record modal
 
 ### Patient Dashboard Files
+
 - ✅ `app/dashboard/patient/components/MedicalRecordsList.tsx` - View and download component
 - ✅ `app/dashboard/patient/page.tsx` - Added Medical Records tab
 
@@ -60,6 +68,7 @@ npm run dev
 ## Step 4: Clear Browser Cache
 
 Clear your browser cache or do a hard refresh:
+
 - **Chrome/Edge**: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)
 - **Firefox**: Ctrl+Shift+Delete (Windows) or Cmd+Shift+Delete (Mac)
 - **Safari**: Cmd+Option+E
@@ -69,19 +78,23 @@ Clear your browser cache or do a hard refresh:
 ### Test Doctor Workflow
 
 1. **Login as Doctor**
+
    - Navigate to `/login`
    - Select "Doctor" role
    - Login with doctor credentials
 
 2. **View Today's Appointments**
+
    - Click on "Today's Appointments" tab
    - You should see appointments for today
 
 3. **Complete an Appointment**
+
    - Click "Complete" on an appointment
    - This changes status to "completed"
 
 4. **Create Medical Record**
+
    - After completing, click "Create Medical Record" button
    - Modal form opens with sections:
      - Chief Complaint & Diagnosis (required)
@@ -103,15 +116,18 @@ Clear your browser cache or do a hard refresh:
 ### Test Patient Workflow
 
 1. **Login as Patient**
+
    - Navigate to `/login`
    - Select "Patient" role
    - Login with patient credentials
 
 2. **Navigate to Medical Records**
+
    - Click on "Medical Records" tab in dashboard
    - Or click "View Records →" in Quick Actions
 
 3. **View Medical Records**
+
    - See list of all medical records
    - Each card shows:
      - Doctor name and specialization
@@ -120,6 +136,7 @@ Clear your browser cache or do a hard refresh:
      - Diagnosis
 
 4. **View Detailed Record**
+
    - Click "View" button on any record
    - Modal opens showing all details:
      - Chief Complaint & Diagnosis
@@ -140,7 +157,8 @@ Clear your browser cache or do a hard refresh:
 The following Row Level Security policies are in place:
 
 ### Medical Records Table
-- **Patients can view their own records**: 
+
+- **Patients can view their own records**:
   ```sql
   patient_id = auth.uid()
   ```
@@ -154,6 +172,7 @@ The following Row Level Security policies are in place:
   ```
 
 ### Medical Record Logs Table
+
 - **Doctors and admins can view audit logs**:
   ```sql
   role IN ('doctor', 'admin')
@@ -162,6 +181,7 @@ The following Row Level Security policies are in place:
 ## Features Overview
 
 ### For Doctors
+
 ✅ Create comprehensive medical records after completing appointments
 ✅ 18+ fields covering all aspects of patient encounter
 ✅ Organized sections: vitals, clinical notes, lab results, history
@@ -169,6 +189,7 @@ The following Row Level Security policies are in place:
 ✅ Cannot create duplicate records for same appointment
 
 ### For Patients
+
 ✅ View all medical records in chronological order
 ✅ Quick summary cards with key information
 ✅ Detailed view modal showing all record information
@@ -176,6 +197,7 @@ The following Row Level Security policies are in place:
 ✅ Professional PDF layout with all clinical information
 
 ### Audit Trail
+
 ✅ All record actions are logged (created, updated, viewed, downloaded)
 ✅ Tracks who performed action and when
 ✅ Stores old/new data for updates (JSONB format)
@@ -184,6 +206,7 @@ The following Row Level Security policies are in place:
 ## Database Schema Details
 
 ### medical_records Table (25+ columns)
+
 - **Identification**: id, patient_id, doctor_id, appointment_id, record_date
 - **Chief Information**: chief_complaint, diagnosis
 - **Vital Signs**: blood_pressure, heart_rate, temperature, weight, height
@@ -193,34 +216,43 @@ The following Row Level Security policies are in place:
 - **Additional**: additional_notes, created_at, updated_at
 
 ### medical_record_logs Table
+
 - Tracks: action_type, performed_by_user_id, performed_by_role
 - Audit: old_data, new_data (JSONB), performed_at
 
 ## Troubleshooting
 
 ### Issue: Medical Records tab not showing
+
 **Solution**: Ensure you've restarted dev server and cleared browser cache
 
 ### Issue: Cannot create medical record
-**Solution**: 
+
+**Solution**:
+
 1. Verify database schema is deployed (Step 1)
 2. Check appointment status is "completed"
 3. Check browser console for errors
 4. Verify doctor is logged in
 
 ### Issue: PDF download not working
+
 **Solution**:
+
 1. Verify jsPDF is installed: `npm list jspdf`
 2. Check browser console for errors
 3. Ensure browser allows downloads from localhost
 
 ### Issue: Patient cannot see records
+
 **Solution**:
+
 1. Verify RLS policies are in place (should be from schema)
 2. Check patient_id matches between record and logged-in user
 3. Verify at least one medical record exists
 
 ### Issue: "Medical record already exists" error
+
 **Solution**: This is expected behavior - prevents duplicate records. Each appointment can only have one medical record.
 
 ## API Reference
@@ -273,6 +305,7 @@ After successful deployment:
 ## Support
 
 If you encounter issues:
+
 1. Check browser console for error messages
 2. Check Supabase logs in dashboard
 3. Verify all deployment steps were completed

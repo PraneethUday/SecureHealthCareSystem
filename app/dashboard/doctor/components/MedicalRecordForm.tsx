@@ -64,8 +64,12 @@ export default function MedicalRecordForm({
         chief_complaint: formData.chief_complaint,
         diagnosis: formData.diagnosis,
         blood_pressure: formData.blood_pressure || undefined,
-        heart_rate: formData.heart_rate ? parseInt(formData.heart_rate) : undefined,
-        temperature: formData.temperature ? parseFloat(formData.temperature) : undefined,
+        heart_rate: formData.heart_rate
+          ? parseInt(formData.heart_rate)
+          : undefined,
+        temperature: formData.temperature
+          ? parseFloat(formData.temperature)
+          : undefined,
         weight: formData.weight ? parseFloat(formData.weight) : undefined,
         height: formData.height ? parseFloat(formData.height) : undefined,
         symptoms: formData.symptoms || undefined,
@@ -79,7 +83,7 @@ export default function MedicalRecordForm({
         current_medications: formData.current_medications || undefined,
         past_medical_history: formData.past_medical_history || undefined,
         notes: formData.notes || undefined,
-        record_date: new Date().toISOString().split('T')[0],
+        record_date: new Date().toISOString().split("T")[0],
       },
       doctorId
     );
@@ -104,7 +108,8 @@ export default function MedicalRecordForm({
               Create Medical Record
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              Patient: {appointment.patient_name} • Date: {new Date(appointment.appointment_date).toLocaleDateString()}
+              Patient: {appointment.patient_name} • Date:{" "}
+              {new Date(appointment.appointment_date).toLocaleDateString()}
             </p>
           </div>
           <button
@@ -117,7 +122,10 @@ export default function MedicalRecordForm({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 max-h-[70vh] overflow-y-auto">
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 max-h-[70vh] overflow-y-auto"
+        >
           {/* Chief Complaint & Diagnosis */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -236,7 +244,9 @@ export default function MedicalRecordForm({
 
           {/* Clinical Notes */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Clinical Notes</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              Clinical Notes
+            </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -308,7 +318,9 @@ export default function MedicalRecordForm({
 
           {/* Lab & Test Results */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Lab & Test Results</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              Lab & Test Results
+            </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -341,7 +353,9 @@ export default function MedicalRecordForm({
 
           {/* Medical History */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Medical History</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              Medical History
+            </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

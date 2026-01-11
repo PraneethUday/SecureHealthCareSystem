@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Video, VideoOff, Mic, MicOff, PhoneOff, Monitor, X } from "lucide-react";
+import {
+  Video,
+  VideoOff,
+  Mic,
+  MicOff,
+  PhoneOff,
+  Monitor,
+  X,
+} from "lucide-react";
 import { startVideoCall, endVideoCall } from "@/lib/prescriptions";
 import { AppointmentWithDetails } from "@/lib/database.types";
 
@@ -64,7 +72,9 @@ export default function VideoCallInterface({
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   return (
@@ -82,7 +92,9 @@ export default function VideoCallInterface({
           </div>
           <button
             onClick={onClose}
-            className="text-white hover:text-gray-200 transition"            aria-label="Close video call"          >
+            className="text-white hover:text-gray-200 transition"
+            aria-label="Close video call"
+          >
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -207,8 +219,8 @@ export default function VideoCallInterface({
           {/* Note about production */}
           <div className="mt-4 text-center text-xs text-gray-500">
             <p>
-              💡 This is a demo interface. In production, this would integrate with a real video
-              service like Twilio, Agora, or WebRTC.
+              💡 This is a demo interface. In production, this would integrate
+              with a real video service like Twilio, Agora, or WebRTC.
             </p>
           </div>
         </div>

@@ -350,12 +350,14 @@ export default function NewAppointmentForm({
                       Telemedicine (Video Consultation)
                     </label>
                     <p className="text-sm text-gray-600 mt-1">
-                      Connect with your doctor via secure video call for quick consultations, 
-                      follow-ups, or minor health concerns. Ideal for non-emergency situations.
+                      Connect with your doctor via secure video call for quick
+                      consultations, follow-ups, or minor health concerns. Ideal
+                      for non-emergency situations.
                     </p>
                     {isTelemedicine && (
                       <div className="mt-2 text-xs text-blue-700 bg-blue-100 px-3 py-2 rounded">
-                        ✓ Video call link will be provided before your appointment
+                        ✓ Video call link will be provided before your
+                        appointment
                       </div>
                     )}
                   </div>

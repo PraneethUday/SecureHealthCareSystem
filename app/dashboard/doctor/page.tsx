@@ -32,10 +32,14 @@ export default function DoctorDashboard() {
   );
   const [selectedAppointmentForVideo, setSelectedAppointmentForVideo] =
     useState<AppointmentWithDetails | null>(null);
-  const [selectedAppointmentForPrescription, setSelectedAppointmentForPrescription] =
-    useState<AppointmentWithDetails | null>(null);
-  const [selectedAppointmentForMedicalRecord, setSelectedAppointmentForMedicalRecord] =
-    useState<AppointmentWithDetails | null>(null);
+  const [
+    selectedAppointmentForPrescription,
+    setSelectedAppointmentForPrescription,
+  ] = useState<AppointmentWithDetails | null>(null);
+  const [
+    selectedAppointmentForMedicalRecord,
+    setSelectedAppointmentForMedicalRecord,
+  ] = useState<AppointmentWithDetails | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [upcomingFilter, setUpcomingFilter] = useState<
     "all" | "telemedicine" | "in_person"
@@ -103,11 +107,7 @@ export default function DoctorDashboard() {
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const matchesSearch = (apt: AppointmentWithDetails) => {
     if (!normalizedSearch) return true;
-    const haystack = [
-      apt.patient_name,
-      apt.hospital_name,
-      apt.reason || "",
-    ]
+    const haystack = [apt.patient_name, apt.hospital_name, apt.reason || ""]
       .join(" ")
       .toLowerCase();
     return haystack.includes(normalizedSearch);
@@ -324,7 +324,9 @@ export default function DoctorDashboard() {
                         appointment={appointment}
                         doctorId={user.id}
                         onUpdate={() => loadAppointments(user.id)}
-                        onStartVideoCall={() => setSelectedAppointmentForVideo(appointment)}
+                        onStartVideoCall={() =>
+                          setSelectedAppointmentForVideo(appointment)
+                        }
                         onPrescribe={() =>
                           setSelectedAppointmentForPrescription(appointment)
                         }
@@ -351,7 +353,9 @@ export default function DoctorDashboard() {
                         appointment={appointment}
                         doctorId={user.id}
                         onUpdate={() => loadAppointments(user.id)}
-                        onStartVideoCall={() => setSelectedAppointmentForVideo(appointment)}
+                        onStartVideoCall={() =>
+                          setSelectedAppointmentForVideo(appointment)
+                        }
                         onPrescribe={() =>
                           setSelectedAppointmentForPrescription(appointment)
                         }
@@ -377,7 +381,9 @@ export default function DoctorDashboard() {
                       appointment={appointment}
                       doctorId={user.id}
                       onUpdate={() => loadAppointments(user.id)}
-                      onStartVideoCall={() => setSelectedAppointmentForVideo(appointment)}
+                      onStartVideoCall={() =>
+                        setSelectedAppointmentForVideo(appointment)
+                      }
                       onPrescribe={() =>
                         setSelectedAppointmentForPrescription(appointment)
                       }

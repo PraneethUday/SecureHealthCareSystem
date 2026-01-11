@@ -11,11 +11,13 @@
 5. Click **"Run"**
 
 **Expected Output:**
+
 ```
 message: "Telemedicine & E-Prescription schema created successfully!"
 ```
 
 **What This Creates:**
+
 - ✅ Adds telemedicine columns to appointments table
 - ✅ Creates prescriptions table
 - ✅ Creates prescription_logs table (audit trail)
@@ -32,6 +34,7 @@ message: "Telemedicine & E-Prescription schema created successfully!"
 **Problem:** Doctors couldn't accept/complete appointments due to missing error handling.
 
 **Solution:** Updated `lib/appointments.ts`:
+
 - Added better error handling in `updateAppointmentStatus()`
 - Added explicit `.select().single()` to return updated data
 - Added `updated_at` timestamp to update operations
@@ -43,12 +46,14 @@ message: "Telemedicine & E-Prescription schema created successfully!"
 ### 1. Telemedicine Video Consultations
 
 #### Patient Side:
+
 - ✅ Checkbox option during appointment booking
 - ✅ "Telemedicine (Video Consultation)" toggle in Step 4
 - ✅ Visual indicator showing appointment type
 - ✅ Automatic video call link generation
 
 #### Doctor Side:
+
 - ✅ "Start Video Call" button for telemedicine appointments
 - ✅ Video call interface with controls
 - ✅ Call duration tracking
@@ -57,6 +62,7 @@ message: "Telemedicine & E-Prescription schema created successfully!"
 ### 2. E-Prescription System
 
 #### Doctor Features:
+
 - ✅ "Prescribe" button on appointment cards
 - ✅ Multi-medication prescription form
 - ✅ Fields: medication name, dosage, frequency, duration, instructions
@@ -64,6 +70,7 @@ message: "Telemedicine & E-Prescription schema created successfully!"
 - ✅ Automatic logging to admin audit trail
 
 #### Patient Features:
+
 - ✅ View all prescriptions on dashboard
 - ✅ See doctor name and specialization
 - ✅ View medication details and instructions
@@ -81,6 +88,7 @@ message: "Telemedicine & E-Prescription schema created successfully!"
 ## 📋 Files Created/Modified
 
 ### New Files:
+
 1. `supabase/telemedicine-schema.sql` - Database schema
 2. `lib/prescriptions.ts` - Prescription & video call logic
 3. `app/dashboard/components/VideoCallInterface.tsx` - Video call UI
@@ -88,6 +96,7 @@ message: "Telemedicine & E-Prescription schema created successfully!"
 5. `docs/TELEMEDICINE_IMPLEMENTATION.md` - This guide
 
 ### Modified Files:
+
 1. `lib/database.types.ts` - Added new TypeScript interfaces
 2. `lib/appointments.ts` - Fixed update bug, added telemedicine support
 3. `app/dashboard/patient/components/NewAppointmentForm.tsx` - Added telemedicine option
@@ -100,6 +109,7 @@ message: "Telemedicine & E-Prescription schema created successfully!"
 ### For Patients:
 
 1. **Book Telemedicine Appointment:**
+
    - Login as patient
    - Click "Book Appointment"
    - Go through Steps 1-3 (Hospital, Doctor, Date/Time)
@@ -107,6 +117,7 @@ message: "Telemedicine & E-Prescription schema created successfully!"
    - Complete booking
 
 2. **Join Video Call:**
+
    - On appointment day/time
    - Video call link will be available
    - Click to join secure video consultation
@@ -119,12 +130,14 @@ message: "Telemedicine & E-Prescription schema created successfully!"
 ### For Doctors:
 
 1. **Start Video Consultation:**
+
    - Go to Doctor Dashboard
    - Find telemedicine appointment (marked with 🎥 icon)
    - Click "Start Video Call"
    - Video interface opens
 
 2. **Prescribe Medication:**
+
    - During or after appointment
    - Click "Prescribe" button
    - Fill in medication details:
@@ -143,6 +156,7 @@ message: "Telemedicine & E-Prescription schema created successfully!"
 ### For Admins:
 
 1. **View Prescription Logs:**
+
    - Go to Admin Dashboard
    - "Prescription Logs" tab
    - See all prescriptions issued
@@ -169,6 +183,7 @@ message: "Telemedicine & E-Prescription schema created successfully!"
 ## 📊 Database Schema
 
 ### Prescriptions Table:
+
 ```sql
 - id (UUID)
 - appointment_id (UUID) - links to appointment
@@ -187,6 +202,7 @@ message: "Telemedicine & E-Prescription schema created successfully!"
 ```
 
 ### Prescription Logs Table:
+
 ```sql
 - id (UUID)
 - prescription_id (UUID)
@@ -199,6 +215,7 @@ message: "Telemedicine & E-Prescription schema created successfully!"
 ```
 
 ### Video Call Logs Table:
+
 ```sql
 - id (UUID)
 - appointment_id (UUID)
@@ -225,6 +242,7 @@ This implementation includes a demo video interface. For production, integrate w
 4. **WebRTC** (custom implementation)
 
 Update `lib/prescriptions.ts` `startVideoCall()` function to:
+
 - Generate actual video room tokens
 - Use real video service SDK
 - Handle peer-to-peer connections
@@ -247,26 +265,31 @@ Update `lib/prescriptions.ts` `startVideoCall()` function to:
 ### Test Telemedicine Flow:
 
 1. **Login as Patient**
+
    - Email: `john.doe@email.com`
    - Password: `patient1`
 
 2. **Book Telemedicine Appointment**
+
    - Select hospital and doctor
    - Choose date and time
    - ✅ Check "Telemedicine" option
    - Complete booking
 
 3. **Login as Doctor**
+
    - ID: `D001`
    - Password: `doctor1`
 
 4. **Conduct Video Consultation**
+
    - Find the telemedicine appointment
    - Click "Start Video Call"
    - Click "Prescribe" to add medications
    - Complete appointment
 
 5. **Login as Patient Again**
+
    - View prescriptions on dashboard
    - Verify all medication details
 
@@ -291,15 +314,18 @@ Update `lib/prescriptions.ts` `startVideoCall()` function to:
 ## 🐛 Troubleshooting
 
 **"Error updating appointment":**
+
 - Run the telemedicine schema SQL
 - Check RLS policies are configured
 
 **"Failed to create prescription":**
+
 - Verify prescriptions table exists
 - Check all required fields are filled
 - Ensure doctor ID matches appointment
 
 **Video call not starting:**
+
 - This is expected in demo mode
 - For production, integrate actual video service
 
@@ -308,6 +334,7 @@ Update `lib/prescriptions.ts` `startVideoCall()` function to:
 ## 📞 Support
 
 For issues or questions, check:
+
 1. `docs/DEVELOPMENT.md` - Development guidelines
 2. `docs/QUICK_REFERENCE.md` - Quick command reference
 3. Supabase Dashboard logs for errors

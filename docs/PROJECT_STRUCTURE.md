@@ -98,12 +98,14 @@ SecureHealthCareSystem/
 **Purpose**: Handles user authentication with role-based login
 
 **Key Files**:
+
 - `page.tsx` - Main login page
 - `components/LoginForm.tsx` - Dynamic form (email for patients, ID for staff)
 - `components/RoleSelector.tsx` - Role selection interface
 - `utils/validation.ts` - Input validation logic
 
 **Features**:
+
 - Role-based authentication (Patient uses email, Staff uses ID)
 - Dynamic theming based on role
 - Input validation
@@ -114,10 +116,12 @@ SecureHealthCareSystem/
 **Purpose**: Patient self-registration
 
 **Key Files**:
+
 - `patient/page.tsx` - Registration form
 - `/api/register/patient/route.ts` - Registration API endpoint
 
 **Features**:
+
 - Multi-field patient registration
 - Email validation
 - Password strength checking
@@ -128,18 +132,21 @@ SecureHealthCareSystem/
 **Purpose**: Role-specific user interfaces
 
 #### Patient Dashboard
+
 - View upcoming and past appointments
 - Book new appointments (4-step wizard)
 - Access medical information
 - Cancel appointments
 
 #### Doctor Dashboard
+
 - View daily schedule
 - Manage appointments (complete/no-show)
 - Access patient information
 - Track appointment history
 
 #### Admin Dashboard
+
 - System-wide oversight
 - Audit logs (system and appointments)
 - User management
@@ -150,6 +157,7 @@ SecureHealthCareSystem/
 **Purpose**: Reusable business logic and utilities
 
 **Key Files**:
+
 - `appointments.ts` - All appointment CRUD operations
 - `auth.ts` - Authentication helpers
 - `logging.ts` - System and action logging
@@ -157,6 +165,7 @@ SecureHealthCareSystem/
 - `database.types.ts` - TypeScript interfaces for all tables
 
 **Functions**:
+
 - `getHospitals()` - Fetch hospital list
 - `getDoctorsByHospital()` - Get doctors by hospital
 - `createAppointment()` - Book appointment
@@ -169,11 +178,13 @@ SecureHealthCareSystem/
 **Purpose**: Database schema and seed data
 
 **Key Files**:
+
 - `schema.sql` - Core tables (users, patients, doctors, etc.)
 - `appointments-schema.sql` - Appointment system tables
 - `seed.sql` - Sample data for testing
 
 **Tables**:
+
 - `patients`, `doctors`, `nurses`, `staff`, `admins` - User profiles
 - `hospitals` - Hospital locations
 - `appointments` - Appointment records
@@ -184,6 +195,7 @@ SecureHealthCareSystem/
 ## API Routes
 
 ### `/api/register/patient`
+
 - **Method**: POST
 - **Purpose**: Patient registration
 - **Body**: Patient information (name, email, password, phone, etc.)
@@ -192,35 +204,42 @@ SecureHealthCareSystem/
 ## Utility Scripts
 
 ### `npm run setup-db`
+
 - Automated database setup
 - Creates all tables
 - Inserts sample data
 
 ### `npm run check-schema`
+
 - Validates database schema
 - Checks for missing tables/columns
 
 ### `npm run test-db`
+
 - Tests database connection
 - Verifies table structure
 
 ### `npm run test-appointments`
+
 - Tests appointment system
 - Validates CRUD operations
 
 ## Configuration Files
 
 ### `next.config.ts`
+
 - Next.js configuration
 - Build settings
 - Environment variables
 
 ### `tailwind.config.ts`
+
 - Tailwind CSS customization
 - Theme colors
 - Custom utilities
 
 ### `tsconfig.json`
+
 - TypeScript compiler options
 - Path aliases
 - Type checking rules
@@ -237,15 +256,18 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ## Development Workflow
 
 1. **Start Development Server**
+
    ```bash
    npm run dev
    ```
 
 2. **Access Application**
+
    - URL: http://localhost:3000
    - Redirects to login page
 
 3. **Testing**
+
    - Use sample credentials from README.md
    - Test different user roles
    - Verify appointment workflows
@@ -258,23 +280,27 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ## Code Organization Best Practices
 
 ### Components
+
 - Keep components small and focused
 - Use TypeScript for type safety
 - Separate UI from business logic
 - Document complex components
 
 ### Styling
+
 - Use Tailwind CSS utility classes
 - Follow consistent spacing (4px grid)
 - Maintain responsive design
 - Use role-specific themes
 
 ### State Management
+
 - Use React hooks for local state
 - Session storage for user data
 - Supabase for persistent data
 
 ### Error Handling
+
 - Try-catch blocks for async operations
 - User-friendly error messages
 - Console logging for debugging

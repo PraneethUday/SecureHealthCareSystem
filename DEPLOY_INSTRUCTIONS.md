@@ -11,11 +11,13 @@ This means **you haven't run the database schema yet**. All the errors you're ex
 ## Fix: Run the SQL Schema (2 minutes)
 
 ### Step 1: Open Supabase Dashboard
+
 1. Go to [https://supabase.com/dashboard](https://supabase.com/dashboard)
 2. Select your project: **SecureHealthCareSystem**
 3. Click on **SQL Editor** in the left sidebar
 
 ### Step 2: Run the Schema
+
 1. Click **"+ New Query"**
 2. Open the file: `supabase/telemedicine-schema.sql` from your project
 3. Copy ALL the contents (the entire file)
@@ -23,24 +25,26 @@ This means **you haven't run the database schema yet**. All the errors you're ex
 5. Click **"Run"** (or press Cmd/Ctrl + Enter)
 
 You should see:
+
 ```
 SUCCESS: Telemedicine & E-Prescription schema created successfully!
 ```
 
 ### Step 3: Verify the Changes
+
 Run this query to confirm everything is set up:
 
 ```sql
 -- Check if columns exist
-SELECT column_name, data_type 
-FROM information_schema.columns 
-WHERE table_name = 'appointments' 
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'appointments'
   AND column_name IN ('is_telemedicine', 'video_call_link', 'video_call_started_at', 'video_call_ended_at');
 
 -- Check if new tables exist
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
   AND table_name IN ('prescriptions', 'prescription_logs', 'video_call_logs');
 ```
 
@@ -49,23 +53,27 @@ You should see 4 rows for appointments columns and 3 rows for the new tables.
 ## What This Schema Creates
 
 ✅ **Adds to `appointments` table:**
+
 - `is_telemedicine` (boolean) - Whether appointment is video consultation
 - `video_call_link` (text) - Video call URL
 - `video_call_started_at` (timestamp) - Call start time
 - `video_call_ended_at` (timestamp) - Call end time
 
 ✅ **Creates `prescriptions` table:**
+
 - Full medication details (name, dosage, frequency, duration)
 - Status tracking (active/completed/discontinued)
 - Doctor and patient references
 - Start and end dates
 
 ✅ **Creates `prescription_logs` table:**
+
 - Audit trail of all prescription actions
 - Tracks who did what and when
 - Stores old and new data for changes
 
 ✅ **Creates `video_call_logs` table:**
+
 - Records all video consultations
 - Automatic duration calculation
 - Call quality ratings
@@ -76,18 +84,21 @@ You should see 4 rows for appointments columns and 3 rows for the new tables.
 ### Test the Features:
 
 1. **Book a Telemedicine Appointment** (Patient)
+
    - Login as patient: `john.doe@email.com` / `patient1`
    - Click "Book Appointment"
    - Check the ✅ "Telemedicine (Video Consultation)" option
    - Complete booking
 
 2. **Start Video Call & Prescribe** (Doctor)
+
    - Login as doctor: ID `D001` / password `doctor1`
    - Find the telemedicine appointment
    - Click "Start Video Call"
    - Click "Prescribe" to add medications
 
 3. **View Prescription** (Patient)
+
    - Login back as patient
    - Prescriptions appear automatically in "My Prescriptions" tab
 
@@ -107,6 +118,7 @@ If you still see errors after running the schema:
 ## Need Help?
 
 Check these files for detailed information:
+
 - `docs/TELEMEDICINE_IMPLEMENTATION.md` - Complete guide
 - `IMPLEMENTATION_COMPLETE.md` - Feature overview
 - `supabase/telemedicine-schema.sql` - The actual SQL to run

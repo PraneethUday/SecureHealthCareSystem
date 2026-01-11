@@ -151,31 +151,36 @@ npm start
 ## Sample Login Credentials
 
 ### Admin
+
 - **ID**: `admin`
 - **Password**: `admin123`
 
 ### Patients (Login with EMAIL)
+
 - **Email**: `john.doe@email.com` / **Password**: `patient1`
 - **Email**: `jane.smith@email.com` / **Password**: `patient2`
 
 ### Doctors (Login with ID)
+
 - **ID**: `D001` / **Password**: `doctor1`
 - **ID**: `D002` / **Password**: `doctor2`
 
 ### Nurses
+
 - **ID**: `N001` / **Password**: `nurse1`
 
 ### Staff
+
 - **ID**: `S001` / **Password**: `staff1`
 
 ## User Roles
 
-| Role        | Login Method | Description                        | Features                                    |
-| ----------- | ------------ | ---------------------------------- | ------------------------------------------- |
-| **Patient** | Email        | General public access for patients | Book appointments, view medical records     |
-| **Doctor**  | Staff ID     | Medical practitioners              | Manage appointments, view patient records   |
-| **Nurse**   | Staff ID     | Nursing staff                      | View schedules, patient care management     |
-| **Staff**   | Staff ID     | Administrative and support staff   | Scheduling, billing, administrative tasks   |
+| Role        | Login Method | Description                        | Features                                        |
+| ----------- | ------------ | ---------------------------------- | ----------------------------------------------- |
+| **Patient** | Email        | General public access for patients | Book appointments, view medical records         |
+| **Doctor**  | Staff ID     | Medical practitioners              | Manage appointments, view patient records       |
+| **Nurse**   | Staff ID     | Nursing staff                      | View schedules, patient care management         |
+| **Staff**   | Staff ID     | Administrative and support staff   | Scheduling, billing, administrative tasks       |
 | **Admin**   | Staff ID     | System administrators              | Full system access, audit logs, user management |
 
 ## Login Credentials Format
@@ -202,6 +207,7 @@ npm start
 ## Database Schema
 
 ### Core Tables
+
 - **patients** - Patient profiles and information
 - **doctors** - Doctor profiles with specializations
 - **nurses** - Nurse profiles
@@ -209,6 +215,7 @@ npm start
 - **admins** - System administrators
 
 ### Healthcare System
+
 - **hospitals** - Hospital locations and departments
 - **appointments** - Patient appointments with status tracking
 - **appointment_logs** - Audit trail for appointment actions
@@ -269,6 +276,7 @@ The authentication module with role-based login functionality.
 ## Key Features
 
 ### For Patients
+
 - Self-registration with email verification
 - Book appointments with preferred doctors
 - View appointment history
@@ -276,12 +284,14 @@ The authentication module with role-based login functionality.
 - Manage personal information
 
 ### For Doctors
+
 - View daily schedule
 - Manage appointments (complete/no-show)
 - Access patient information
 - Track appointment history
 
 ### For Administrators
+
 - System-wide oversight
 - Comprehensive audit logs
 - User management

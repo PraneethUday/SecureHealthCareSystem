@@ -3,6 +3,7 @@
 ## Quick Start for Developers
 
 ### Prerequisites
+
 - Node.js 18 or higher
 - npm or yarn
 - Git
@@ -12,6 +13,7 @@
 ### Initial Setup
 
 1. **Clone and Install**
+
    ```bash
    git clone <repository-url>
    cd SecureHealthCareSystem
@@ -19,15 +21,16 @@
    ```
 
 2. **Environment Configuration**
-   
+
    Create `.env.local` in the root directory:
+
    ```env
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
    ```
 
 3. **Database Setup**
-   
+
    See [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md) for detailed database configuration.
 
 4. **Start Development Server**
@@ -59,21 +62,25 @@ npm run test-appointments  # Test appointment system
 ### Adding a New Feature
 
 1. **Create Feature Branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
 2. **Database Changes (if needed)**
+
    - Add SQL to appropriate file in `/supabase`
    - Update TypeScript types in `lib/database.types.ts`
    - Test with `npm run check-schema`
 
 3. **Implement Feature**
+
    - Add business logic in `/lib`
    - Create UI components in `/app`
    - Follow existing patterns
 
 4. **Test Thoroughly**
+
    - Test all user roles
    - Verify database operations
    - Check responsive design
@@ -89,47 +96,53 @@ npm run test-appointments  # Test appointment system
 ### Code Style Guidelines
 
 #### TypeScript
+
 ```typescript
 // Use explicit types
 interface User {
   id: string;
   name: string;
-  role: 'patient' | 'doctor' | 'nurse' | 'staff' | 'admin';
+  role: "patient" | "doctor" | "nurse" | "staff" | "admin";
 }
 
 // Use async/await
 async function fetchUser(id: string): Promise<User | null> {
   try {
     const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', id)
+      .from("users")
+      .select("*")
+      .eq("id", id)
       .single();
-    
+
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error fetching user:', error);
+    console.error("Error fetching user:", error);
     return null;
   }
 }
 ```
 
 #### React Components
+
 ```typescript
 // Use functional components with TypeScript
 interface ButtonProps {
   label: string;
   onClick: () => void;
-  variant?: 'primary' | 'secondary';
+  variant?: "primary" | "secondary";
 }
 
-export default function Button({ label, onClick, variant = 'primary' }: ButtonProps) {
+export default function Button({
+  label,
+  onClick,
+  variant = "primary",
+}: ButtonProps) {
   return (
     <button
       onClick={onClick}
       className={`px-4 py-2 rounded ${
-        variant === 'primary' ? 'bg-blue-600' : 'bg-gray-600'
+        variant === "primary" ? "bg-blue-600" : "bg-gray-600"
       }`}
     >
       {label}
@@ -139,6 +152,7 @@ export default function Button({ label, onClick, variant = 'primary' }: ButtonPr
 ```
 
 #### Tailwind CSS
+
 ```typescript
 // Use consistent spacing and colors
 // Prefer utility classes over custom CSS
@@ -158,30 +172,31 @@ export default function Button({ label, onClick, variant = 'primary' }: ButtonPr
 4. Update navigation
 
 Example:
+
 ```typescript
 // app/dashboard/pharmacist/page.tsx
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function PharmacistDashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const userData = sessionStorage.getItem('user');
+    const userData = sessionStorage.getItem("user");
     if (!userData) {
-      router.push('/login');
+      router.push("/login");
       return;
     }
-    
+
     const parsed = JSON.parse(userData);
-    if (parsed.role !== 'pharmacist') {
-      router.push('/login');
+    if (parsed.role !== "pharmacist") {
+      router.push("/login");
       return;
     }
-    
+
     setUser(parsed);
   }, [router]);
 
@@ -204,34 +219,35 @@ export default function PharmacistDashboard() {
 4. Add TypeScript types
 
 Example:
+
 ```typescript
 // app/api/prescriptions/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { NextRequest, NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(request: NextRequest) {
   try {
-    const patientId = request.nextUrl.searchParams.get('patientId');
-    
+    const patientId = request.nextUrl.searchParams.get("patientId");
+
     if (!patientId) {
       return NextResponse.json(
-        { error: 'Patient ID is required' },
+        { error: "Patient ID is required" },
         { status: 400 }
       );
     }
 
     const { data, error } = await supabase
-      .from('prescriptions')
-      .select('*')
-      .eq('patient_id', patientId);
+      .from("prescriptions")
+      .select("*")
+      .eq("patient_id", patientId);
 
     if (error) throw error;
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching prescriptions:', error);
+    console.error("Error fetching prescriptions:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch prescriptions' },
+      { error: "Failed to fetch prescriptions" },
       { status: 500 }
     );
   }
@@ -240,18 +256,18 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Validate required fields
     const { patient_id, doctor_id, medication, dosage } = body;
     if (!patient_id || !doctor_id || !medication) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
     const { data, error } = await supabase
-      .from('prescriptions')
+      .from("prescriptions")
       .insert([body])
       .select()
       .single();
@@ -260,9 +276,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    console.error('Error creating prescription:', error);
+    console.error("Error creating prescription:", error);
     return NextResponse.json(
-      { error: 'Failed to create prescription' },
+      { error: "Failed to create prescription" },
       { status: 500 }
     );
   }
@@ -277,6 +293,7 @@ export async function POST(request: NextRequest) {
 4. Add seed data if needed
 
 Example:
+
 ```sql
 -- Add to schema.sql or create new migration file
 CREATE TABLE prescriptions (
@@ -299,6 +316,7 @@ CREATE INDEX idx_prescriptions_doctor ON prescriptions(doctor_id);
 ```
 
 Then update `lib/database.types.ts`:
+
 ```typescript
 export interface Prescription {
   id: string;
@@ -318,12 +336,14 @@ export interface Prescription {
 ## Debugging Tips
 
 ### Frontend Issues
+
 - Check browser console for errors
 - Use React DevTools
 - Verify session storage data
 - Check network tab for API calls
 
 ### Backend/Database Issues
+
 - Check Supabase logs in dashboard
 - Verify environment variables
 - Test queries in SQL Editor
@@ -332,16 +352,19 @@ export interface Prescription {
 ### Common Errors and Solutions
 
 **Error: "Invalid login credentials"**
+
 - Verify user exists in database
 - Check password matches
 - Ensure correct role table
 
 **Error: "Row level security policy"**
+
 - Check RLS is disabled for testing
 - Or add appropriate policies
 - Verify user has correct permissions
 
 **Error: "Cannot read property of undefined"**
+
 - Check session storage has user data
 - Verify data structure matches types
 - Add null checks
@@ -349,18 +372,21 @@ export interface Prescription {
 ## Performance Optimization
 
 ### Database Queries
+
 - Use specific column selection instead of `*`
 - Add indexes for frequently queried columns
 - Limit results when appropriate
 - Use pagination for large datasets
 
 ### Frontend
+
 - Lazy load components when possible
 - Optimize images
 - Minimize re-renders
 - Use React.memo for expensive components
 
 ### Caching
+
 - Consider implementing SWR or React Query
 - Cache API responses when appropriate
 - Use Next.js static generation where possible
@@ -383,6 +409,7 @@ Before submitting a pull request:
 ## Resources
 
 ### Documentation
+
 - [Next.js Docs](https://nextjs.org/docs)
 - [React Docs](https://react.dev)
 - [Supabase Docs](https://supabase.com/docs)
@@ -390,6 +417,7 @@ Before submitting a pull request:
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 
 ### Tools
+
 - [VS Code](https://code.visualstudio.com/)
 - [React DevTools](https://react.dev/learn/react-developer-tools)
 - [Supabase Studio](https://supabase.com/docs/guides/platform/studio)

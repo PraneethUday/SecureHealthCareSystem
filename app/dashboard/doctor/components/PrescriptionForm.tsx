@@ -115,7 +115,9 @@ export default function PrescriptionForm({
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"            aria-label="Close prescription form"          >
+            className="text-gray-400 hover:text-gray-600"
+            aria-label="Close prescription form"
+          >
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -129,7 +131,9 @@ export default function PrescriptionForm({
 
           {/* Appointment Info */}
           <div className="bg-blue-50 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold text-gray-800 mb-2">Appointment Details</h3>
+            <h3 className="font-semibold text-gray-800 mb-2">
+              Appointment Details
+            </h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <span className="text-gray-600">Date:</span>{" "}
@@ -139,11 +143,15 @@ export default function PrescriptionForm({
               </div>
               <div>
                 <span className="text-gray-600">Time:</span>{" "}
-                <span className="font-medium">{appointment.appointment_time}</span>
+                <span className="font-medium">
+                  {appointment.appointment_time}
+                </span>
               </div>
               <div className="col-span-2">
                 <span className="text-gray-600">Reason:</span>{" "}
-                <span className="font-medium">{appointment.reason || "N/A"}</span>
+                <span className="font-medium">
+                  {appointment.reason || "N/A"}
+                </span>
               </div>
             </div>
           </div>
@@ -179,7 +187,11 @@ export default function PrescriptionForm({
                       type="text"
                       value={prescription.medication_name}
                       onChange={(e) =>
-                        updatePrescription(index, "medication_name", e.target.value)
+                        updatePrescription(
+                          index,
+                          "medication_name",
+                          e.target.value
+                        )
                       }
                       placeholder="e.g., Amoxicillin"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -242,7 +254,11 @@ export default function PrescriptionForm({
                     <textarea
                       value={prescription.instructions}
                       onChange={(e) =>
-                        updatePrescription(index, "instructions", e.target.value)
+                        updatePrescription(
+                          index,
+                          "instructions",
+                          e.target.value
+                        )
                       }
                       placeholder="e.g., Take with food, Avoid alcohol"
                       rows={2}

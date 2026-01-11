@@ -175,7 +175,7 @@ export interface Prescription {
   prescribed_date: string;
   start_date: string;
   end_date?: string;
-  status: 'active' | 'completed' | 'discontinued';
+  status: "active" | "completed" | "discontinued";
   created_at?: string;
   updated_at?: string;
 }
@@ -189,7 +189,7 @@ export interface PrescriptionWithDetails extends Prescription {
 export interface PrescriptionLog {
   id: string;
   prescription_id: string;
-  action_type: 'created' | 'updated' | 'discontinued';
+  action_type: "created" | "updated" | "discontinued";
   performed_by_user_id: string;
   performed_by_role: string;
   old_data?: Record<string, any>;
@@ -206,7 +206,7 @@ export interface VideoCallLog {
   call_started_at: string;
   call_ended_at?: string;
   duration_minutes?: number;
-  call_status?: 'completed' | 'interrupted' | 'failed';
+  call_status?: "completed" | "interrupted" | "failed";
   quality_rating?: number;
   metadata?: Record<string, any>;
   created_at?: string;
@@ -217,37 +217,37 @@ export interface MedicalRecord {
   appointment_id?: string;
   patient_id: string;
   doctor_id: string;
-  
+
   // Chief Complaint & Diagnosis
   chief_complaint: string;
   diagnosis: string;
-  
+
   // Vital Signs
   blood_pressure?: string;
   heart_rate?: number;
   temperature?: number;
   weight?: number;
   height?: number;
-  
+
   // Clinical Notes
   symptoms?: string;
   examination_findings?: string;
   treatment_plan?: string;
   recommendations?: string;
   follow_up_instructions?: string;
-  
+
   // Lab Results & Tests
   lab_results?: string;
   test_results?: string;
-  
+
   // Allergies & Medical History
   allergies?: string;
   current_medications?: string;
   past_medical_history?: string;
-  
+
   // Additional Information
   notes?: string;
-  
+
   // Metadata
   record_date: string;
   created_at?: string;
@@ -265,7 +265,7 @@ export interface MedicalRecordWithDetails extends MedicalRecord {
 export interface MedicalRecordLog {
   id: string;
   medical_record_id: string;
-  action_type: 'created' | 'updated' | 'viewed' | 'downloaded';
+  action_type: "created" | "updated" | "viewed" | "downloaded";
   performed_by_user_id: string;
   performed_by_role: string;
   old_data?: Record<string, any>;

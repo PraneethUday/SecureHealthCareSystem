@@ -1,9 +1,13 @@
 import { supabase } from "./supabase";
-import { MedicalRecord, MedicalRecordWithDetails, MedicalRecordLog } from "./database.types";
+import {
+  MedicalRecord,
+  MedicalRecordWithDetails,
+  MedicalRecordLog,
+} from "./database.types";
 
 // Create a new medical record
 export async function createMedicalRecord(
-  recordData: Omit<MedicalRecord, 'id' | 'created_at' | 'updated_at'>,
+  recordData: Omit<MedicalRecord, "id" | "created_at" | "updated_at">,
   doctorId: string
 ): Promise<{ success: boolean; data?: MedicalRecord; error?: string }> {
   try {
@@ -17,8 +21,12 @@ export async function createMedicalRecord(
 
     if (error) {
       console.error("Error creating medical record:", error);
-      const errorMessage = error.message || error.details || JSON.stringify(error);
-      return { success: false, error: `Failed to create medical record: ${errorMessage}` };
+      const errorMessage =
+        error.message || error.details || JSON.stringify(error);
+      return {
+        success: false,
+        error: `Failed to create medical record: ${errorMessage}`,
+      };
     }
 
     if (!data) {
@@ -40,7 +48,8 @@ export async function createMedicalRecord(
     return { success: true, data };
   } catch (error: any) {
     console.error("Caught error in createMedicalRecord:", error);
-    const errorMessage = error.message || error.toString() || "Unknown error occurred";
+    const errorMessage =
+      error.message || error.toString() || "Unknown error occurred";
     return { success: false, error: errorMessage };
   }
 }
@@ -52,7 +61,8 @@ export async function getPatientMedicalRecords(
   try {
     const { data, error } = await supabase
       .from("medical_records")
-      .select(`
+      .select(
+        `
         *,
         doctors (
           first_name,
@@ -63,7 +73,8 @@ export async function getPatientMedicalRecords(
           appointment_date,
           appointment_time
         )
-      `)
+      `
+      )
       .eq("patient_id", patientId)
       .order("record_date", { ascending: false });
 
@@ -91,11 +102,16 @@ export async function getPatientMedicalRecords(
 export async function getMedicalRecordById(
   recordId: string,
   userId: string
-): Promise<{ success: boolean; data?: MedicalRecordWithDetails; error?: string }> {
+): Promise<{
+  success: boolean;
+  data?: MedicalRecordWithDetails;
+  error?: string;
+}> {
   try {
     const { data, error } = await supabase
       .from("medical_records")
-      .select(`
+      .select(
+        `
         *,
         doctors (
           first_name,
@@ -110,7 +126,8 @@ export async function getMedicalRecordById(
           appointment_date,
           appointment_time
         )
-      `)
+      `
+      )
       .eq("id", recordId)
       .single();
 
