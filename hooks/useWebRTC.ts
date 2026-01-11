@@ -506,11 +506,7 @@ export function useWebRTC(options: UseWebRTCOptions) {
    * Handle signaling messages (offer, answer, ICE candidates)
    */
   const handleSignalingMessage = useCallback(
-    async (
-      callId: string,
-      message: VideoCallSignalingMessage,
-      remoteUserId: string
-    ) => {
+    async (callId: string, message: SignalingMessage, remoteUserId: string) => {
       if (!peerConnectionRef.current) {
         console.warn("[Hook] No peer connection available");
         return;
