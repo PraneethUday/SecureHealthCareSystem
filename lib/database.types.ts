@@ -96,6 +96,62 @@ export interface AccessLog {
   user_agent?: string;
 }
 
+export interface Hospital {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  zip_code?: string;
+  phone: string;
+  email?: string;
+  departments?: string[];
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no_show';
+export type AppointmentActionType = 'created' | 'updated' | 'cancelled' | 'completed' | 'rescheduled';
+
+export interface Appointment {
+  id: string;
+  patient_id: string;
+  doctor_id: string;
+  hospital_id: string;
+  appointment_date: string;
+  appointment_time: string;
+  duration_minutes?: number;
+  status: AppointmentStatus;
+  reason?: string;
+  notes?: string;
+  cancellation_reason?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AppointmentWithDetails extends Appointment {
+  patient_name?: string;
+  patient_email?: string;
+  doctor_name?: string;
+  specialization?: string;
+  hospital_name?: string;
+  hospital_address?: string;
+}
+
+export interface AppointmentLog {
+  id: string;
+  appointment_id: string;
+  action_type: AppointmentActionType;
+  performed_by_user_id: string;
+  performed_by_role: string;
+  old_status?: AppointmentStatus;
+  new_status?: AppointmentStatus;
+  metadata?: Record<string, any>;
+  ip_address?: string;
+  timestamp: string;
+}
+
 export type UserRole = "patient" | "doctor" | "nurse" | "staff" | "admin";
 
 export interface LoginCredentials {

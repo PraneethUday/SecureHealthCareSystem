@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSession, clearSession } from "@/lib/auth";
 import { logAction, getAllLogs } from "@/lib/logging";
+import { getAppointmentLogs } from "@/lib/appointments";
+import { AppointmentLog } from "@/lib/database.types";
 import {
   Shield,
   Users,
@@ -12,13 +14,17 @@ import {
   LogOut,
   Database,
   FileText,
+  Calendar,
 } from "lucide-react";
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
+  const [appointmentLogs, setAppointmentLogs] = useState<AppointmentLog[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
+  const [loadingAppointmentLogs, setLoadingAppointmentLogs] = useState(true);
+  const [activeLogTab, setActiveLogTab] = useState<'system' | 'appointments'>('system');
 
   useEffect(() => {
     const session = getSession();
@@ -35,6 +41,7 @@ export default function AdminDashboard() {
       });
       // Fetch logs
       fetchLogs();
+      fetchAppointmentLogs();
     }
   }, [router]);
 
@@ -46,6 +53,17 @@ export default function AdminDashboard() {
       console.error("Failed to fetch logs:", error);
     } finally {
       setLoadingLogs(false);
+    }
+  };
+
+  const fetchAppointmentLogs = async () => {
+    try {
+      const fetchedLogs = await getAppointmentLogs();
+      setAppointmentLogs(fetchedLogs);
+    } catch (error) {
+      console.error("Failed to fetch appointment logs:", error);
+    } finally {
+      setLoadingAppointmentLogs(false);
     }
   };
 
@@ -201,103 +219,225 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-semibold text-gray-800">
-                System Access Logs
+                System Logs
               </h2>
               <p className="text-sm text-gray-500 mt-1">
                 Real-time monitoring of all system activities
               </p>
             </div>
             <button
-              onClick={fetchLogs}
+              onClick={() => {
+                fetchLogs();
+                fetchAppointmentLogs();
+              }}
               className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm"
             >
               Refresh Logs
             </button>
           </div>
 
-          {loadingLogs ? (
-            <div className="text-center py-8">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-800 border-r-transparent"></div>
-              <p className="mt-2 text-gray-600">Loading logs...</p>
-            </div>
-          ) : logs.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <FileText className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-              <p>No logs available</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b-2 border-gray-200">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Timestamp
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      User ID
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Role
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Action
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Details
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {logs.map((log, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {new Date(log.timestamp).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-800">
-                        {log.user_id}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span
-                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                            log.user_role === "admin"
-                              ? "bg-gray-100 text-gray-800"
-                              : log.user_role === "doctor"
-                              ? "bg-blue-100 text-blue-800"
-                              : log.user_role === "nurse"
-                              ? "bg-purple-100 text-purple-800"
-                              : log.user_role === "staff"
-                              ? "bg-orange-100 text-orange-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {log.user_role}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-800">
-                        {log.action}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {log.details || "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span
-                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                            log.status === "success"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {log.status || "success"}
-                        </span>
-                      </td>
+          {/* Tabs */}
+          <div className="flex gap-4 border-b border-gray-200 mb-6">
+            <button
+              onClick={() => setActiveLogTab('system')}
+              className={`pb-2 px-1 font-medium transition-colors flex items-center gap-2 ${
+                activeLogTab === 'system'
+                  ? 'text-gray-800 border-b-2 border-gray-800'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Activity className="w-4 h-4" />
+              System Logs ({logs.length})
+            </button>
+            <button
+              onClick={() => setActiveLogTab('appointments')}
+              className={`pb-2 px-1 font-medium transition-colors flex items-center gap-2 ${
+                activeLogTab === 'appointments'
+                  ? 'text-gray-800 border-b-2 border-gray-800'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Calendar className="w-4 h-4" />
+              Appointment Logs ({appointmentLogs.length})
+            </button>
+          </div>
+
+          {/* System Logs Table */}
+          {activeLogTab === 'system' && (
+            loadingLogs ? (
+              <div className="text-center py-8">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-800 border-r-transparent"></div>
+                <p className="mt-2 text-gray-600">Loading logs...</p>
+              </div>
+            ) : logs.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                <p>No logs available</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Timestamp
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        User ID
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Role
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Action
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Details
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Status
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {logs.map((log, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-medium text-gray-800">
+                          {log.user_id}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span
+                            className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              log.user_role === "admin"
+                                ? "bg-gray-100 text-gray-800"
+                                : log.user_role === "doctor"
+                                ? "bg-blue-100 text-blue-800"
+                                : log.user_role === "nurse"
+                                ? "bg-purple-100 text-purple-800"
+                                : log.user_role === "staff"
+                                ? "bg-orange-100 text-orange-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {log.user_role}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-800">
+                          {log.action}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {log.details}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span
+                            className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              log.status === "success"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {log.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          )}
+
+          {/* Appointment Logs Table */}
+          {activeLogTab === 'appointments' && (
+            loadingAppointmentLogs ? (
+              <div className="text-center py-8">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-800 border-r-transparent"></div>
+                <p className="mt-2 text-gray-600">Loading appointment logs...</p>
+              </div>
+            ) : appointmentLogs.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Calendar className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                <p>No appointment logs available</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Timestamp
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Appointment ID
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Action
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Performed By
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Role
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Details
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {appointmentLogs.map((log) => (
+                      <tr key={log.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-mono text-gray-800">
+                          {log.appointment_id.slice(0, 8)}...
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span
+                            className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              log.action_type === "created"
+                                ? "bg-blue-100 text-blue-800"
+                                : log.action_type === "updated"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : log.action_type === "cancelled"
+                                ? "bg-red-100 text-red-800"
+                                : log.action_type === "completed"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-purple-100 text-purple-800"
+                            }`}
+                          >
+                            {log.action_type}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm font-medium text-gray-800">
+                          {log.performed_by_user_id}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span
+                            className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              log.performed_by_role === "patient"
+                                ? "bg-red-100 text-red-800"
+                                : log.performed_by_role === "doctor"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {log.performed_by_role}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {log.metadata ? JSON.stringify(log.metadata) : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
           )}
         </div>
       </main>
