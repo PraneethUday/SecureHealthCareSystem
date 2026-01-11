@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSession, clearSession } from "@/lib/auth";
 import { logAction } from "@/lib/logging";
-import { Users, FileText, Calendar, Settings, LogOut } from "lucide-react";
+import {
+  Users,
+  FileText,
+  Calendar,
+  Settings,
+  LogOut,
+  UserCog,
+} from "lucide-react";
 
 export default function StaffDashboard() {
   const router = useRouter();

@@ -4,7 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSession, clearSession } from "@/lib/auth";
 import { logAction } from "@/lib/logging";
-import { Heart, Users, Clock, FileText, LogOut } from "lucide-react";
+import {
+  Heart,
+  Users,
+  Clock,
+  FileText,
+  LogOut,
+  Activity,
+  Calendar,
+  FileHeart,
+} from "lucide-react";
 
 export default function NurseDashboard() {
   const router = useRouter();
