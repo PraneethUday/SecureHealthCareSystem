@@ -14,9 +14,13 @@ import {
   User,
   Plus,
   Loader2,
+  Pill,
+  Search,
 } from "lucide-react";
 import AppointmentCard from "./components/AppointmentCard";
 import NewAppointmentForm from "./components/NewAppointmentForm";
+import PrescriptionsList from "./components/PrescriptionsList";
+import MedicalRecordsList from "./components/MedicalRecordsList";
 
 export default function PatientDashboard() {
   const router = useRouter();
@@ -26,7 +30,15 @@ export default function PatientDashboard() {
   );
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [showNewAppointment, setShowNewAppointment] = useState(false);
-  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
+  const [activeTab, setActiveTab] = useState<"appointments" | "prescriptions" | "records">("appointments");
+  const [appointmentSubTab, setAppointmentSubTab] = useState<"upcoming" | "past">("upcoming");
+  const [appointmentSearchTerm, setAppointmentSearchTerm] = useState("");
+  const [upcomingAppointmentFilter, setUpcomingAppointmentFilter] = useState<
+    "all" | "telemedicine" | "in_person"
+  >("all");
+  const [pastAppointmentFilter, setPastAppointmentFilter] = useState<
+    "all" | "completed" | "cancelled" | "no_show"
+  >("all");
 
   useEffect(() => {
     const session = getSession();
@@ -76,6 +88,47 @@ export default function PatientDashboard() {
       new Date(apt.appointment_date + "T" + apt.appointment_time) <
         new Date() || apt.status !== "scheduled"
   );
+
+  const normalizedAppointmentSearch = appointmentSearchTerm
+    .trim()
+    .toLowerCase();
+  const matchesAppointmentSearch = (apt: AppointmentWithDetails) => {
+    if (!normalizedAppointmentSearch) {
+      return true;
+    }
+    const haystack = [
+      apt.patient_name,
+      apt.doctor_name || "",
+      apt.hospital_name || "",
+      apt.reason || "",
+    ]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(normalizedAppointmentSearch);
+  };
+
+  const filteredUpcomingAppointments = upcomingAppointments.filter((apt) => {
+    if (!matchesAppointmentSearch(apt)) {
+      return false;
+    }
+    if (upcomingAppointmentFilter === "telemedicine") {
+      return apt.is_telemedicine;
+    }
+    if (upcomingAppointmentFilter === "in_person") {
+      return !apt.is_telemedicine;
+    }
+    return true;
+  });
+
+  const filteredPastAppointments = pastAppointments.filter((apt) => {
+    if (!matchesAppointmentSearch(apt)) {
+      return false;
+    }
+    if (pastAppointmentFilter === "all") {
+      return true;
+    }
+    return apt.status === pastAppointmentFilter;
+  });
 
   if (!user) return null;
 
@@ -140,89 +193,199 @@ export default function PatientDashboard() {
           </div>
         </div>
 
-        {/* Appointments Section */}
+        {/* Main Tabs */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-red-100">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">
-              My Appointments
-            </h2>
-            <button
-              onClick={() => setShowNewAppointment(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Book Appointment
-            </button>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex gap-4 border-b border-gray-200 mb-6">
-            <button
-              onClick={() => setActiveTab("upcoming")}
-              className={`pb-2 px-1 font-medium transition-colors ${
-                activeTab === "upcoming"
-                  ? "text-red-600 border-b-2 border-red-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Upcoming ({upcomingAppointments.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("past")}
-              className={`pb-2 px-1 font-medium transition-colors ${
-                activeTab === "past"
-                  ? "text-red-600 border-b-2 border-red-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Past ({pastAppointments.length})
-            </button>
-          </div>
-
-          {/* Appointments List */}
-          {loadingAppointments ? (
-            <div className="text-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto text-red-500" />
-              <p className="text-gray-500 mt-2">Loading appointments...</p>
+            <div className="flex gap-6 border-b border-gray-200 w-full">
+              <button
+                onClick={() => setActiveTab("appointments")}
+                className={`pb-3 px-2 font-semibold transition-colors text-base ${
+                  activeTab === "appointments"
+                    ? "text-red-600 border-b-2 border-red-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <Calendar className="w-5 h-5 inline mr-2" />
+                Appointments
+              </button>
+              <button
+                onClick={() => setActiveTab("prescriptions")}
+                className={`pb-3 px-2 font-semibold transition-colors text-base ${
+                  activeTab === "prescriptions"
+                    ? "text-red-600 border-b-2 border-red-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <Pill className="w-5 h-5 inline mr-2" />
+                Prescriptions
+              </button>
+              <button
+                onClick={() => setActiveTab("records")}
+                className={`pb-3 px-2 font-semibold transition-colors text-base ${
+                  activeTab === "records"
+                    ? "text-red-600 border-b-2 border-red-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <FileText className="w-5 h-5 inline mr-2" />
+                Medical Records
+              </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {activeTab === "upcoming" ? (
-                upcomingAppointments.length === 0 ? (
-                  <div className="col-span-2 text-center py-12 text-gray-500">
-                    <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No upcoming appointments</p>
-                    <button
-                      onClick={() => setShowNewAppointment(true)}
-                      className="mt-4 text-red-600 hover:underline"
-                    >
-                      Book your first appointment
-                    </button>
-                  </div>
-                ) : (
-                  upcomingAppointments.map((appointment) => (
-                    <AppointmentCard
-                      key={appointment.id}
-                      appointment={appointment}
-                      onUpdate={() => loadAppointments(user.id)}
-                    />
-                  ))
-                )
-              ) : pastAppointments.length === 0 ? (
-                <div className="col-span-2 text-center py-12 text-gray-500">
-                  <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p>No past appointments</p>
+            {activeTab === "appointments" && (
+              <button
+                onClick={() => setShowNewAppointment(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors whitespace-nowrap ml-4"
+              >
+                <Plus className="w-4 h-4" />
+                Book Appointment
+              </button>
+            )}
+          </div>
+
+          {/* Appointments Tab Content */}
+          {activeTab === "appointments" && (
+            <>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+                <div className="relative w-full sm:w-72">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={appointmentSearchTerm}
+                    onChange={(e) => setAppointmentSearchTerm(e.target.value)}
+                    placeholder="Search patient or doctor name"
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-200"
+                  />
+                </div>
+                {appointmentSubTab === "upcoming" && (
+                  <select
+                    aria-label="Filter upcoming appointments"
+                    value={upcomingAppointmentFilter}
+                    onChange={(e) =>
+                      setUpcomingAppointmentFilter(
+                        e.target.value as "all" | "telemedicine" | "in_person"
+                      )
+                    }
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200"
+                  >
+                    <option value="all">All Types</option>
+                    <option value="telemedicine">Telemedicine</option>
+                    <option value="in_person">In-person</option>
+                  </select>
+                )}
+                {appointmentSubTab === "past" && (
+                  <select
+                    aria-label="Filter past appointments"
+                    value={pastAppointmentFilter}
+                    onChange={(e) =>
+                      setPastAppointmentFilter(
+                        e.target.value as
+                          | "all"
+                          | "completed"
+                          | "cancelled"
+                          | "no_show"
+                      )
+                    }
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="no_show">No Show</option>
+                  </select>
+                )}
+              </div>
+              {/* Appointment Sub-Tabs */}
+              <div className="flex gap-4 border-b border-gray-200 mb-6">
+                <button
+                  onClick={() => setAppointmentSubTab("upcoming")}
+                  className={`pb-2 px-1 font-medium transition-colors ${
+                    appointmentSubTab === "upcoming"
+                      ? "text-red-600 border-b-2 border-red-600"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Upcoming ({filteredUpcomingAppointments.length})
+                </button>
+                <button
+                  onClick={() => setAppointmentSubTab("past")}
+                  className={`pb-2 px-1 font-medium transition-colors ${
+                    appointmentSubTab === "past"
+                      ? "text-red-600 border-b-2 border-red-600"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Past ({filteredPastAppointments.length})
+                </button>
+              </div>
+
+              {/* Appointments List */}
+              {loadingAppointments ? (
+                <div className="text-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-red-500" />
+                  <p className="text-gray-500 mt-2">Loading appointments...</p>
                 </div>
               ) : (
-                pastAppointments.map((appointment) => (
-                  <AppointmentCard
-                    key={appointment.id}
-                    appointment={appointment}
-                    onUpdate={() => loadAppointments(user.id)}
-                  />
-                ))
+                <div className="max-h-[32rem] overflow-y-auto pr-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {appointmentSubTab === "upcoming" ? (
+                      filteredUpcomingAppointments.length === 0 ? (
+                        <div className="col-span-2 text-center py-12 text-gray-500">
+                          <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                          <p>
+                            {upcomingAppointments.length === 0
+                              ? "No upcoming appointments"
+                              : "No appointments match your search or filters"}
+                          </p>
+                          {upcomingAppointments.length === 0 && (
+                            <button
+                              onClick={() => setShowNewAppointment(true)}
+                              className="mt-4 text-red-600 hover:underline"
+                            >
+                              Book your first appointment
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        filteredUpcomingAppointments.map((appointment) => (
+                          <AppointmentCard
+                            key={appointment.id}
+                            appointment={appointment}
+                            onUpdate={() => loadAppointments(user.id)}
+                          />
+                        ))
+                      )
+                    ) : filteredPastAppointments.length === 0 ? (
+                      <div className="col-span-2 text-center py-12 text-gray-500">
+                        <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p>
+                          {pastAppointments.length === 0
+                            ? "No past appointments"
+                            : "No appointments match your search or filters"}
+                        </p>
+                      </div>
+                    ) : (
+                      filteredPastAppointments.map((appointment) => (
+                        <AppointmentCard
+                          key={appointment.id}
+                          appointment={appointment}
+                          onUpdate={() => loadAppointments(user.id)}
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
               )}
-            </div>
+            </>
+          )}
+
+          {/* Prescriptions Tab Content */}
+          {activeTab === "prescriptions" && user && (
+            <PrescriptionsList patientId={user.id} />
+          )}
+
+          {/* Medical Records Tab Content */}
+          {activeTab === "records" && user && (
+            <MedicalRecordsList patientId={user.id} />
           )}
         </div>
 
@@ -252,7 +415,10 @@ export default function PatientDashboard() {
             <p className="text-gray-600 text-sm mb-4">
               Access your medical history and records
             </p>
-            <button className="text-red-600 font-medium text-sm hover:underline">
+            <button 
+              onClick={() => setActiveTab("records")}
+              className="text-red-600 font-medium text-sm hover:underline"
+            >
               View Records →
             </button>
           </div>

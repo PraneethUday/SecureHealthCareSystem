@@ -72,18 +72,6 @@ export interface Staff {
   updated_at?: string;
 }
 
-export interface MedicalRecord {
-  id?: string;
-  patient_id: string;
-  doctor_id?: string;
-  diagnosis?: string;
-  prescription?: string;
-  notes?: string;
-  visit_date?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
 export interface AccessLog {
   id?: string;
   user_role: string;
@@ -135,6 +123,10 @@ export interface Appointment {
   reason?: string;
   notes?: string;
   cancellation_reason?: string;
+  is_telemedicine?: boolean;
+  video_call_link?: string;
+  video_call_started_at?: string;
+  video_call_ended_at?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -167,4 +159,117 @@ export interface LoginCredentials {
   identifier: string;
   password: string;
   role: UserRole;
+}
+
+export interface Prescription {
+  id: string;
+  appointment_id?: string;
+  patient_id: string;
+  doctor_id: string;
+  medication_name: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  instructions?: string;
+  notes?: string;
+  prescribed_date: string;
+  start_date: string;
+  end_date?: string;
+  status: 'active' | 'completed' | 'discontinued';
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PrescriptionWithDetails extends Prescription {
+  doctor_name?: string;
+  doctor_specialization?: string;
+  patient_name?: string;
+}
+
+export interface PrescriptionLog {
+  id: string;
+  prescription_id: string;
+  action_type: 'created' | 'updated' | 'discontinued';
+  performed_by_user_id: string;
+  performed_by_role: string;
+  old_data?: Record<string, any>;
+  new_data?: Record<string, any>;
+  metadata?: Record<string, any>;
+  timestamp: string;
+}
+
+export interface VideoCallLog {
+  id: string;
+  appointment_id: string;
+  patient_id: string;
+  doctor_id: string;
+  call_started_at: string;
+  call_ended_at?: string;
+  duration_minutes?: number;
+  call_status?: 'completed' | 'interrupted' | 'failed';
+  quality_rating?: number;
+  metadata?: Record<string, any>;
+  created_at?: string;
+}
+
+export interface MedicalRecord {
+  id: string;
+  appointment_id?: string;
+  patient_id: string;
+  doctor_id: string;
+  
+  // Chief Complaint & Diagnosis
+  chief_complaint: string;
+  diagnosis: string;
+  
+  // Vital Signs
+  blood_pressure?: string;
+  heart_rate?: number;
+  temperature?: number;
+  weight?: number;
+  height?: number;
+  
+  // Clinical Notes
+  symptoms?: string;
+  examination_findings?: string;
+  treatment_plan?: string;
+  recommendations?: string;
+  follow_up_instructions?: string;
+  
+  // Lab Results & Tests
+  lab_results?: string;
+  test_results?: string;
+  
+  // Allergies & Medical History
+  allergies?: string;
+  current_medications?: string;
+  past_medical_history?: string;
+  
+  // Additional Information
+  notes?: string;
+  
+  // Metadata
+  record_date: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MedicalRecordWithDetails extends MedicalRecord {
+  doctor_name?: string;
+  doctor_specialization?: string;
+  patient_name?: string;
+  appointment_date?: string;
+  appointment_time?: string;
+}
+
+export interface MedicalRecordLog {
+  id: string;
+  medical_record_id: string;
+  action_type: 'created' | 'updated' | 'viewed' | 'downloaded';
+  performed_by_user_id: string;
+  performed_by_role: string;
+  old_data?: Record<string, any>;
+  new_data?: Record<string, any>;
+  metadata?: Record<string, any>;
+  timestamp: string;
 }

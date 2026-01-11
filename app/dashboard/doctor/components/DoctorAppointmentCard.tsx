@@ -10,28 +10,51 @@ import {
   Mail,
   CheckCircle,
   XCircle,
+  Video,
+  Pill,
 } from "lucide-react";
 import { AppointmentWithDetails } from "@/lib/database.types";
 import {
   completeAppointment,
   updateAppointmentStatus,
 } from "@/lib/appointments";
-import { useState } from "react";
+import { getAppointmentPrescriptionCount } from "@/lib/prescriptions";
+import { hasAppointmentMedicalRecord } from "@/lib/medicalRecords";
+import { useState, useEffect } from "react";
 
 interface DoctorAppointmentCardProps {
   appointment: AppointmentWithDetails;
   doctorId: string;
   onUpdate: () => void;
+  onStartVideoCall?: () => void;
+  onPrescribe?: () => void;
+  onCreateMedicalRecord?: () => void;
 }
 
 export default function DoctorAppointmentCard({
   appointment,
   doctorId,
   onUpdate,
+  onStartVideoCall,
+  onPrescribe,
+  onCreateMedicalRecord,
 }: DoctorAppointmentCardProps) {
   const [updating, setUpdating] = useState(false);
   const [showMarkComplete, setShowMarkComplete] = useState(false);
   const [showMarkNoShow, setShowMarkNoShow] = useState(false);
+  const [prescriptionCount, setPrescriptionCount] = useState<number>(0);
+  const [hasMedicalRecord, setHasMedicalRecord] = useState(false);
+
+  useEffect(() => {
+    async function loadData() {
+      const count = await getAppointmentPrescriptionCount(appointment.id);
+      setPrescriptionCount(count);
+      
+      const hasRecord = await hasAppointmentMedicalRecord(appointment.id);
+      setHasMedicalRecord(hasRecord);
+    }
+    loadData();
+  }, [appointment.id]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -55,6 +78,8 @@ export default function DoctorAppointmentCard({
     if (result.success) {
       setShowMarkComplete(false);
       onUpdate();
+    } else {
+      alert(`Error completing appointment: ${result.error || 'Unknown error'}`);
     }
   };
 
@@ -70,14 +95,20 @@ export default function DoctorAppointmentCard({
     if (result.success) {
       setShowMarkNoShow(false);
       onUpdate();
+    } else {
+      alert(`Error marking no-show: ${result.error || 'Unknown error'}`);
     }
   };
 
   const isScheduled = appointment.status === "scheduled";
+  const isCompleted = appointment.status === "completed";
   const appointmentDate = new Date(
     appointment.appointment_date + "T" + appointment.appointment_time
   );
   const isToday = new Date().toDateString() === appointmentDate.toDateString();
+  const showMedicalRecordButton =
+    Boolean(onCreateMedicalRecord) && (isToday || isCompleted);
+  const medicalRecordButtonDisabled = hasMedicalRecord;
 
   return (
     <div className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-blue-300 transition-all">
@@ -161,63 +192,157 @@ export default function DoctorAppointmentCard({
       )}
 
       {/* Actions */}
-      {isScheduled && (
+      {(isScheduled || isCompleted) && (
         <div className="pt-4 border-t border-gray-200 space-y-2">
-          {showMarkComplete ? (
-            <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
-              <span className="text-sm text-green-700">Mark as completed?</span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowMarkComplete(false)}
-                  className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleComplete}
-                  disabled={updating}
-                  className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
-                >
-                  {updating ? "Updating..." : "Confirm"}
-                </button>
-              </div>
+          {isCompleted && (
+            <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3">
+              Appointment marked as completed. Finalize the visit notes below.
             </div>
-          ) : showMarkNoShow ? (
-            <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-              <span className="text-sm text-gray-700">Mark as no-show?</span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowMarkNoShow(false)}
-                  className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleNoShow}
-                  disabled={updating}
-                  className="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50"
-                >
-                  {updating ? "Updating..." : "Confirm"}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex gap-2">
+          )}
+
+          {isScheduled && (
+            <>
+          {/* Video Call & Prescription buttons for telemedicine */}
+          {appointment.is_telemedicine && onStartVideoCall && onPrescribe && (
+            <div className="grid grid-cols-2 gap-3 mb-4">
               <button
-                onClick={() => setShowMarkComplete(true)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-green-600 border border-green-300 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium"
+                onClick={onStartVideoCall}
+                className="flex items-center justify-center gap-2 px-3 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all active:scale-95 text-sm font-semibold shadow-sm"
               >
-                <CheckCircle className="w-4 h-4" />
-                Complete
+                <Video className="w-4 h-4" />
+                <span>Video Call</span>
               </button>
               <button
-                onClick={() => setShowMarkNoShow(true)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                onClick={onPrescribe}
+                className={`flex items-center justify-center gap-2 px-3 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold shadow-sm ${
+                  prescriptionCount > 0
+                    ? "text-white bg-green-600 hover:bg-green-700"
+                    : "text-white bg-purple-600 hover:bg-purple-700"
+                }`}
               >
-                <XCircle className="w-4 h-4" />
-                No Show
+                {prescriptionCount > 0 ? (
+                  <>
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Prescribed</span>
+                  </>
+                ) : (
+                  <>
+                    <Pill className="w-4 h-4" />
+                    <span>Prescribe</span>
+                  </>
+                )}
               </button>
             </div>
+          )}
+
+          {/* For in-person appointments, show prescribe button only */}
+          {!appointment.is_telemedicine && isToday && onPrescribe && (
+            <button
+              onClick={onPrescribe}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm ${
+                prescriptionCount > 0
+                  ? "text-white bg-green-600 hover:bg-green-700"
+                  : "text-white bg-purple-600 hover:bg-purple-700"
+              }`}
+            >
+              {prescriptionCount > 0 ? (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Prescribed</span>
+                </>
+              ) : (
+                <>
+                  <Pill className="w-4 h-4" />
+                  <span>Prescribe</span>
+                </>
+              )}
+            </button>
+          )}
+            </>
+          )}
+
+          {/* Medical Record Button */}
+          {showMedicalRecordButton && (
+            <button
+              onClick={medicalRecordButtonDisabled ? undefined : onCreateMedicalRecord}
+              disabled={medicalRecordButtonDisabled}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm border-2 ${
+                medicalRecordButtonDisabled
+                  ? "text-green-600 bg-green-50 border-green-400 cursor-not-allowed opacity-70"
+                  : "text-blue-600 bg-blue-50 border-blue-400 hover:bg-blue-100"
+              }`}
+            >
+              {hasMedicalRecord ? (
+                <>
+                  <CheckCircle className="w-5 h-5" />
+                  <span>Medical Record Ready</span>
+                </>
+              ) : (
+                <>
+                  <FileText className="w-5 h-5" />
+                  <span>Create Medical Record</span>
+                </>
+              )}
+            </button>
+          )}
+
+          {isScheduled && (
+            showMarkComplete ? (
+              <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
+                <span className="text-sm text-green-700">Mark as completed?</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowMarkComplete(false)}
+                    className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleComplete}
+                    disabled={updating}
+                    className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+                  >
+                    {updating ? "Updating..." : "Confirm"}
+                  </button>
+                </div>
+              </div>
+            ) : showMarkNoShow ? (
+              <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                <span className="text-sm text-gray-700">Mark as no-show?</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowMarkNoShow(false)}
+                    className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleNoShow}
+                    disabled={updating}
+                    className="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50"
+                  >
+                    {updating ? "Updating..." : "Confirm"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setShowMarkComplete(true)}
+                  className="flex items-center justify-center gap-2 px-3 py-3 text-white bg-green-600 rounded-lg hover:bg-green-700 transition-all active:scale-95 text-sm font-semibold shadow-sm"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Complete</span>
+                </button>
+                <button
+                  onClick={() => setShowMarkNoShow(true)}
+                  className="flex items-center justify-center gap-2 px-3 py-3 text-white bg-gray-600 rounded-lg hover:bg-gray-700 transition-all active:scale-95 text-sm font-semibold shadow-sm"
+                >
+                  <XCircle className="w-4 h-4" />
+                  <span>No Show</span>
+                </button>
+              </div>
+            )
           )}
         </div>
       )}

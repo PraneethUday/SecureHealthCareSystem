@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, Clock, MapPin, User, X, Loader2 } from "lucide-react";
+import { Calendar, Clock, MapPin, User, X, Loader2, Video } from "lucide-react";
 import {
   getHospitals,
   getDoctors,
@@ -37,6 +37,7 @@ export default function NewAppointmentForm({
   const [selectedTime, setSelectedTime] = useState("");
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
+  const [isTelemedicine, setIsTelemedicine] = useState(false);
 
   // Load hospitals on mount
   useEffect(() => {
@@ -90,6 +91,7 @@ export default function NewAppointmentForm({
       appointmentTime: selectedTime,
       reason,
       notes,
+      isTelemedicine,
     });
 
     setLoading(false);
@@ -329,6 +331,37 @@ export default function NewAppointmentForm({
                 Appointment Details
               </h3>
 
+              {/* Telemedicine Toggle */}
+              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="telemedicine"
+                    checked={isTelemedicine}
+                    onChange={(e) => setIsTelemedicine(e.target.checked)}
+                    className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <div className="flex-1">
+                    <label
+                      htmlFor="telemedicine"
+                      className="font-semibold text-gray-800 flex items-center gap-2 cursor-pointer"
+                    >
+                      <Video className="w-5 h-5 text-blue-600" />
+                      Telemedicine (Video Consultation)
+                    </label>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Connect with your doctor via secure video call for quick consultations, 
+                      follow-ups, or minor health concerns. Ideal for non-emergency situations.
+                    </p>
+                    {isTelemedicine && (
+                      <div className="mt-2 text-xs text-blue-700 bg-blue-100 px-3 py-2 rounded">
+                        ✓ Video call link will be provided before your appointment
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Reason for Visit{" "}
@@ -363,6 +396,22 @@ export default function NewAppointmentForm({
                   Appointment Summary
                 </h4>
                 <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Type:</span>
+                    <span className="font-medium flex items-center gap-1">
+                      {isTelemedicine ? (
+                        <>
+                          <Video className="w-4 h-4 text-blue-600" />
+                          <span className="text-blue-600">Telemedicine</span>
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="w-4 h-4 text-gray-600" />
+                          In-Person
+                        </>
+                      )}
+                    </span>
+                  </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Hospital:</span>
                     <span className="font-medium">

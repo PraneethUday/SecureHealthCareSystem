@@ -1,9 +1,10 @@
 "use client";
 
-import { Calendar, Clock, MapPin, User, FileText, X } from "lucide-react";
+import { Calendar, Clock, MapPin, User, FileText, X, CheckCircle, Pill } from "lucide-react";
 import { AppointmentWithDetails } from "@/lib/database.types";
 import { cancelAppointment } from "@/lib/appointments";
-import { useState } from "react";
+import { getAppointmentPrescriptionCount } from "@/lib/prescriptions";
+import { useState, useEffect } from "react";
 
 interface AppointmentCardProps {
   appointment: AppointmentWithDetails;
@@ -16,6 +17,15 @@ export default function AppointmentCard({
 }: AppointmentCardProps) {
   const [cancelling, setCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [prescriptionCount, setPrescriptionCount] = useState<number>(0);
+
+  useEffect(() => {
+    async function loadPrescriptionCount() {
+      const count = await getAppointmentPrescriptionCount(appointment.id);
+      setPrescriptionCount(count);
+    }
+    loadPrescriptionCount();
+  }, [appointment.id]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -56,22 +66,42 @@ export default function AppointmentCard({
     <div className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-red-300 transition-all">
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-2">
             <User className="w-5 h-5 text-red-500" />
             Dr. {appointment.doctor_name}
           </h3>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-gray-600 mb-2">
             {appointment.hospital_name}
           </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                appointment.status
+              )}`}
+            >
+              {appointment.status.charAt(0).toUpperCase() +
+                appointment.status.slice(1).replace("_", " ")}
+            </span>
+            {prescriptionCount > 0 && (
+              <span className="px-3 py-1 rounded-full text-xs font-medium border bg-green-100 text-green-800 border-green-200 flex items-center gap-1.5">
+                <CheckCircle className="w-3.5 h-3.5" />
+                {prescriptionCount} Medication{prescriptionCount > 1 ? 's' : ''} Prescribed
+              </span>
+            )}
+          </div>
         </div>
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-            appointment.status
-          )}`}
-        >
-          {appointment.status.replace("_", " ").toUpperCase()}
-        </span>
+
+        {/* Cancel Button */}
+        {canCancel && (
+          <button
+            onClick={() => setShowCancelConfirm(true)}
+            className="text-red-600 hover:text-red-800 transition-colors"
+            title="Cancel appointment"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Date & Time */}

@@ -82,8 +82,11 @@ export async function createAppointment(appointmentData: {
   appointmentTime: string;
   reason?: string;
   notes?: string;
+  isTelemedicine?: boolean;
 }): Promise<{ success: boolean; appointment?: Appointment; error?: string }> {
   try {
+    console.log("Creating appointment with data:", appointmentData);
+
     const { data, error } = await supabase
       .from("appointments")
       .insert({
@@ -94,6 +97,7 @@ export async function createAppointment(appointmentData: {
         appointment_time: appointmentData.appointmentTime,
         reason: appointmentData.reason,
         notes: appointmentData.notes,
+        is_telemedicine: appointmentData.isTelemedicine || false,
         status: "scheduled",
       })
       .select()
@@ -101,13 +105,21 @@ export async function createAppointment(appointmentData: {
 
     if (error) {
       console.error("Error creating appointment:", error);
-      return { success: false, error: error.message };
+      const errorMessage = error.message || error.details || JSON.stringify(error);
+      return { success: false, error: `Failed to create appointment: ${errorMessage}` };
     }
 
+    if (!data) {
+      return { success: false, error: "No data returned from insert" };
+    }
+
+    console.log("Appointment created successfully:", data);
+
     // Log the appointment creation
-    await supabase.from("appointment_logs").insert({
+    const actionType: 'created' = 'created';
+    const logResult = await supabase.from("appointment_logs").insert({
       appointment_id: data.id,
-      action_type: "created",
+      action_type: actionType,
       performed_by_user_id: appointmentData.patientId,
       performed_by_role: "patient",
       new_status: "scheduled",
@@ -119,9 +131,15 @@ export async function createAppointment(appointmentData: {
       },
     });
 
+    if (logResult.error) {
+      console.error("Error logging appointment creation:", logResult.error);
+    }
+
     return { success: true, appointment: data };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    console.error("Caught error in createAppointment:", error);
+    const errorMessage = error.message || error.toString() || "Unknown error occurred";
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -214,40 +232,70 @@ export async function updateAppointmentStatus(
   status: AppointmentStatus,
   userId?: string,
   cancellationReason?: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; data?: any }> {
   try {
+    console.log("Updating appointment:", { appointmentId, status, userId });
+
     // Get current appointment to log the change
-    const { data: currentAppointment } = await supabase
+    const { data: currentAppointment, error: fetchError } = await supabase
       .from("appointments")
-      .select("status")
+      .select("*")
       .eq("id", appointmentId)
       .single();
 
-    const updateData: any = { status };
+    if (fetchError) {
+      console.error("Error fetching appointment:", fetchError);
+      return { success: false, error: `Failed to fetch appointment: ${fetchError.message || JSON.stringify(fetchError)}` };
+    }
+
+    if (!currentAppointment) {
+      return { success: false, error: "Appointment not found" };
+    }
+
+    const updateData: any = { 
+      status,
+      updated_at: new Date().toISOString()
+    };
     if (cancellationReason) {
       updateData.cancellation_reason = cancellationReason;
     }
 
-    const { error } = await supabase
+    console.log("Update data:", updateData);
+
+    const { data: updatedData, error } = await supabase
       .from("appointments")
       .update(updateData)
-      .eq("id", appointmentId);
+      .eq("id", appointmentId)
+      .select()
+      .single();
 
     if (error) {
       console.error("Error updating appointment:", error);
-      return { success: false, error: error.message };
+      const errorMessage = error.message || error.details || JSON.stringify(error);
+      return { success: false, error: `Failed to update appointment: ${errorMessage}` };
     }
+
+    if (!updatedData) {
+      return { success: false, error: "No data returned from update" };
+    }
+
+    console.log("Update successful:", updatedData);
 
     // Log the status change if userId provided
     if (userId && currentAppointment) {
-      await supabase.from("appointment_logs").insert({
+      // Determine action type based on status change
+      let actionType: 'created' | 'updated' | 'cancelled' | 'completed' | 'rescheduled';
+      if (status === "cancelled") {
+        actionType = "cancelled";
+      } else if (status === "completed") {
+        actionType = "completed";
+      } else {
+        actionType = "updated";
+      }
+
+      const logResult = await supabase.from("appointment_logs").insert({
         appointment_id: appointmentId,
-        action_type:
-          status === "cancelled"
-            ? "cancelled"
-            : status === "completed"
-            ? "completed"
-            : "updated",
+        action_type: actionType,
         performed_by_user_id: userId,
         performed_by_role: status === "cancelled" ? "patient" : "doctor",
         old_status: currentAppointment.status,
@@ -256,11 +304,17 @@ export async function updateAppointmentStatus(
           ? { reason: cancellationReason }
           : undefined,
       });
+
+      if (logResult.error) {
+        console.error("Error logging appointment change:", logResult.error);
+      }
     }
 
-    return { success: true };
+    return { success: true, data: updatedData };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    console.error("Caught error in updateAppointmentStatus:", error);
+    const errorMessage = error.message || error.toString() || "Unknown error occurred";
+    return { success: false, error: errorMessage };
   }
 }
 

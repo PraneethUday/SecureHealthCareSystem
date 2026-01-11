@@ -13,8 +13,12 @@ import {
   FileText,
   LogOut,
   Loader2,
+  Search,
 } from "lucide-react";
 import DoctorAppointmentCard from "./components/DoctorAppointmentCard";
+import VideoCallInterface from "../components/VideoCallInterface";
+import PrescriptionForm from "./components/PrescriptionForm";
+import MedicalRecordForm from "./components/MedicalRecordForm";
 
 export default function DoctorDashboard() {
   const router = useRouter();
@@ -26,6 +30,19 @@ export default function DoctorDashboard() {
   const [activeTab, setActiveTab] = useState<"today" | "upcoming" | "past">(
     "today"
   );
+  const [selectedAppointmentForVideo, setSelectedAppointmentForVideo] =
+    useState<AppointmentWithDetails | null>(null);
+  const [selectedAppointmentForPrescription, setSelectedAppointmentForPrescription] =
+    useState<AppointmentWithDetails | null>(null);
+  const [selectedAppointmentForMedicalRecord, setSelectedAppointmentForMedicalRecord] =
+    useState<AppointmentWithDetails | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [upcomingFilter, setUpcomingFilter] = useState<
+    "all" | "telemedicine" | "in_person"
+  >("all");
+  const [pastFilter, setPastFilter] = useState<
+    "all" | "completed" | "cancelled" | "no_show"
+  >("all");
 
   useEffect(() => {
     const session = getSession();
@@ -82,6 +99,40 @@ export default function DoctorDashboard() {
       new Date(apt.appointment_date + "T" + apt.appointment_time) <
         new Date() || apt.status !== "scheduled"
   );
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const matchesSearch = (apt: AppointmentWithDetails) => {
+    if (!normalizedSearch) return true;
+    const haystack = [
+      apt.patient_name,
+      apt.hospital_name,
+      apt.reason || "",
+    ]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(normalizedSearch);
+  };
+
+  const filteredTodayAppointments = todayAppointments.filter(matchesSearch);
+
+  const filteredUpcomingAppointments = upcomingAppointments.filter((apt) => {
+    if (!matchesSearch(apt)) return false;
+    if (upcomingFilter === "telemedicine") {
+      return apt.is_telemedicine;
+    }
+    if (upcomingFilter === "in_person") {
+      return !apt.is_telemedicine;
+    }
+    return true;
+  });
+
+  const filteredPastAppointments = pastAppointments.filter((apt) => {
+    if (!matchesSearch(apt)) return false;
+    if (pastFilter === "all") {
+      return true;
+    }
+    return apt.status === pastFilter;
+  });
 
   if (!user) return null;
 
@@ -152,13 +203,64 @@ export default function DoctorDashboard() {
 
         {/* Appointments Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">
-              My Appointments
-            </h2>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Calendar className="w-4 h-4" />
-              <span>Total: {appointments.length}</span>
+          <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-800">
+                My Appointments
+              </h2>
+              <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
+                <Calendar className="w-4 h-4" />
+                <span>Total: {appointments.length}</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="relative w-full sm:w-64">
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search patient name"
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                />
+              </div>
+              {activeTab === "upcoming" && (
+                <select
+                  aria-label="Filter upcoming appointments"
+                  value={upcomingFilter}
+                  onChange={(e) =>
+                    setUpcomingFilter(
+                      e.target.value as "all" | "telemedicine" | "in_person"
+                    )
+                  }
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                >
+                  <option value="all">All Types</option>
+                  <option value="telemedicine">Telemedicine</option>
+                  <option value="in_person">In-person</option>
+                </select>
+              )}
+              {activeTab === "past" && (
+                <select
+                  aria-label="Filter past appointments"
+                  value={pastFilter}
+                  onChange={(e) =>
+                    setPastFilter(
+                      e.target.value as
+                        | "all"
+                        | "completed"
+                        | "cancelled"
+                        | "no_show"
+                    )
+                  }
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="no_show">No Show</option>
+                </select>
+              )}
             </div>
           </div>
 
@@ -172,7 +274,7 @@ export default function DoctorDashboard() {
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              Today ({todayAppointments.length})
+              Today ({filteredTodayAppointments.length})
             </button>
             <button
               onClick={() => setActiveTab("upcoming")}
@@ -182,7 +284,7 @@ export default function DoctorDashboard() {
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              Upcoming ({upcomingAppointments.length})
+              Upcoming ({filteredUpcomingAppointments.length})
             </button>
             <button
               onClick={() => setActiveTab("past")}
@@ -192,7 +294,7 @@ export default function DoctorDashboard() {
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              Past ({pastAppointments.length})
+              Past ({filteredPastAppointments.length})
             </button>
           </div>
 
@@ -203,54 +305,89 @@ export default function DoctorDashboard() {
               <p className="text-gray-500 mt-2">Loading appointments...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {activeTab === "today" ? (
-                todayAppointments.length === 0 ? (
+            <div className="max-h-[32rem] overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {activeTab === "today" ? (
+                  filteredTodayAppointments.length === 0 ? (
+                    <div className="col-span-full text-center py-12 text-gray-500">
+                      <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p>
+                        {todayAppointments.length === 0
+                          ? "No appointments today"
+                          : "No appointments match your search"}
+                      </p>
+                    </div>
+                  ) : (
+                    filteredTodayAppointments.map((appointment) => (
+                      <DoctorAppointmentCard
+                        key={appointment.id}
+                        appointment={appointment}
+                        doctorId={user.id}
+                        onUpdate={() => loadAppointments(user.id)}
+                        onStartVideoCall={() => setSelectedAppointmentForVideo(appointment)}
+                        onPrescribe={() =>
+                          setSelectedAppointmentForPrescription(appointment)
+                        }
+                        onCreateMedicalRecord={() =>
+                          setSelectedAppointmentForMedicalRecord(appointment)
+                        }
+                      />
+                    ))
+                  )
+                ) : activeTab === "upcoming" ? (
+                  filteredUpcomingAppointments.length === 0 ? (
+                    <div className="col-span-full text-center py-12 text-gray-500">
+                      <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p>
+                        {upcomingAppointments.length === 0
+                          ? "No upcoming appointments"
+                          : "No appointments match your filters"}
+                      </p>
+                    </div>
+                  ) : (
+                    filteredUpcomingAppointments.map((appointment) => (
+                      <DoctorAppointmentCard
+                        key={appointment.id}
+                        appointment={appointment}
+                        doctorId={user.id}
+                        onUpdate={() => loadAppointments(user.id)}
+                        onStartVideoCall={() => setSelectedAppointmentForVideo(appointment)}
+                        onPrescribe={() =>
+                          setSelectedAppointmentForPrescription(appointment)
+                        }
+                        onCreateMedicalRecord={() =>
+                          setSelectedAppointmentForMedicalRecord(appointment)
+                        }
+                      />
+                    ))
+                  )
+                ) : filteredPastAppointments.length === 0 ? (
                   <div className="col-span-full text-center py-12 text-gray-500">
-                    <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No appointments today</p>
+                    <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p>
+                      {pastAppointments.length === 0
+                        ? "No past appointments"
+                        : "No appointments match your filters"}
+                    </p>
                   </div>
                 ) : (
-                  todayAppointments.map((appointment) => (
+                  filteredPastAppointments.map((appointment) => (
                     <DoctorAppointmentCard
                       key={appointment.id}
                       appointment={appointment}
                       doctorId={user.id}
                       onUpdate={() => loadAppointments(user.id)}
+                      onStartVideoCall={() => setSelectedAppointmentForVideo(appointment)}
+                      onPrescribe={() =>
+                        setSelectedAppointmentForPrescription(appointment)
+                      }
+                      onCreateMedicalRecord={() =>
+                        setSelectedAppointmentForMedicalRecord(appointment)
+                      }
                     />
                   ))
-                )
-              ) : activeTab === "upcoming" ? (
-                upcomingAppointments.length === 0 ? (
-                  <div className="col-span-full text-center py-12 text-gray-500">
-                    <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No upcoming appointments</p>
-                  </div>
-                ) : (
-                  upcomingAppointments.map((appointment) => (
-                    <DoctorAppointmentCard
-                      key={appointment.id}
-                      appointment={appointment}
-                      doctorId={user.id}
-                      onUpdate={() => loadAppointments(user.id)}
-                    />
-                  ))
-                )
-              ) : pastAppointments.length === 0 ? (
-                <div className="col-span-full text-center py-12 text-gray-500">
-                  <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p>No past appointments</p>
-                </div>
-              ) : (
-                pastAppointments.map((appointment) => (
-                  <DoctorAppointmentCard
-                    key={appointment.id}
-                    appointment={appointment}
-                    doctorId={user.id}
-                    onUpdate={() => loadAppointments(user.id)}
-                  />
-                ))
-              )}
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -298,6 +435,48 @@ export default function DoctorDashboard() {
           </div>
         </div>
       </main>
+
+      {/* Video Call Modal */}
+      {selectedAppointmentForVideo && (
+        <VideoCallInterface
+          appointment={selectedAppointmentForVideo}
+          userId={user.id}
+          userRole="doctor"
+          onClose={() => setSelectedAppointmentForVideo(null)}
+          onCallEnded={() => {
+            setSelectedAppointmentForVideo(null);
+            loadAppointments(user.id);
+          }}
+        />
+      )}
+
+      {/* Prescription Modal */}
+      {selectedAppointmentForPrescription && (
+        <PrescriptionForm
+          appointment={selectedAppointmentForPrescription}
+          doctorId={user.id}
+          onClose={() => setSelectedAppointmentForPrescription(null)}
+          onSuccess={() => {
+            setSelectedAppointmentForPrescription(null);
+            loadAppointments(user.id);
+            alert("Prescription issued successfully!");
+          }}
+        />
+      )}
+
+      {/* Medical Record Modal */}
+      {selectedAppointmentForMedicalRecord && (
+        <MedicalRecordForm
+          appointment={selectedAppointmentForMedicalRecord}
+          doctorId={user.id}
+          onClose={() => setSelectedAppointmentForMedicalRecord(null)}
+          onSuccess={() => {
+            setSelectedAppointmentForMedicalRecord(null);
+            loadAppointments(user.id);
+            alert("Medical record created successfully!");
+          }}
+        />
+      )}
     </div>
   );
 }

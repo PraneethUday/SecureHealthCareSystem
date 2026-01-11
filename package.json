@@ -8,12 +8,15 @@
     "start": "next start",
     "lint": "next lint",
     "setup-db": "ts-node scripts/setup-database.ts",
-    "update-passwords": "ts-node scripts/update-passwords.ts"
+    "check-schema": "ts-node scripts/check-schema.ts",
+    "test-db": "ts-node scripts/test-database.ts",
+    "test-appointments": "ts-node scripts/test-appointments.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
+    "jspdf": "^4.0.0",
     "lucide-react": "^0.462.0",
     "next": "^15.1.6",
     "react": "^18.3.1",
