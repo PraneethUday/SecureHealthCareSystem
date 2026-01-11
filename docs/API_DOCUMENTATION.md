@@ -15,7 +15,7 @@ Sessions are managed via HTTP-only cookies stored after successful login.
 
 // Get current session
 export function getSession(): Session | null {
-  const cookies = document.cookie.split(';');
+  const cookies = document.cookie.split(";");
   // Returns { user: { id, email, role }, role }
 }
 
@@ -24,7 +24,7 @@ export async function checkSession(req: NextRequest): Promise<{
   isAuthenticated: boolean;
   user?: User;
   role?: string;
-}>
+}>;
 ```
 
 ### User Roles
@@ -43,6 +43,7 @@ export async function checkSession(req: NextRequest): Promise<{
 Register a new patient account.
 
 **Request Body:**
+
 ```json
 {
   "email": "patient@example.com",
@@ -57,6 +58,7 @@ Register a new patient account.
 ```
 
 **Response (Success - 200):**
+
 ```json
 {
   "success": true,
@@ -66,6 +68,7 @@ Register a new patient account.
 ```
 
 **Response (Error - 400/500):**
+
 ```json
 {
   "success": false,
@@ -74,6 +77,7 @@ Register a new patient account.
 ```
 
 **Validation Rules:**
+
 - Email: Valid email format
 - Password: Minimum 8 characters
 - Full Name: Required
@@ -104,23 +108,26 @@ async function createVideoCall(
   patientId: string,
   doctorId: string,
   userRole: string
-): Promise<CreateVideoCallResult>
+): Promise<CreateVideoCallResult>;
 ```
 
 Creates a new video call record and associates it with an appointment.
 
 **Parameters:**
+
 - `appointmentId`: UUID of the appointment
 - `patientId`: UUID of the patient
 - `doctorId`: UUID of the doctor
 - `userRole`: Role of the user creating the call
 
 **Returns:**
+
 - `success`: Boolean indicating operation success
 - `videoCallId`: UUID of created call (if successful)
 - `error`: Error message (if failed)
 
 **Database Record Created:**
+
 ```sql
 INSERT INTO video_calls (
   appointment_id,
@@ -147,15 +154,16 @@ interface UpdateCallStatusResult {
 
 async function updateCallStatus(
   callId: string,
-  status: 'calling' | 'accepted' | 'in-progress' | 'ended' | 'rejected',
+  status: "calling" | "accepted" | "in-progress" | "ended" | "rejected",
   userId: string,
   userRole: string
-): Promise<UpdateCallStatusResult>
+): Promise<UpdateCallStatusResult>;
 ```
 
 Updates the status of an existing video call.
 
 **Status Transitions:**
+
 - `calling` → `accepted` (when doctor accepts)
 - `accepted` → `in-progress` (when connection established)
 - `in-progress` → `ended` (when call ends)
@@ -164,12 +172,13 @@ Updates the status of an existing video call.
 #### End Video Call
 
 ```typescript
-async function endVideoCall(callId: string): Promise<void>
+async function endVideoCall(callId: string): Promise<void>;
 ```
 
 Ends an active video call and updates the database.
 
 **Actions:**
+
 - Sets status to 'ended'
 - Records ended_at timestamp
 - Closes signaling channel
@@ -184,7 +193,7 @@ interface SignalingMessage {
   fromUserId: string;
   fromUserRole: string;
   toUserId: string;
-  signalType: 'offer' | 'answer' | 'ice-candidate';
+  signalType: "offer" | "answer" | "ice-candidate";
   signalData: any;
 }
 
@@ -195,7 +204,7 @@ async function sendSignalingMessage(
   toUserId: string,
   signalType: string,
   signalData: any
-): Promise<void>
+): Promise<void>;
 ```
 
 Sends WebRTC signaling data between peers.
@@ -203,6 +212,7 @@ Sends WebRTC signaling data between peers.
 **Signal Types:**
 
 1. **offer**: SDP offer from caller (patient)
+
    ```json
    {
      "type": "offer",
@@ -211,6 +221,7 @@ Sends WebRTC signaling data between peers.
    ```
 
 2. **answer**: SDP answer from callee (doctor)
+
    ```json
    {
      "type": "answer",
@@ -232,7 +243,7 @@ Sends WebRTC signaling data between peers.
 ```typescript
 async function getRecentSignalingMessages(
   callId: string
-): Promise<VideoCallSignalingMessage[]>
+): Promise<VideoCallSignalingMessage[]>;
 ```
 
 Retrieves recent signaling messages for a call (used when doctor joins).
@@ -246,7 +257,7 @@ function subscribeToSignalingMessages(
   callId: string,
   onMessage: (message: VideoCallSignalingMessage) => void,
   onError?: (error: Error) => void
-): () => void
+): () => void;
 ```
 
 Subscribes to real-time signaling messages via Supabase Realtime.
@@ -254,16 +265,17 @@ Subscribes to real-time signaling messages via Supabase Realtime.
 **Returns:** Unsubscribe function
 
 **Usage:**
+
 ```typescript
 const unsubscribe = subscribeToSignalingMessages(
   callId,
   (message) => {
-    if (message.signal_type === 'offer') {
+    if (message.signal_type === "offer") {
       // Handle offer
     }
   },
   (error) => {
-    console.error('Signaling error:', error);
+    console.error("Signaling error:", error);
   }
 );
 
@@ -278,7 +290,7 @@ function subscribeToIncomingCalls(
   doctorId: string,
   onCall: (call: VideoCall) => void,
   onError?: (error: Error) => void
-): () => void
+): () => void;
 ```
 
 Subscribes doctor to real-time notifications of incoming calls.
@@ -300,6 +312,7 @@ const DEFAULT_STUN_SERVERS = [
 ```
 
 Custom TURN server can be configured via environment variables:
+
 ```env
 NEXT_PUBLIC_TURN_SERVER=turn:your-turn-server.com:3478
 NEXT_PUBLIC_TURN_USERNAME=username
@@ -468,6 +481,7 @@ See [Video Call System Documentation](VIDEO_CALL_SYSTEM.md) for comprehensive te
 ## Monitoring
 
 Recommended monitoring:
+
 - API response times
 - Error rates per endpoint
 - WebRTC connection success rate
@@ -477,6 +491,7 @@ Recommended monitoring:
 ## Future API Endpoints
 
 Planned additions:
+
 - [ ] GET `/api/appointments` - List appointments
 - [ ] POST `/api/appointments` - Create appointment
 - [ ] GET `/api/medical-records/:patientId` - Get records

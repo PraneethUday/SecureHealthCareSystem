@@ -16,7 +16,9 @@ The Secure Healthcare System includes a complete WebRTC-powered video calling sy
 ### Components
 
 #### 1. **useWebRTC Hook** (`hooks/useWebRTC.ts`)
+
 Central hook managing the entire video call lifecycle:
+
 - Media device access (camera/microphone)
 - WebRTC peer connection management
 - Signaling message handling
@@ -24,7 +26,9 @@ Central hook managing the entire video call lifecycle:
 - Audio/video controls
 
 #### 2. **PeerConnection Class** (`lib/webrtc-peer-connection.ts`)
+
 Low-level WebRTC wrapper:
+
 - RTCPeerConnection lifecycle management
 - Local/remote stream handling
 - SDP offer/answer creation
@@ -32,13 +36,16 @@ Low-level WebRTC wrapper:
 - Media device enumeration and access
 
 #### 3. **Signaling Service** (`lib/webrtc-signaling.ts`)
+
 Handles communication via Supabase:
+
 - Creates video call records
 - Sends/receives signaling messages (offer/answer/ICE)
 - Subscribes to real-time updates
 - Manages call status updates
 
 #### 4. **UI Components**
+
 - **Patient Call Start Page** (`app/dashboard/call/start/page.tsx`): Initiates calls with camera permissions
 - **Doctor Call Page** (`app/dashboard/components/CallPage.tsx`): Accepts and manages incoming calls
 - **Incoming Call Modal** (`app/dashboard/doctor/components/IncomingCallModal.tsx`): Real-time notification system
@@ -48,6 +55,7 @@ Handles communication via Supabase:
 ### Tables
 
 #### `video_calls`
+
 Stores call metadata and status.
 
 ```sql
@@ -64,6 +72,7 @@ CREATE TABLE video_calls (
 ```
 
 #### `video_call_signaling`
+
 Stores WebRTC signaling messages (SDP offers/answers and ICE candidates).
 
 ```sql
@@ -181,13 +190,14 @@ const devices = await navigator.mediaDevices.enumerateDevices();
 // Requests appropriate permissions
 const constraints = {
   audio: { echoCancellation: true, noiseSuppression: true },
-  video: { width: { ideal: 1280 }, height: { ideal: 720 } }
+  video: { width: { ideal: 1280 }, height: { ideal: 720 } },
 };
 
 const stream = await navigator.mediaDevices.getUserMedia(constraints);
 ```
 
 **Error Handling**:
+
 - Permission denied: Clear message to user
 - No devices found: Prompts to connect camera/mic
 - Device already in use: Attempts to reuse existing stream
@@ -200,14 +210,18 @@ Instead of WebSockets, uses Supabase Realtime:
 // Subscribe to incoming messages
 const subscription = supabase
   .channel(`call:${callId}`)
-  .on('postgres_changes', {
-    event: 'INSERT',
-    schema: 'public',
-    table: 'video_call_signaling',
-    filter: `call_id=eq.${callId}`
-  }, (payload) => {
-    handleSignalingMessage(payload.new);
-  })
+  .on(
+    "postgres_changes",
+    {
+      event: "INSERT",
+      schema: "public",
+      table: "video_call_signaling",
+      filter: `call_id=eq.${callId}`,
+    },
+    (payload) => {
+      handleSignalingMessage(payload.new);
+    }
+  )
   .subscribe();
 ```
 
@@ -218,11 +232,18 @@ Critical timing fix - ICE handlers are set up BEFORE creating offers/answers:
 ```typescript
 // Patient side - BEFORE creating offer
 peerConnection.onIceCandidateHandler(async (candidate) => {
-  await sendSignalingMessage(callId, userId, userRole, doctorId, 'ice-candidate', {
-    candidate: candidate.candidate,
-    sdpMLineIndex: candidate.sdpMLineIndex,
-    sdpMid: candidate.sdpMid,
-  });
+  await sendSignalingMessage(
+    callId,
+    userId,
+    userRole,
+    doctorId,
+    "ice-candidate",
+    {
+      candidate: candidate.candidate,
+      sdpMLineIndex: candidate.sdpMLineIndex,
+      sdpMid: candidate.sdpMid,
+    }
+  );
 });
 
 const offer = await peerConnection.createOffer(); // ICE candidates generated immediately
@@ -233,9 +254,9 @@ const offer = await peerConnection.createOffer(); // ICE candidates generated im
 ```typescript
 peerConnection.onConnectionStateChange((state) => {
   // States: new, connecting, connected, disconnected, failed, closed
-  if (state === 'connected') {
+  if (state === "connected") {
     // Peer-to-peer connection established
-    setState({ isConnected: true, callStatus: 'in-progress' });
+    setState({ isConnected: true, callStatus: "in-progress" });
   }
 });
 ```
@@ -253,12 +274,14 @@ peerConnection.onConnectionStateChange((state) => {
 **Critical**: Realtime must be enabled for call notifications to work.
 
 #### Via Supabase Dashboard:
+
 1. Go to Database → Replication
 2. Enable Realtime for these tables:
    - `video_calls`
    - `video_call_signaling`
 
 #### Via SQL:
+
 ```sql
 -- Enable Realtime for video calls
 ALTER PUBLICATION supabase_realtime ADD TABLE video_calls;
@@ -270,6 +293,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE video_call_signaling;
 No additional environment variables required for basic functionality.
 
 **Optional** - For TURN server support (bypassing restrictive firewalls):
+
 ```env
 NEXT_PUBLIC_TURN_SERVER=turn:your-turn-server.com:3478
 NEXT_PUBLIC_TURN_USERNAME=username
@@ -279,11 +303,13 @@ NEXT_PUBLIC_TURN_PASSWORD=password
 ### 3. Database Schema
 
 Run the WebRTC schema migration:
+
 ```bash
 npm run setup:webrtc
 ```
 
 Or manually execute:
+
 ```sql
 -- See supabase/webrtc-schema.sql
 ```
@@ -291,6 +317,7 @@ Or manually execute:
 ## Testing the System
 
 ### Prerequisites
+
 - Two separate browsers or devices
 - Camera and microphone on both
 - Patient and doctor accounts
@@ -298,6 +325,7 @@ Or manually execute:
 ### Test Steps
 
 1. **Login as Patient**
+
    - Navigate to dashboard
    - Find an appointment with a doctor
    - Click "Start Video Call"
@@ -305,6 +333,7 @@ Or manually execute:
    - **Expect**: After granting, see your own video
 
 2. **Login as Doctor** (different browser/device)
+
    - Navigate to dashboard
    - **Expect**: Modal pops up showing incoming call
    - Click "Accept"
@@ -312,6 +341,7 @@ Or manually execute:
    - **Expect**: After granting, see both videos (yours and patient's)
 
 3. **Verify Connection**
+
    - **Patient side**: Status changes from "Calling..." to "Connected"
    - **Doctor side**: Status shows "Connected" with call duration timer
    - **Both sides**: Can see and hear each other
@@ -327,7 +357,8 @@ Or manually execute:
 
 **Cause**: Supabase Realtime not enabled
 
-**Solution**: 
+**Solution**:
+
 ```sql
 ALTER PUBLICATION supabase_realtime ADD TABLE video_calls;
 ALTER PUBLICATION supabase_realtime ADD TABLE video_call_signaling;
@@ -338,11 +369,13 @@ ALTER PUBLICATION supabase_realtime ADD TABLE video_call_signaling;
 **Cause**: ICE candidates not being exchanged
 
 **Symptoms**:
+
 - Local video works on both sides
 - Status stays "Connecting..." or "Calling..."
 - Never reaches "Connected"
 
 **Debug**:
+
 1. Check browser console for "🧊 Processing ICE candidate" messages
 2. Verify ICE handlers are set up before offer/answer creation
 3. Check Supabase Realtime subscription is active
@@ -354,6 +387,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE video_call_signaling;
 **Cause**: Browser permissions blocked
 
 **Solution**:
+
 1. Click lock icon in browser address bar
 2. Allow camera and microphone
 3. Refresh page and try again
@@ -361,11 +395,13 @@ ALTER PUBLICATION supabase_realtime ADD TABLE video_call_signaling;
 ### Issue: "No video showing" on patient side
 
 **Debug**:
+
 1. Check console for "✅ Camera and microphone access granted!"
 2. Verify stream tracks: `video: 1, audio: 1`
 3. Check "✅ Local stream attached to video element"
 
 **Common Causes**:
+
 - Stream not attached to video element
 - `autoPlay` blocked by browser
 - Video element missing `playsInline` attribute
@@ -373,11 +409,13 @@ ALTER PUBLICATION supabase_realtime ADD TABLE video_call_signaling;
 ### Issue: "Remote video not showing"
 
 **Debug**:
+
 1. Check console for "📹 Remote stream received"
 2. Verify connection state reaches "connected"
 3. Check ICE candidates are being processed
 
 **Common Causes**:
+
 - Connection not established (stuck in connecting state)
 - Missing ICE candidates
 - STUN server connectivity issues
@@ -387,28 +425,31 @@ ALTER PUBLICATION supabase_realtime ADD TABLE video_call_signaling;
 ### Video Quality
 
 Default constraints:
+
 ```typescript
-video: { 
-  width: { ideal: 1280 }, 
-  height: { ideal: 720 } 
+video: {
+  width: { ideal: 1280 },
+  height: { ideal: 720 }
 }
 ```
 
 For lower bandwidth:
+
 ```typescript
-video: { 
-  width: { ideal: 640 }, 
-  height: { ideal: 480 } 
+video: {
+  width: { ideal: 640 },
+  height: { ideal: 480 }
 }
 ```
 
 ### Audio Quality
 
 Default settings provide optimal quality:
+
 ```typescript
-audio: { 
-  echoCancellation: true, 
-  noiseSuppression: true 
+audio: {
+  echoCancellation: true,
+  noiseSuppression: true
 }
 ```
 
@@ -422,6 +463,7 @@ audio: {
 ## Future Enhancements
 
 Potential improvements:
+
 - [ ] Call recording functionality
 - [ ] Screen sharing capability
 - [ ] Group video calls (multiple doctors)
@@ -455,7 +497,7 @@ await initiateCall(doctorId);
 ```typescript
 const { acceptCall, localStream, remoteStream, isConnected } = useWebRTC({
   userId: doctor.id,
-  userRole: 'doctor'
+  userRole: "doctor",
 });
 
 // Accept incoming call
@@ -481,6 +523,7 @@ await endCall(); // Closes connection and updates database
 ## Support
 
 For issues or questions:
+
 1. Check browser console for detailed error messages
 2. Verify Supabase Realtime is enabled
 3. Ensure both parties have camera/microphone permissions

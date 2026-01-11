@@ -38,39 +38,44 @@ NEXT_PUBLIC_TURN_PASSWORD=turn-password
 #### Supabase Setup
 
 1. **Create Supabase Project**
+
    - Go to [Supabase Dashboard](https://app.supabase.com)
    - Create new project
    - Note your project URL and API keys
 
 2. **Run Database Migrations**
+
    ```bash
    # Connect to Supabase
    npx supabase login
-   
+
    # Link your project
    npx supabase link --project-ref your-project-ref
-   
+
    # Run migrations
    npx supabase db push
    ```
 
 3. **Enable Realtime**
-   
+
    Via Dashboard:
+
    - Navigate to Database → Replication
    - Enable realtime for:
      - `video_calls`
      - `video_call_signaling`
-   
+
    Or via SQL:
+
    ```sql
    ALTER PUBLICATION supabase_realtime ADD TABLE video_calls;
    ALTER PUBLICATION supabase_realtime ADD TABLE video_call_signaling;
    ```
 
 4. **Configure Row Level Security (RLS)**
-   
+
    Ensure RLS policies are in place:
+
    ```sql
    -- See supabase/schema.sql for complete RLS policies
    ```
@@ -84,21 +89,25 @@ Vercel provides seamless Next.js deployment with automatic SSL.
 #### Steps:
 
 1. **Install Vercel CLI**
+
    ```bash
    npm install -g vercel
    ```
 
 2. **Login to Vercel**
+
    ```bash
    vercel login
    ```
 
 3. **Deploy**
+
    ```bash
    vercel --prod
    ```
 
 4. **Configure Environment Variables**
+
    - Go to Vercel Dashboard → Your Project → Settings → Environment Variables
    - Add all variables from `.env.production`
 
@@ -109,6 +118,7 @@ Vercel provides seamless Next.js deployment with automatic SSL.
 #### Vercel Configuration
 
 Create `vercel.json`:
+
 ```json
 {
   "buildCommand": "npm run build",
@@ -130,6 +140,7 @@ For self-hosted deployments or cloud platforms.
 #### Dockerfile
 
 Create `Dockerfile`:
+
 ```dockerfile
 FROM node:18-alpine AS builder
 
@@ -167,8 +178,9 @@ CMD ["node", "server.js"]
 #### Docker Compose
 
 Create `docker-compose.yml`:
+
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -205,21 +217,25 @@ Deploy to AWS using Elastic Beanstalk or ECS.
 #### AWS Elastic Beanstalk
 
 1. **Install EB CLI**
+
    ```bash
    pip install awsebcli
    ```
 
 2. **Initialize EB**
+
    ```bash
    eb init -p node.js-18 healthcare-system
    ```
 
 3. **Create Environment**
+
    ```bash
    eb create healthcare-prod
    ```
 
 4. **Set Environment Variables**
+
    ```bash
    eb setenv NEXT_PUBLIC_SUPABASE_URL=your-url \
             NEXT_PUBLIC_SUPABASE_ANON_KEY=your-key
@@ -235,6 +251,7 @@ Deploy to AWS using Elastic Beanstalk or ECS.
 **Critical**: WebRTC requires HTTPS in production.
 
 ### Using Vercel
+
 SSL is automatic with Vercel.
 
 ### Using Let's Encrypt (Self-hosted)
@@ -254,6 +271,7 @@ sudo certbot certonly --standalone -d yourdomain.com
 ### Nginx Configuration
 
 Create `/etc/nginx/sites-available/healthcare`:
+
 ```nginx
 server {
     listen 443 ssl http2;
@@ -280,6 +298,7 @@ server {
 ```
 
 Enable and restart:
+
 ```bash
 sudo ln -s /etc/nginx/sites-available/healthcare /etc/nginx/sites-enabled/
 sudo nginx -t
@@ -291,18 +310,19 @@ sudo systemctl restart nginx
 ### 1. Build Optimization
 
 Update `next.config.ts`:
+
 ```typescript
 const config: NextConfig = {
-  output: 'standalone',
+  output: "standalone",
   compress: true,
   poweredByHeader: false,
-  
+
   // Image optimization
   images: {
-    domains: ['your-supabase-project.supabase.co'],
-    formats: ['image/avif', 'image/webp'],
+    domains: ["your-supabase-project.supabase.co"],
+    formats: ["image/avif", "image/webp"],
   },
-  
+
   // Enable SWC minification
   swcMinify: true,
 };
@@ -311,17 +331,18 @@ const config: NextConfig = {
 ### 2. Caching Strategy
 
 Configure caching headers:
+
 ```typescript
 // next.config.ts
 const config: NextConfig = {
   async headers() {
     return [
       {
-        source: '/:all*(svg|jpg|png)',
+        source: "/:all*(svg|jpg|png)",
         headers: [
           {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
           },
         ],
       },
@@ -349,6 +370,7 @@ CREATE INDEX idx_video_calls_status ON video_calls(status);
 ### 1. Application Monitoring
 
 Recommended tools:
+
 - **Vercel Analytics**: Built-in for Vercel deployments
 - **Sentry**: Error tracking and performance monitoring
 - **New Relic**: Full-stack monitoring
@@ -373,21 +395,26 @@ Sentry.init({
 ### 2. Log Management
 
 Configure structured logging:
+
 ```typescript
 // lib/logging.ts
 export const logger = {
   info: (message: string, meta?: any) => {
-    console.log(JSON.stringify({ level: 'info', message, ...meta, timestamp: new Date() }));
+    console.log(
+      JSON.stringify({ level: "info", message, ...meta, timestamp: new Date() })
+    );
   },
   error: (message: string, error: Error, meta?: any) => {
-    console.error(JSON.stringify({ 
-      level: 'error', 
-      message, 
-      error: error.message, 
-      stack: error.stack,
-      ...meta, 
-      timestamp: new Date() 
-    }));
+    console.error(
+      JSON.stringify({
+        level: "error",
+        message,
+        error: error.message,
+        stack: error.stack,
+        ...meta,
+        timestamp: new Date(),
+      })
+    );
   },
 };
 ```
@@ -395,31 +422,35 @@ export const logger = {
 ### 3. Health Checks
 
 Create health check endpoint:
+
 ```typescript
 // app/api/health/route.ts
-import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 
 export async function GET() {
   try {
     // Check database connection
-    const { error } = await supabase.from('users').select('id').limit(1);
-    
+    const { error } = await supabase.from("users").select("id").limit(1);
+
     if (error) throw error;
-    
-    return NextResponse.json({ 
-      status: 'healthy',
+
+    return NextResponse.json({
+      status: "healthy",
       timestamp: new Date().toISOString(),
       services: {
-        database: 'up',
-        application: 'up'
-      }
+        database: "up",
+        application: "up",
+      },
     });
   } catch (error) {
-    return NextResponse.json({ 
-      status: 'unhealthy',
-      error: error.message 
-    }, { status: 503 });
+    return NextResponse.json(
+      {
+        status: "unhealthy",
+        error: error.message,
+      },
+      { status: 503 }
+    );
   }
 }
 ```
@@ -429,6 +460,7 @@ export async function GET() {
 ### 1. Security Headers
 
 Add security headers in `next.config.ts`:
+
 ```typescript
 async headers() {
   return [
@@ -464,13 +496,14 @@ async headers() {
 ### 2. Rate Limiting
 
 Implement rate limiting for APIs:
+
 ```typescript
 // lib/rate-limit.ts
-import { RateLimiter } from 'limiter';
+import { RateLimiter } from "limiter";
 
 const limiter = new RateLimiter({
   tokensPerInterval: 100,
-  interval: 'minute',
+  interval: "minute",
 });
 
 export async function checkRateLimit() {
@@ -482,8 +515,9 @@ export async function checkRateLimit() {
 ### 3. Input Sanitization
 
 Always sanitize user input:
+
 ```typescript
-import DOMPurify from 'isomorphic-dompurify';
+import DOMPurify from "isomorphic-dompurify";
 
 export function sanitizeInput(input: string): string {
   return DOMPurify.sanitize(input);
@@ -528,6 +562,7 @@ find $BACKUP_DIR -name "backup-*.sql.gz" -mtime +30 -delete
 ```
 
 Add to crontab:
+
 ```bash
 0 2 * * * /path/to/backup.sh
 ```
@@ -537,6 +572,7 @@ Add to crontab:
 ### Horizontal Scaling
 
 For high traffic:
+
 1. **Load Balancer**: Distribute traffic across multiple instances
 2. **CDN**: Use CloudFlare or AWS CloudFront for static assets
 3. **Database Pooling**: Use PgBouncer for connection pooling
@@ -544,6 +580,7 @@ For high traffic:
 ### Vertical Scaling
 
 Upgrade resources as needed:
+
 - Increase server memory for Node.js
 - Use larger database instance
 - Upgrade Supabase plan for more concurrent connections
@@ -553,6 +590,7 @@ Upgrade resources as needed:
 ### Version Control
 
 Tag releases:
+
 ```bash
 git tag -a v1.0.0 -m "Release version 1.0.0"
 git push origin v1.0.0
@@ -561,11 +599,13 @@ git push origin v1.0.0
 ### Quick Rollback
 
 Vercel:
+
 ```bash
 vercel rollback
 ```
 
 Docker:
+
 ```bash
 docker pull healthcare-system:previous-tag
 docker-compose up -d
@@ -591,16 +631,19 @@ docker-compose up -d
 ## Troubleshooting
 
 ### Issue: "WebRTC not working in production"
+
 - Verify HTTPS is enabled
 - Check TURN server configuration
 - Test with different networks
 
 ### Issue: "Realtime not working"
+
 - Verify Supabase Realtime is enabled for tables
 - Check API keys are correct
 - Verify network allows WebSocket connections
 
 ### Issue: "Slow page loads"
+
 - Enable CDN
 - Optimize images
 - Check database query performance
@@ -609,6 +652,7 @@ docker-compose up -d
 ## Support
 
 For deployment issues:
+
 - Vercel: [Vercel Support](https://vercel.com/support)
 - Supabase: [Supabase Support](https://supabase.com/support)
 - Community: [GitHub Discussions](your-repo/discussions)
