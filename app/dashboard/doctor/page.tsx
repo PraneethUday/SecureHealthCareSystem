@@ -55,7 +55,12 @@ export default function DoctorDashboard() {
         setUser(session.user);
         // Use the UUID id field, not the TEXT doctor_id field
         const doctorUUID = session.user.id;
-        console.log("🔍 Doctor UUID:", doctorUUID, "| doctor_id (text):", session.user.doctor_id);
+        console.log(
+          "🔍 Doctor UUID:",
+          doctorUUID,
+          "| doctor_id (text):",
+          session.user.doctor_id
+        );
         loadAppointments(doctorUUID);
         // Log dashboard access
         logAction({
@@ -329,7 +334,9 @@ export default function DoctorDashboard() {
                         doctorId={user.id}
                         onUpdate={() => loadAppointments(user.id)}
                         onStartVideoCall={() => {
-                          alert("Please wait for patient to initiate the video call. You'll receive a notification.");
+                          alert(
+                            "Please wait for patient to initiate the video call. You'll receive a notification."
+                          );
                         }}
                         onPrescribe={() =>
                           setSelectedAppointmentForPrescription(appointment)
@@ -358,7 +365,9 @@ export default function DoctorDashboard() {
                         doctorId={user.id}
                         onUpdate={() => loadAppointments(user.id)}
                         onStartVideoCall={() => {
-                          alert("Please wait for patient to initiate the video call. You'll receive a notification.");
+                          alert(
+                            "Please wait for patient to initiate the video call. You'll receive a notification."
+                          );
                         }}
                         onPrescribe={() =>
                           setSelectedAppointmentForPrescription(appointment)
@@ -386,7 +395,9 @@ export default function DoctorDashboard() {
                       doctorId={user.id}
                       onUpdate={() => loadAppointments(user.id)}
                       onStartVideoCall={() => {
-                        alert("Please wait for patient to initiate the video call. You'll receive a notification.");
+                        alert(
+                          "Please wait for patient to initiate the video call. You'll receive a notification."
+                        );
                       }}
                       onPrescribe={() =>
                         setSelectedAppointmentForPrescription(appointment)
@@ -451,11 +462,11 @@ export default function DoctorDashboard() {
         <IncomingCallModal
           doctorId={user.id}
           onCallAccepted={(call) => {
-            console.log('[Dashboard] Call accepted, navigating to call page');
+            console.log("[Dashboard] Call accepted, navigating to call page");
             router.push(`/dashboard/call/${call.id}`);
           }}
           onCallRejected={(callId) => {
-            console.log('[Dashboard] Call rejected:', callId);
+            console.log("[Dashboard] Call rejected:", callId);
           }}
         />
       )}

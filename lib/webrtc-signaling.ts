@@ -1,19 +1,25 @@
-import { createClient } from '@supabase/supabase-js';
-import { RealtimeChannel } from '@supabase/realtime-js';
+import { createClient } from "@supabase/supabase-js";
+import { RealtimeChannel } from "@supabase/realtime-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
 );
 
-export type SignalType = 'offer' | 'answer' | 'ice-candidate' | 'renegotiate';
-export type CallStatus = 'calling' | 'ringing' | 'accepted' | 'rejected' | 'ended' | 'missed';
+export type SignalType = "offer" | "answer" | "ice-candidate" | "renegotiate";
+export type CallStatus =
+  | "calling"
+  | "ringing"
+  | "accepted"
+  | "rejected"
+  | "ended"
+  | "missed";
 
 export interface SignalingMessage {
   id: string;
   video_call_id: string;
   from_user_id: string;
-  from_user_role: 'patient' | 'doctor';
+  from_user_role: "patient" | "doctor";
   to_user_id: string;
   signal_type: SignalType;
   signal_data: any;
@@ -26,7 +32,7 @@ export interface VideoCall {
   patient_id: string;
   doctor_id: string;
   status: CallStatus;
-  initiated_by_role: 'patient' | 'doctor';
+  initiated_by_role: "patient" | "doctor";
   call_started_at: string | null;
   call_ended_at: string | null;
   duration_seconds: number | null;
@@ -46,52 +52,61 @@ export async function createVideoCall(
 ): Promise<{ success: boolean; error?: string; videoCallId?: string }> {
   try {
     // Verify patient role
-    if (userRole !== 'patient') {
-      return { success: false, error: 'Only patients can initiate video calls' };
+    if (userRole !== "patient") {
+      return {
+        success: false,
+        error: "Only patients can initiate video calls",
+      };
     }
 
     // Verify appointment exists and belongs to patient
     const { data: appointment, error: aptError } = await supabase
-      .from('appointments')
-      .select('id, patient_id, doctor_id, status')
-      .eq('id', appointmentId)
+      .from("appointments")
+      .select("id, patient_id, doctor_id, status")
+      .eq("id", appointmentId)
       .single();
 
     if (aptError || !appointment) {
-      return { success: false, error: 'Appointment not found' };
+      return { success: false, error: "Appointment not found" };
     }
 
     if (appointment.patient_id !== patientId) {
-      return { success: false, error: 'Unauthorized: this is not your appointment' };
+      return {
+        success: false,
+        error: "Unauthorized: this is not your appointment",
+      };
     }
 
-    if (appointment.status !== 'scheduled') {
-      return { success: false, error: 'Can only call for scheduled appointments' };
+    if (appointment.status !== "scheduled") {
+      return {
+        success: false,
+        error: "Can only call for scheduled appointments",
+      };
     }
 
     // Create video call record
-    console.log('[WebRTC] Creating video call with:', {
+    console.log("[WebRTC] Creating video call with:", {
       appointment_id: appointmentId,
       patient_id: patientId,
       doctor_id: appointment.doctor_id,
-      status: 'calling',
+      status: "calling",
     });
-    
+
     const { data: videoCall, error: createError } = await supabase
-      .from('video_calls')
+      .from("video_calls")
       .insert({
         appointment_id: appointmentId,
         patient_id: patientId,
         doctor_id: appointment.doctor_id,
-        status: 'calling',
-        initiated_by_role: 'patient',
+        status: "calling",
+        initiated_by_role: "patient",
       })
       .select()
       .single();
 
     if (createError || !videoCall) {
-      console.error('[WebRTC] Error creating video call:', createError);
-      return { success: false, error: 'Failed to create video call' };
+      console.error("[WebRTC] Error creating video call:", createError);
+      return { success: false, error: "Failed to create video call" };
     }
 
     // Log the call creation with full details
@@ -105,8 +120,8 @@ export async function createVideoCall(
 
     return { success: true, videoCallId: videoCall.id };
   } catch (error) {
-    console.error('Error in createVideoCall:', error);
-    return { success: false, error: 'Unexpected error creating video call' };
+    console.error("Error in createVideoCall:", error);
+    return { success: false, error: "Unexpected error creating video call" };
   }
 }
 
@@ -122,48 +137,55 @@ export async function updateCallStatus(
   try {
     // Get call to verify user is participant
     const { data: videoCall } = await supabase
-      .from('video_calls')
-      .select('*')
-      .eq('id', videoCallId)
+      .from("video_calls")
+      .select("*")
+      .eq("id", videoCallId)
       .single();
 
     if (!videoCall) {
-      return { success: false, error: 'Video call not found' };
+      return { success: false, error: "Video call not found" };
     }
 
     // Verify user is participant
-    const isPatient = userRole === 'patient' && videoCall.patient_id === userId;
-    const isDoctor = userRole === 'doctor' && videoCall.doctor_id === userId;
+    const isPatient = userRole === "patient" && videoCall.patient_id === userId;
+    const isDoctor = userRole === "doctor" && videoCall.doctor_id === userId;
 
     if (!isPatient && !isDoctor) {
-      return { success: false, error: 'Unauthorized: not a participant in this call' };
+      return {
+        success: false,
+        error: "Unauthorized: not a participant in this call",
+      };
     }
 
     // Update status
     const updates: any = { status: newStatus };
 
-    if (newStatus === 'accepted') {
+    if (newStatus === "accepted") {
       updates.call_started_at = new Date().toISOString();
     }
 
-    if (newStatus === 'ended' || newStatus === 'rejected' || newStatus === 'missed') {
+    if (
+      newStatus === "ended" ||
+      newStatus === "rejected" ||
+      newStatus === "missed"
+    ) {
       updates.call_ended_at = new Date().toISOString();
     }
 
     const { error: updateError } = await supabase
-      .from('video_calls')
+      .from("video_calls")
       .update(updates)
-      .eq('id', videoCallId);
+      .eq("id", videoCallId);
 
     if (updateError) {
-      return { success: false, error: 'Failed to update call status' };
+      return { success: false, error: "Failed to update call status" };
     }
 
     console.log(`[WebRTC] Call status updated: ${videoCallId} -> ${newStatus}`);
     return { success: true };
   } catch (error) {
-    console.error('Error updating call status:', error);
-    return { success: false, error: 'Unexpected error updating call status' };
+    console.error("Error updating call status:", error);
+    return { success: false, error: "Unexpected error updating call status" };
   }
 }
 
@@ -173,33 +195,34 @@ export async function updateCallStatus(
 export async function sendSignalingMessage(
   videoCallId: string,
   fromUserId: string,
-  fromUserRole: 'patient' | 'doctor',
+  fromUserRole: "patient" | "doctor",
   toUserId: string,
   signalType: SignalType,
   signalData: any
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await supabase
-      .from('video_call_signaling')
-      .insert({
-        video_call_id: videoCallId,
-        from_user_id: fromUserId,
-        from_user_role: fromUserRole,
-        to_user_id: toUserId,
-        signal_type: signalType,
-        signal_data: signalData,
-      });
+    const { error } = await supabase.from("video_call_signaling").insert({
+      video_call_id: videoCallId,
+      from_user_id: fromUserId,
+      from_user_role: fromUserRole,
+      to_user_id: toUserId,
+      signal_type: signalType,
+      signal_data: signalData,
+    });
 
     if (error) {
-      console.error('Error sending signaling message:', error);
-      return { success: false, error: 'Failed to send signaling message' };
+      console.error("Error sending signaling message:", error);
+      return { success: false, error: "Failed to send signaling message" };
     }
 
     console.log(`[WebRTC] Signaling message sent: ${signalType}`);
     return { success: true };
   } catch (error) {
-    console.error('Error in sendSignalingMessage:', error);
-    return { success: false, error: 'Unexpected error sending signaling message' };
+    console.error("Error in sendSignalingMessage:", error);
+    return {
+      success: false,
+      error: "Unexpected error sending signaling message",
+    };
   }
 }
 
@@ -212,26 +235,26 @@ export async function getRecentSignalingMessages(
 ): Promise<SignalingMessage[]> {
   try {
     let query = supabase
-      .from('video_call_signaling')
-      .select('*')
-      .eq('video_call_id', videoCallId)
-      .order('created_at', { ascending: false })
+      .from("video_call_signaling")
+      .select("*")
+      .eq("video_call_id", videoCallId)
+      .order("created_at", { ascending: false })
       .limit(50);
 
     if (afterTimestamp) {
-      query = query.gt('created_at', afterTimestamp);
+      query = query.gt("created_at", afterTimestamp);
     }
 
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching signaling messages:', error);
+      console.error("Error fetching signaling messages:", error);
       return [];
     }
 
     return data || [];
   } catch (error) {
-    console.error('Error in getRecentSignalingMessages:', error);
+    console.error("Error in getRecentSignalingMessages:", error);
     return [];
   }
 }
@@ -248,20 +271,22 @@ export function subscribeToSignalingMessages(
   const channel = supabase
     .channel(`video_call:${videoCallId}`)
     .on(
-      'postgres_changes',
+      "postgres_changes",
       {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'video_call_signaling',
+        event: "INSERT",
+        schema: "public",
+        table: "video_call_signaling",
         filter: `video_call_id=eq.${videoCallId}`,
       },
       (payload: any) => {
-        console.log(`[WebRTC] Signaling message received: ${payload.new.signal_type}`);
+        console.log(
+          `[WebRTC] Signaling message received: ${payload.new.signal_type}`
+        );
         onMessage(payload.new);
       }
     )
     .subscribe((status) => {
-      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
         console.error(`[WebRTC] Channel subscription error: ${status}`);
         onError?.(new Error(`Channel error: ${status}`));
       }
@@ -283,38 +308,44 @@ export function subscribeToIncomingCalls(
   onError?: (error: any) => void
 ): () => void {
   console.log(`[WebRTC] Subscribing to incoming calls for doctor: ${doctorId}`);
-  
+
   if (!doctorId) {
-    console.error('[WebRTC] Cannot subscribe - doctorId is empty!');
+    console.error("[WebRTC] Cannot subscribe - doctorId is empty!");
     return () => {};
   }
-  
+
   const channel = supabase
     .channel(`incoming_calls:${doctorId}`)
     .on(
-      'postgres_changes',
+      "postgres_changes",
       {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'video_calls',
+        event: "INSERT",
+        schema: "public",
+        table: "video_calls",
         filter: `doctor_id=eq.${doctorId}`,
       },
       (payload: any) => {
-        console.log(`[WebRTC] INSERT event received for video_calls table:`, payload);
-        if (payload.new && payload.new.status === 'calling') {
+        console.log(
+          `[WebRTC] INSERT event received for video_calls table:`,
+          payload
+        );
+        if (payload.new && payload.new.status === "calling") {
           console.log(`[WebRTC] 🔔 Incoming call received: ${payload.new.id}`);
           onIncomingCall(payload.new);
         } else {
-          console.log(`[WebRTC] INSERT event but not a calling status:`, payload.new?.status);
+          console.log(
+            `[WebRTC] INSERT event but not a calling status:`,
+            payload.new?.status
+          );
         }
       }
     )
     .on(
-      'postgres_changes',
+      "postgres_changes",
       {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'video_calls',
+        event: "UPDATE",
+        schema: "public",
+        table: "video_calls",
         filter: `doctor_id=eq.${doctorId}`,
       },
       (payload: any) => {
@@ -323,17 +354,23 @@ export function subscribeToIncomingCalls(
       }
     )
     .subscribe((status) => {
-      console.log(`[WebRTC] Subscription status for doctor ${doctorId}: ${status}`);
-      if (status === 'SUBSCRIBED') {
-        console.log(`[WebRTC] ✅ Successfully subscribed to incoming calls for doctor: ${doctorId}`);
-      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+      console.log(
+        `[WebRTC] Subscription status for doctor ${doctorId}: ${status}`
+      );
+      if (status === "SUBSCRIBED") {
+        console.log(
+          `[WebRTC] ✅ Successfully subscribed to incoming calls for doctor: ${doctorId}`
+        );
+      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
         console.error(`[WebRTC] ❌ Channel subscription error: ${status}`);
         onError?.(new Error(`Channel error: ${status}`));
       }
     });
 
   return () => {
-    console.log(`[WebRTC] Unsubscribing from incoming calls for doctor: ${doctorId}`);
+    console.log(
+      `[WebRTC] Unsubscribing from incoming calls for doctor: ${doctorId}`
+    );
     supabase.removeChannel(channel);
   };
 }
@@ -341,22 +378,24 @@ export function subscribeToIncomingCalls(
 /**
  * Get video call by ID
  */
-export async function getVideoCall(videoCallId: string): Promise<VideoCall | null> {
+export async function getVideoCall(
+  videoCallId: string
+): Promise<VideoCall | null> {
   try {
     const { data, error } = await supabase
-      .from('video_calls')
-      .select('*')
-      .eq('id', videoCallId)
+      .from("video_calls")
+      .select("*")
+      .eq("id", videoCallId)
       .single();
 
     if (error) {
-      console.error('Error fetching video call:', error);
+      console.error("Error fetching video call:", error);
       return null;
     }
 
     return data;
   } catch (error) {
-    console.error('Error in getVideoCall:', error);
+    console.error("Error in getVideoCall:", error);
     return null;
   }
 }
@@ -364,36 +403,38 @@ export async function getVideoCall(videoCallId: string): Promise<VideoCall | nul
 /**
  * End a video call and cleanup
  */
-export async function endVideoCall(videoCallId: string): Promise<{ success: boolean }> {
+export async function endVideoCall(
+  videoCallId: string
+): Promise<{ success: boolean }> {
   try {
     // Update call status
     const { error: updateError } = await supabase
-      .from('video_calls')
+      .from("video_calls")
       .update({
-        status: 'ended',
+        status: "ended",
         call_ended_at: new Date().toISOString(),
       })
-      .eq('id', videoCallId);
+      .eq("id", videoCallId);
 
     if (updateError) {
-      console.error('Error ending video call:', updateError);
+      console.error("Error ending video call:", updateError);
       return { success: false };
     }
 
     // Clean up signaling data
     const { error: deleteError } = await supabase
-      .from('video_call_signaling')
+      .from("video_call_signaling")
       .delete()
-      .eq('video_call_id', videoCallId);
+      .eq("video_call_id", videoCallId);
 
     if (deleteError) {
-      console.warn('Warning: Failed to cleanup signaling data:', deleteError);
+      console.warn("Warning: Failed to cleanup signaling data:", deleteError);
     }
 
     console.log(`[WebRTC] Call ended and cleaned up: ${videoCallId}`);
     return { success: true };
   } catch (error) {
-    console.error('Error in endVideoCall:', error);
+    console.error("Error in endVideoCall:", error);
     return { success: false };
   }
 }

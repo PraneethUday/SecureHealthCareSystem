@@ -154,7 +154,7 @@ export async function getPatientAppointments(
 ): Promise<AppointmentWithDetails[]> {
   try {
     console.log("🔍 Fetching appointments for patient:", patientId);
-    
+
     const { data, error } = await supabase
       .from("appointments")
       .select(
@@ -193,7 +193,9 @@ export async function getPatientAppointments(
     // Transform the data
     return (data || []).map((apt) => ({
       ...apt,
-      doctor_name: apt.doctors ? `${apt.doctors.first_name} ${apt.doctors.last_name}` : "Unknown",
+      doctor_name: apt.doctors
+        ? `${apt.doctors.first_name} ${apt.doctors.last_name}`
+        : "Unknown",
       specialization: apt.doctors?.specialization || "N/A",
       hospital_name: apt.hospitals?.name || "N/A",
       hospital_address: apt.hospitals?.address || "N/A",
@@ -210,7 +212,7 @@ export async function getDoctorAppointments(
 ): Promise<AppointmentWithDetails[]> {
   try {
     console.log("🔍 Fetching appointments for doctor:", doctorId);
-    
+
     const { data, error } = await supabase
       .from("appointments")
       .select(
@@ -250,7 +252,9 @@ export async function getDoctorAppointments(
     // Transform the data
     return (data || []).map((apt) => ({
       ...apt,
-      patient_name: apt.patients ? `${apt.patients.first_name} ${apt.patients.last_name}` : "Unknown",
+      patient_name: apt.patients
+        ? `${apt.patients.first_name} ${apt.patients.last_name}`
+        : "Unknown",
       patient_email: apt.patients?.email || "N/A",
       hospital_name: apt.hospitals?.name || "N/A",
       hospital_address: apt.hospitals?.address || "N/A",

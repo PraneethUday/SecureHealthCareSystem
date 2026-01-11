@@ -52,7 +52,14 @@ export default function PatientDashboard() {
       setUser(session.user);
       // Use the UUID id field, not the TEXT patient_id field
       const patientUUID = session.user.id;
-      console.log("🔍 Patient UUID:", patientUUID, "| patient_id (text):", session.user.patient_id, "| email:", session.user.email);
+      console.log(
+        "🔍 Patient UUID:",
+        patientUUID,
+        "| patient_id (text):",
+        session.user.patient_id,
+        "| email:",
+        session.user.email
+      );
       loadAppointments(patientUUID);
       // Log dashboard access
       logAction({

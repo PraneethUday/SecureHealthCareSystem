@@ -258,8 +258,11 @@ export async function startVideoCall(
   doctorId: string
 ): Promise<{ success: boolean; callLink?: string; error?: string }> {
   try {
-    console.log('🎥 [startVideoCall] Starting call for appointment:', appointmentId);
-    
+    console.log(
+      "🎥 [startVideoCall] Starting call for appointment:",
+      appointmentId
+    );
+
     // Generate a unique video call link (in production, use actual video service API)
     const callLink = `https://videocall.securehealthcare.com/room/${appointmentId}`;
 
@@ -278,40 +281,54 @@ export async function startVideoCall(
         details: appointmentError.details,
         hint: appointmentError.hint,
       });
-      return { success: false, error: appointmentError.message || 'Failed to start video call' };
+      return {
+        success: false,
+        error: appointmentError.message || "Failed to start video call",
+      };
     }
 
     // Log the video call start (optional - video_call_logs table may not exist)
     try {
-      const { error: logError } = await supabase.from("video_call_logs").insert({
-        appointment_id: appointmentId,
-        patient_id: patientId,
-        doctor_id: doctorId,
-        call_started_at: new Date().toISOString(),
-        call_status: "completed",
-      });
+      const { error: logError } = await supabase
+        .from("video_call_logs")
+        .insert({
+          appointment_id: appointmentId,
+          patient_id: patientId,
+          doctor_id: doctorId,
+          call_started_at: new Date().toISOString(),
+          call_status: "completed",
+        });
 
       if (logError) {
-        console.warn("⚠️ [startVideoCall] Could not log video call (table may not exist):", {
-          code: logError.code,
-          message: logError.message,
-          details: logError.details,
-          hint: logError.hint,
-        });
+        console.warn(
+          "⚠️ [startVideoCall] Could not log video call (table may not exist):",
+          {
+            code: logError.code,
+            message: logError.message,
+            details: logError.details,
+            hint: logError.hint,
+          }
+        );
         // Don't fail the whole operation if logging fails
       } else {
-        console.log('✅ [startVideoCall] Call logged successfully');
+        console.log("✅ [startVideoCall] Call logged successfully");
       }
     } catch (logException) {
-      console.warn("⚠️ [startVideoCall] Exception logging video call:", logException);
+      console.warn(
+        "⚠️ [startVideoCall] Exception logging video call:",
+        logException
+      );
       // Continue even if logging fails
     }
 
-    console.log('✅ [startVideoCall] Call started successfully:', callLink);
+    console.log("✅ [startVideoCall] Call started successfully:", callLink);
     return { success: true, callLink };
   } catch (error: any) {
     console.error("❌ [startVideoCall] Exception:", error);
-    return { success: false, error: error.message || 'Unexpected error starting video call' };
+    return {
+      success: false,
+      error: error.message || "Unexpected error starting video call",
+    };
   }
 }
 
@@ -320,7 +337,10 @@ export async function endVideoCall(
   qualityRating?: number
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    console.log('🎥 [endVideoCall] Ending call for appointment:', appointmentId);
+    console.log(
+      "🎥 [endVideoCall] Ending call for appointment:",
+      appointmentId
+    );
     const endTime = new Date().toISOString();
 
     // Update appointment
@@ -338,7 +358,10 @@ export async function endVideoCall(
         details: appointmentError.details,
         hint: appointmentError.hint,
       });
-      return { success: false, error: appointmentError.message || 'Failed to end video call' };
+      return {
+        success: false,
+        error: appointmentError.message || "Failed to end video call",
+      };
     }
 
     // Update video call log (optional - table may not exist)
@@ -362,18 +385,24 @@ export async function endVideoCall(
         });
         // Don't fail the whole operation if logging fails
       } else {
-        console.log('✅ [endVideoCall] Call log updated successfully');
+        console.log("✅ [endVideoCall] Call log updated successfully");
       }
     } catch (logException) {
-      console.warn("⚠️ [endVideoCall] Exception updating video call log:", logException);
+      console.warn(
+        "⚠️ [endVideoCall] Exception updating video call log:",
+        logException
+      );
       // Continue even if logging fails
     }
 
-    console.log('✅ [endVideoCall] Call ended successfully');
+    console.log("✅ [endVideoCall] Call ended successfully");
     return { success: true };
   } catch (error: any) {
     console.error("❌ [endVideoCall] Exception:", error);
-    return { success: false, error: error.message || 'Unexpected error ending video call' };
+    return {
+      success: false,
+      error: error.message || "Unexpected error ending video call",
+    };
   }
 }
 

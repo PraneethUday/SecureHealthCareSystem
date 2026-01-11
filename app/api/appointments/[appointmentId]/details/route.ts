@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from "@supabase/supabase-js";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
@@ -7,9 +7,12 @@ export async function GET(
 ) {
   try {
     // Verify environment variables exist
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY) {
+    if (
+      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+    ) {
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { error: "Server configuration error" },
         { status: 500 }
       );
     }
@@ -22,21 +25,23 @@ export async function GET(
     const { appointmentId } = await params;
 
     const { data: appointment, error } = await supabase
-      .from('appointments')
-      .select(`
+      .from("appointments")
+      .select(
+        `
         id,
         appointment_date,
         appointment_time,
         reason,
         type,
         profiles:patient_id(full_name)
-      `)
-      .eq('id', appointmentId)
+      `
+      )
+      .eq("id", appointmentId)
       .single();
 
     if (error || !appointment) {
       return NextResponse.json(
-        { error: 'Appointment not found' },
+        { error: "Appointment not found" },
         { status: 404 }
       );
     }
@@ -46,12 +51,13 @@ export async function GET(
       appointment_time: appointment.appointment_time,
       reason: appointment.reason,
       type: appointment.type,
-      patient_name: (appointment.profiles as any)?.full_name || 'Unknown Patient',
+      patient_name:
+        (appointment.profiles as any)?.full_name || "Unknown Patient",
     });
   } catch (error) {
-    console.error('[API] Error fetching appointment details:', error);
+    console.error("[API] Error fetching appointment details:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

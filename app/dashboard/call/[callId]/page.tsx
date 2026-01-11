@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { getSession } from '@/lib/auth';
-import { getVideoCall } from '@/lib/webrtc-signaling';
-import { CallPage } from '@/app/dashboard/components/CallPage';
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { getVideoCall } from "@/lib/webrtc-signaling";
+import { CallPage } from "@/app/dashboard/components/CallPage";
 
 export default function CallPageWrapper() {
   const params = useParams();
@@ -23,7 +23,7 @@ export default function CallPageWrapper() {
         const currentUser = session?.user;
 
         if (!currentUser) {
-          setError('You must be logged in to access this page');
+          setError("You must be logged in to access this page");
           return;
         }
 
@@ -32,7 +32,7 @@ export default function CallPageWrapper() {
         // Fetch call data to verify user is participant
         const call = await getVideoCall(callId);
         if (!call) {
-          setError('Call not found');
+          setError("Call not found");
           return;
         }
 
@@ -41,18 +41,18 @@ export default function CallPageWrapper() {
         // Use UUID id field for both patient and doctor
         const userId = currentUser.id;
         const isParticipant =
-          (call.patient_id === userId && userRole === 'patient') ||
-          (call.doctor_id === userId && userRole === 'doctor');
+          (call.patient_id === userId && userRole === "patient") ||
+          (call.doctor_id === userId && userRole === "doctor");
 
         if (!isParticipant) {
-          setError('You are not authorized to access this call');
+          setError("You are not authorized to access this call");
           return;
         }
 
         setCallData(call);
       } catch (err) {
-        console.error('[CallPageWrapper] Error initializing call:', err);
-        setError('Failed to initialize call');
+        console.error("[CallPageWrapper] Error initializing call:", err);
+        setError("Failed to initialize call");
       } finally {
         setIsLoading(false);
       }
@@ -134,7 +134,7 @@ export default function CallPageWrapper() {
   const session = getSession();
   // Use UUID id field for all roles
   const userId = user.id;
-  const userRole = userId === callData.doctor_id ? 'doctor' : 'patient';
+  const userRole = userId === callData.doctor_id ? "doctor" : "patient";
 
   return (
     <CallPage
@@ -143,7 +143,9 @@ export default function CallPageWrapper() {
       userRole={userRole}
       appointmentId={callData.appointment_id}
       remoteUserId={
-        userId === callData.patient_id ? callData.doctor_id : callData.patient_id
+        userId === callData.patient_id
+          ? callData.doctor_id
+          : callData.patient_id
       }
     />
   );

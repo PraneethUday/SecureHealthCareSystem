@@ -11,9 +11,9 @@ export interface WebRTCConfig {
  * Default STUN servers for NAT traversal
  */
 const DEFAULT_STUN_SERVERS: RTCIceServer[] = [
-  { urls: ['stun:stun.l.google.com:19302'] },
-  { urls: ['stun:stun1.l.google.com:19302'] },
-  { urls: ['stun:stun2.l.google.com:19302'] },
+  { urls: ["stun:stun.l.google.com:19302"] },
+  { urls: ["stun:stun1.l.google.com:19302"] },
+  { urls: ["stun:stun2.l.google.com:19302"] },
 ];
 
 /**
@@ -40,9 +40,13 @@ export class PeerConnection {
   private localStream: MediaStream | null = null;
   private remoteStream: MediaStream = new MediaStream();
   private config: WebRTCConfig;
-  private onIceCandidate: ((candidate: RTCIceCandidate) => Promise<void>) | null = null;
+  private onIceCandidate:
+    | ((candidate: RTCIceCandidate) => Promise<void>)
+    | null = null;
   private onRemoteStream: ((stream: MediaStream) => void) | null = null;
-  private onConnectionStateChange: ((state: RTCPeerConnectionState) => void) | null = null;
+  private onConnectionStateChange:
+    | ((state: RTCPeerConnectionState) => void)
+    | null = null;
   private onError: ((error: Error) => void) | null = null;
 
   constructor(config?: WebRTCConfig) {
@@ -62,16 +66,16 @@ export class PeerConnection {
     // ICE candidate generation
     this.pc.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
       if (event.candidate) {
-        console.log('[WebRTC] ICE candidate generated');
+        console.log("[WebRTC] ICE candidate generated");
         this.onIceCandidate?.(event.candidate).catch((err) => {
-          console.error('[WebRTC] Error sending ICE candidate:', err);
+          console.error("[WebRTC] Error sending ICE candidate:", err);
         });
       }
     };
 
     // Remote stream reception
     this.pc.ontrack = (event: RTCTrackEvent) => {
-      console.log('[WebRTC] Remote track received:', event.track.kind);
+      console.log("[WebRTC] Remote track received:", event.track.kind);
       if (event.streams[0]) {
         this.remoteStream = event.streams[0];
         this.onRemoteStream?.(this.remoteStream);
@@ -80,26 +84,28 @@ export class PeerConnection {
 
     // Connection state changes
     this.pc.onconnectionstatechange = () => {
-      console.log('[WebRTC] Connection state:', this.pc.connectionState);
+      console.log("[WebRTC] Connection state:", this.pc.connectionState);
       this.onConnectionStateChange?.(this.pc.connectionState);
 
       if (
-        this.pc.connectionState === 'failed' ||
-        this.pc.connectionState === 'disconnected' ||
-        this.pc.connectionState === 'closed'
+        this.pc.connectionState === "failed" ||
+        this.pc.connectionState === "disconnected" ||
+        this.pc.connectionState === "closed"
       ) {
-        this.onError?.(new Error(`Connection state: ${this.pc.connectionState}`));
+        this.onError?.(
+          new Error(`Connection state: ${this.pc.connectionState}`)
+        );
       }
     };
 
     // ICE connection state (for debugging)
     this.pc.oniceconnectionstatechange = () => {
-      console.log('[WebRTC] ICE connection state:', this.pc.iceConnectionState);
+      console.log("[WebRTC] ICE connection state:", this.pc.iceConnectionState);
     };
 
     // Signaling state (for debugging)
     this.pc.onsignalingstatechange = () => {
-      console.log('[WebRTC] Signaling state:', this.pc.signalingState);
+      console.log("[WebRTC] Signaling state:", this.pc.signalingState);
     };
   }
 
@@ -113,33 +119,47 @@ export class PeerConnection {
     try {
       // If we already have a local stream, return it
       if (this.localStream && this.localStream.active) {
-        console.log('[WebRTC] Reusing existing local stream');
+        console.log("[WebRTC] Reusing existing local stream");
         return this.localStream;
       }
 
       // First try to get available devices
       const devices = await navigator.mediaDevices.enumerateDevices();
-      const hasAudio = devices.some((device) => device.kind === 'audioinput');
-      const hasVideo = devices.some((device) => device.kind === 'videoinput');
+      const hasAudio = devices.some((device) => device.kind === "audioinput");
+      const hasVideo = devices.some((device) => device.kind === "videoinput");
 
-      console.log('[WebRTC] Available devices - Audio:', hasAudio, 'Video:', hasVideo);
+      console.log(
+        "[WebRTC] Available devices - Audio:",
+        hasAudio,
+        "Video:",
+        hasVideo
+      );
 
       const constraints: MediaStreamConstraints = {
-        audio: audio && hasAudio ? { echoCancellation: true, noiseSuppression: true } : false,
-        video: video && hasVideo ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false,
+        audio:
+          audio && hasAudio
+            ? { echoCancellation: true, noiseSuppression: true }
+            : false,
+        video:
+          video && hasVideo
+            ? { width: { ideal: 1280 }, height: { ideal: 720 } }
+            : false,
       };
 
       if (!constraints.audio && !constraints.video) {
-        throw new Error('No audio or video devices available');
+        throw new Error("No audio or video devices available");
       }
 
-      console.log('[WebRTC] Requesting getUserMedia...');
+      console.log("[WebRTC] Requesting getUserMedia...");
       this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log('[WebRTC] getUserMedia successful');
+      console.log("[WebRTC] getUserMedia successful");
 
       // Check peer connection state and recreate if necessary
-      if (this.pc.connectionState === 'closed' || this.pc.signalingState === 'closed') {
-        console.warn('[WebRTC] Peer connection was closed, recreating...');
+      if (
+        this.pc.connectionState === "closed" ||
+        this.pc.signalingState === "closed"
+      ) {
+        console.warn("[WebRTC] Peer connection was closed, recreating...");
         this.pc = new RTCPeerConnection({
           iceServers: this.config.iceServers,
         });
@@ -150,26 +170,29 @@ export class PeerConnection {
       const senders = this.pc.getSenders();
       this.localStream.getTracks().forEach((track) => {
         // Check if this track is already added
-        const existingSender = senders.find(s => s.track?.id === track.id);
+        const existingSender = senders.find((s) => s.track?.id === track.id);
         if (!existingSender) {
-          console.log('[WebRTC] Adding local track:', track.kind);
+          console.log("[WebRTC] Adding local track:", track.kind);
           try {
             this.pc.addTrack(track, this.localStream!);
           } catch (err) {
-            console.error('[WebRTC] Error adding track:', err);
+            console.error("[WebRTC] Error adding track:", err);
             // If we get an error, the peer connection might be in a bad state
-            throw new Error(`Failed to add ${track.kind} track to peer connection`);
+            throw new Error(
+              `Failed to add ${track.kind} track to peer connection`
+            );
           }
         } else {
-          console.log('[WebRTC] Track already added:', track.kind);
+          console.log("[WebRTC] Track already added:", track.kind);
         }
       });
 
-      console.log('[WebRTC] Local stream acquired');
+      console.log("[WebRTC] Local stream acquired");
       return this.localStream;
     } catch (error) {
-      console.error('[WebRTC] Error getting user media:', error);
-      const err = error instanceof Error ? error : new Error('Failed to get user media');
+      console.error("[WebRTC] Error getting user media:", error);
+      const err =
+        error instanceof Error ? error : new Error("Failed to get user media");
       this.onError?.(err);
       throw err;
     }
@@ -181,7 +204,7 @@ export class PeerConnection {
   stopLocalStream(): void {
     if (this.localStream) {
       this.localStream.getTracks().forEach((track) => {
-        console.log('[WebRTC] Stopping local track:', track.kind);
+        console.log("[WebRTC] Stopping local track:", track.kind);
         track.stop();
       });
       this.localStream = null;
@@ -199,14 +222,15 @@ export class PeerConnection {
       });
 
       await this.pc.setLocalDescription(offer);
-      console.log('[WebRTC] SDP offer created');
+      console.log("[WebRTC] SDP offer created");
       return {
         type: offer.type,
         sdp: offer.sdp,
       };
     } catch (error) {
-      console.error('[WebRTC] Error creating offer:', error);
-      const err = error instanceof Error ? error : new Error('Failed to create offer');
+      console.error("[WebRTC] Error creating offer:", error);
+      const err =
+        error instanceof Error ? error : new Error("Failed to create offer");
       this.onError?.(err);
       throw err;
     }
@@ -219,14 +243,15 @@ export class PeerConnection {
     try {
       const answer = await this.pc.createAnswer();
       await this.pc.setLocalDescription(answer);
-      console.log('[WebRTC] SDP answer created');
+      console.log("[WebRTC] SDP answer created");
       return {
         type: answer.type,
         sdp: answer.sdp,
       };
     } catch (error) {
-      console.error('[WebRTC] Error creating answer:', error);
-      const err = error instanceof Error ? error : new Error('Failed to create answer');
+      console.error("[WebRTC] Error creating answer:", error);
+      const err =
+        error instanceof Error ? error : new Error("Failed to create answer");
       this.onError?.(err);
       throw err;
     }
@@ -235,13 +260,20 @@ export class PeerConnection {
   /**
    * Set remote SDP offer/answer
    */
-  async setRemoteDescription(description: RTCSessionDescription): Promise<void> {
+  async setRemoteDescription(
+    description: RTCSessionDescription
+  ): Promise<void> {
     try {
-      await this.pc.setRemoteDescription(new RTCSessionDescription(description));
+      await this.pc.setRemoteDescription(
+        new RTCSessionDescription(description)
+      );
       console.log(`[WebRTC] Remote ${description.type} set`);
     } catch (error) {
-      console.error('[WebRTC] Error setting remote description:', error);
-      const err = error instanceof Error ? error : new Error('Failed to set remote description');
+      console.error("[WebRTC] Error setting remote description:", error);
+      const err =
+        error instanceof Error
+          ? error
+          : new Error("Failed to set remote description");
       this.onError?.(err);
       throw err;
     }
@@ -254,12 +286,14 @@ export class PeerConnection {
     try {
       if (this.pc.remoteDescription) {
         await this.pc.addIceCandidate(new RTCIceCandidate(candidate));
-        console.log('[WebRTC] ICE candidate added');
+        console.log("[WebRTC] ICE candidate added");
       } else {
-        console.warn('[WebRTC] Ignoring ICE candidate - no remote description set yet');
+        console.warn(
+          "[WebRTC] Ignoring ICE candidate - no remote description set yet"
+        );
       }
     } catch (error) {
-      console.error('[WebRTC] Error adding ICE candidate:', error);
+      console.error("[WebRTC] Error adding ICE candidate:", error);
       // Don't throw - ICE candidate errors shouldn't crash the call
     }
   }
@@ -302,7 +336,7 @@ export class PeerConnection {
       track.enabled = !mute;
     });
 
-    console.log(`[WebRTC] Audio ${mute ? 'muted' : 'unmuted'}`);
+    console.log(`[WebRTC] Audio ${mute ? "muted" : "unmuted"}`);
     return true;
   }
 
@@ -316,7 +350,7 @@ export class PeerConnection {
       track.enabled = !disable;
     });
 
-    console.log(`[WebRTC] Video ${disable ? 'disabled' : 'enabled'}`);
+    console.log(`[WebRTC] Video ${disable ? "disabled" : "enabled"}`);
     return true;
   }
 
@@ -341,7 +375,9 @@ export class PeerConnection {
   /**
    * Register ICE candidate callback
    */
-  onIceCandidateHandler(handler: (candidate: RTCIceCandidate) => Promise<void>): void {
+  onIceCandidateHandler(
+    handler: (candidate: RTCIceCandidate) => Promise<void>
+  ): void {
     this.onIceCandidate = handler;
   }
 
@@ -355,7 +391,9 @@ export class PeerConnection {
   /**
    * Register connection state change callback
    */
-  onConnectionStateChangeHandler(handler: (state: RTCPeerConnectionState) => void): void {
+  onConnectionStateChangeHandler(
+    handler: (state: RTCPeerConnectionState) => void
+  ): void {
     this.onConnectionStateChange = handler;
   }
 
@@ -381,7 +419,7 @@ export class PeerConnection {
 
     if (this.pc) {
       this.pc.close();
-      console.log('[WebRTC] Peer connection closed');
+      console.log("[WebRTC] Peer connection closed");
     }
   }
 }
@@ -391,7 +429,7 @@ export class PeerConnection {
  */
 export function isWebRTCSupported(): boolean {
   return (
-    typeof navigator !== 'undefined' &&
+    typeof navigator !== "undefined" &&
     !!(
       navigator.mediaDevices?.getUserMedia ||
       (navigator as any).getUserMedia ||
@@ -399,9 +437,9 @@ export function isWebRTCSupported(): boolean {
       (navigator as any).mozGetUserMedia
     ) &&
     !!(
-      typeof RTCPeerConnection !== 'undefined' ||
-      typeof (window as any).webkitRTCPeerConnection !== 'undefined' ||
-      typeof (window as any).mozRTCPeerConnection !== 'undefined'
+      typeof RTCPeerConnection !== "undefined" ||
+      typeof (window as any).webkitRTCPeerConnection !== "undefined" ||
+      typeof (window as any).mozRTCPeerConnection !== "undefined"
     )
   );
 }

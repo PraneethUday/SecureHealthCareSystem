@@ -1,7 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { subscribeToIncomingCalls, VideoCall, updateCallStatus } from '@/lib/webrtc-signaling';
+import { useEffect, useState } from "react";
+import {
+  subscribeToIncomingCalls,
+  VideoCall,
+  updateCallStatus,
+} from "@/lib/webrtc-signaling";
 
 export interface IncomingCallModalProps {
   doctorId: string;
@@ -17,42 +21,48 @@ export function IncomingCallModal({
   const [incomingCall, setIncomingCall] = useState<VideoCall | null>(null);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
-  const [patientName, setPatientName] = useState('');
+  const [patientName, setPatientName] = useState("");
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
 
-    console.log('[IncomingCallModal] Setting up subscription for doctor:', doctorId);
+    console.log(
+      "[IncomingCallModal] Setting up subscription for doctor:",
+      doctorId
+    );
 
     // Subscribe to incoming calls
     unsubscribe = subscribeToIncomingCalls(
       doctorId,
       async (call) => {
-        console.log('[IncomingCallModal] New incoming call:', call.id);
+        console.log("[IncomingCallModal] New incoming call:", call.id);
 
         // Fetch patient name from appointment
         try {
           const response = await fetch(
             `/api/appointments/${call.appointment_id}/details`,
             {
-              method: 'GET',
-              headers: { 'Content-Type': 'application/json' },
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
             }
           );
 
           if (response.ok) {
             const data = await response.json();
-            setPatientName(data.patient_name || 'Unknown Patient');
+            setPatientName(data.patient_name || "Unknown Patient");
           }
         } catch (error) {
-          console.error('[IncomingCallModal] Error fetching patient info:', error);
-          setPatientName('Patient');
+          console.error(
+            "[IncomingCallModal] Error fetching patient info:",
+            error
+          );
+          setPatientName("Patient");
         }
 
         setIncomingCall(call);
       },
       (error) => {
-        console.error('[IncomingCallModal] Subscription error:', error);
+        console.error("[IncomingCallModal] Subscription error:", error);
       }
     );
 
@@ -72,9 +82,9 @@ export function IncomingCallModal({
       // Update call status to accepted
       const result = await updateCallStatus(
         incomingCall.id,
-        'accepted',
+        "accepted",
         doctorId,
-        'doctor'
+        "doctor"
       );
 
       if (result.success) {
@@ -82,7 +92,7 @@ export function IncomingCallModal({
         setIncomingCall(null);
       }
     } catch (error) {
-      console.error('[IncomingCallModal] Error accepting call:', error);
+      console.error("[IncomingCallModal] Error accepting call:", error);
     } finally {
       setIsAccepting(false);
     }
@@ -97,9 +107,9 @@ export function IncomingCallModal({
       // Update call status to rejected
       const result = await updateCallStatus(
         incomingCall.id,
-        'rejected',
+        "rejected",
         doctorId,
-        'doctor'
+        "doctor"
       );
 
       if (result.success) {
@@ -107,7 +117,7 @@ export function IncomingCallModal({
         setIncomingCall(null);
       }
     } catch (error) {
-      console.error('[IncomingCallModal] Error rejecting call:', error);
+      console.error("[IncomingCallModal] Error rejecting call:", error);
     } finally {
       setIsRejecting(false);
     }
@@ -154,7 +164,9 @@ export function IncomingCallModal({
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Appointment:</span>
-              <span className="font-semibold">{incomingCall.appointment_id.slice(0, 8)}...</span>
+              <span className="font-semibold">
+                {incomingCall.appointment_id.slice(0, 8)}...
+              </span>
             </div>
           </div>
 
@@ -167,15 +179,31 @@ export function IncomingCallModal({
             >
               {isRejecting ? (
                 <span className="flex items-center justify-center">
-                  <svg className="w-4 h-4 mr-1 animate-spin" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  <svg
+                    className="w-4 h-4 mr-1 animate-spin"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Rejecting
                 </span>
               ) : (
                 <span className="flex items-center justify-center">
-                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Reject
                 </span>
@@ -189,14 +217,26 @@ export function IncomingCallModal({
             >
               {isAccepting ? (
                 <span className="flex items-center justify-center">
-                  <svg className="w-4 h-4 mr-1 animate-spin" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  <svg
+                    className="w-4 h-4 mr-1 animate-spin"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Accepting
                 </span>
               ) : (
                 <span className="flex items-center justify-center">
-                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773c.418 1.265 1.215 2.807 2.453 4.045 1.238 1.238 2.78 2.035 4.045 2.453l.773-1.548a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                   </svg>
                   Accept
