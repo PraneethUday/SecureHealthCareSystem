@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { getSession } from '@/lib/auth';
-import { useWebRTC } from '@/hooks/useWebRTC';
+import { useEffect, useState, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { useWebRTC } from "@/hooks/useWebRTC";
 
 /**
  * Call start page for patients
@@ -20,8 +20,8 @@ export default function CallStartPage() {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
-  const appointmentId = searchParams.get('appointmentId');
-  const doctorId = searchParams.get('doctorId');
+  const appointmentId = searchParams.get("appointmentId");
+  const doctorId = searchParams.get("doctorId");
 
   const {
     callId,
@@ -39,8 +39,8 @@ export default function CallStartPage() {
     toggleVideo,
     initiateCall,
   } = useWebRTC({
-    userId: user?.id || '',
-    userRole: 'patient',
+    userId: user?.id || "",
+    userRole: "patient",
     appointmentId: appointmentId || undefined,
   });
 
@@ -48,13 +48,13 @@ export default function CallStartPage() {
   useEffect(() => {
     async function checkUser() {
       const session = getSession();
-      if (!session || session.role !== 'patient') {
-        setError('You must be logged in as a patient');
+      if (!session || session.role !== "patient") {
+        setError("You must be logged in as a patient");
         return;
       }
 
       if (!appointmentId || !doctorId) {
-        setError('Missing appointment or doctor information');
+        setError("Missing appointment or doctor information");
         return;
       }
 
@@ -69,30 +69,30 @@ export default function CallStartPage() {
     if (hasInitializedRef.current || !user || !doctorId || isInitiating) return;
     hasInitializedRef.current = true;
 
-    console.log('[CallStart] Initiating call to doctor:', doctorId);
+    console.log("[CallStart] Initiating call to doctor:", doctorId);
     initiateCall(doctorId);
   }, [user, doctorId, isInitiating, initiateCall]);
 
   // Attach local stream to video element
   useEffect(() => {
     if (localVideoRef.current && localStream) {
-      console.log('[CallStart] Attaching local stream to video element');
-      console.log('[CallStart] Local stream details:', {
+      console.log("[CallStart] Attaching local stream to video element");
+      console.log("[CallStart] Local stream details:", {
         id: localStream.id,
         active: localStream.active,
         videoTracks: localStream.getVideoTracks().length,
         audioTracks: localStream.getAudioTracks().length,
       });
-      
+
       localVideoRef.current.srcObject = localStream;
-      console.log('[CallStart] ✅ Local stream attached to video element');
-      
+      console.log("[CallStart] ✅ Local stream attached to video element");
+
       // Force play in case autoplay is blocked
-      localVideoRef.current.play().catch(err => {
-        console.warn('[CallStart] Could not autoplay local video:', err);
+      localVideoRef.current.play().catch((err) => {
+        console.warn("[CallStart] Could not autoplay local video:", err);
       });
     } else {
-      console.log('[CallStart] Waiting for local stream...', {
+      console.log("[CallStart] Waiting for local stream...", {
         hasVideoRef: !!localVideoRef.current,
         hasLocalStream: !!localStream,
       });
@@ -103,7 +103,7 @@ export default function CallStartPage() {
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
-      console.log('[CallStart] Remote stream attached');
+      console.log("[CallStart] Remote stream attached");
     }
   }, [remoteStream]);
 
@@ -116,7 +116,7 @@ export default function CallStartPage() {
 
   const handleEndCall = async () => {
     await endCall();
-    router.push('/dashboard/patient');
+    router.push("/dashboard/patient");
   };
 
   const formatDuration = (seconds: number): string => {
@@ -125,9 +125,11 @@ export default function CallStartPage() {
     const secs = seconds % 60;
 
     if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      return `${hours}:${minutes.toString().padStart(2, "0")}:${secs
+        .toString()
+        .padStart(2, "0")}`;
     }
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    return `${minutes}:${secs.toString().padStart(2, "0")}`;
   };
 
   if (error) {
@@ -150,7 +152,7 @@ export default function CallStartPage() {
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Error</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
-            onClick={() => router.push('/dashboard/patient')}
+            onClick={() => router.push("/dashboard/patient")}
             className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
           >
             Back to Dashboard
@@ -165,7 +167,11 @@ export default function CallStartPage() {
       <div className="fixed inset-0 bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin mb-4 mx-auto">
-            <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24">
+            <svg
+              className="w-12 h-12 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
               <circle
                 className="opacity-25"
                 cx="12"
@@ -214,12 +220,18 @@ export default function CallStartPage() {
             </div>
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Starting Video Call</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Starting Video Call
+          </h2>
           <p className="text-gray-600 mb-4">
             Please allow access to your camera and microphone when prompted
           </p>
           <div className="flex items-center justify-center gap-2 text-blue-600">
-            <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+            <svg
+              className="animate-spin h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
               <circle
                 className="opacity-25"
                 cx="12"
@@ -238,7 +250,7 @@ export default function CallStartPage() {
           </div>
 
           <button
-            onClick={() => router.push('/dashboard/patient')}
+            onClick={() => router.push("/dashboard/patient")}
             className="mt-6 text-sm text-gray-500 hover:text-gray-700 underline"
           >
             Cancel
@@ -254,9 +266,17 @@ export default function CallStartPage() {
       {/* Status Bar */}
       <div className="bg-gray-800 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-yellow-500'} animate-pulse`}></div>
+          <div
+            className={`w-3 h-3 rounded-full ${
+              isConnected ? "bg-green-500" : "bg-yellow-500"
+            } animate-pulse`}
+          ></div>
           <span className="text-white font-medium">
-            {isConnected ? 'Connected' : callStatus === 'calling' ? 'Calling...' : 'Connecting...'}
+            {isConnected
+              ? "Connected"
+              : callStatus === "calling"
+              ? "Calling..."
+              : "Connecting..."}
           </span>
           {isConnected && (
             <span className="text-gray-400 text-sm">
@@ -280,8 +300,16 @@ export default function CallStartPage() {
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
                 <div className="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-10 h-10 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                  <svg
+                    className="w-10 h-10 text-gray-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <p className="text-gray-400">Waiting for doctor...</p>
@@ -313,15 +341,32 @@ export default function CallStartPage() {
         <button
           onClick={toggleAudio}
           className={`p-4 rounded-full transition-colors ${
-            isAudioMuted ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-700 hover:bg-gray-600'
+            isAudioMuted
+              ? "bg-red-600 hover:bg-red-700"
+              : "bg-gray-700 hover:bg-gray-600"
           }`}
-          title={isAudioMuted ? 'Unmute' : 'Mute'}
+          title={isAudioMuted ? "Unmute" : "Mute"}
         >
-          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg
+            className="w-6 h-6 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
             {isAudioMuted ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+              />
             ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+              />
             )}
           </svg>
         </button>
@@ -329,15 +374,32 @@ export default function CallStartPage() {
         <button
           onClick={toggleVideo}
           className={`p-4 rounded-full transition-colors ${
-            isVideoDisabled ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-700 hover:bg-gray-600'
+            isVideoDisabled
+              ? "bg-red-600 hover:bg-red-700"
+              : "bg-gray-700 hover:bg-gray-600"
           }`}
-          title={isVideoDisabled ? 'Enable Video' : 'Disable Video'}
+          title={isVideoDisabled ? "Enable Video" : "Disable Video"}
         >
-          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg
+            className="w-6 h-6 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
             {isVideoDisabled ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
             ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
             )}
           </svg>
         </button>
@@ -347,8 +409,18 @@ export default function CallStartPage() {
           className="p-4 rounded-full bg-red-600 hover:bg-red-700 transition-colors"
           title="End Call"
         >
-          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="w-6 h-6 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
