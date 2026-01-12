@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!;
+const supabaseKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    
+
     const patientId = formData.get("patientId") as string;
     const reportType = formData.get("reportType") as string;
     const reportName = formData.get("reportName") as string;
@@ -27,7 +29,14 @@ export async function POST(request: NextRequest) {
     });
 
     // Validation
-    if (!patientId || !reportType || !reportName || !uploadedByUserId || !uploadedByRole || !file) {
+    if (
+      !patientId ||
+      !reportType ||
+      !reportName ||
+      !uploadedByUserId ||
+      !uploadedByRole ||
+      !file
+    ) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -43,10 +52,7 @@ export async function POST(request: NextRequest) {
 
     if (patientError || !patientData) {
       console.error("❌ [Upload Report] Patient not found:", patientId);
-      return NextResponse.json(
-        { error: "Patient not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 
     const patientUUID = patientData.id;
@@ -63,9 +69,9 @@ export async function POST(request: NextRequest) {
     // Upload file to Supabase Storage
     const fileName = `${patientId}/${Date.now()}_${file.name}`;
     const fileBuffer = await file.arrayBuffer();
-    
+
     console.log("☁️  [Upload Report] Uploading to storage:", fileName);
-    
+
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("medical-reports")
       .upload(fileName, fileBuffer, {
@@ -194,21 +200,26 @@ export async function GET(request: NextRequest) {
     const reportsWithSignedUrls = await Promise.all(
       (data || []).map(async (report: any) => {
         let signedUrl = report.file_url;
-        
+
         try {
           // Extract the file path from the storage URL
           const urlParts = report.file_url.split("/medical-reports/");
           const filePath = urlParts[1] || report.file_name;
-          
+
           // Generate signed URL (valid for 1 hour)
-          const { data: signedUrlData, error: urlError } = await supabase.storage
-            .from("medical-reports")
-            .createSignedUrl(filePath, 3600);
+          const { data: signedUrlData, error: urlError } =
+            await supabase.storage
+              .from("medical-reports")
+              .createSignedUrl(filePath, 3600);
 
           if (signedUrlData?.signedUrl && !urlError) {
             signedUrl = signedUrlData.signedUrl;
           } else {
-            console.warn("⚠️ Could not generate signed URL for:", filePath, urlError);
+            console.warn(
+              "⚠️ Could not generate signed URL for:",
+              filePath,
+              urlError
+            );
           }
         } catch (err) {
           console.error("Error generating signed URL:", err);

@@ -3,19 +3,23 @@
 ## Issues Fixed
 
 ### 1. WebRTC Channel Errors
+
 **Problem:** CHANNEL_ERROR flooding the console  
 **Solution:** Updated error handling to treat channel errors as warnings instead of fatal errors
 
 **Changes Made:**
+
 - Modified `/lib/webrtc-signaling.ts` to add better logging and error handling
 - Channel errors are now logged as warnings (since realtime may not be enabled)
 - Added emojis for better log readability
 
 ### 2. PDF Viewing/Downloading Not Working
+
 **Problem:** Files uploaded to private storage bucket but not accessible  
 **Solution:** Implemented signed URL generation for secure file access
 
 **Changes Made:**
+
 - Updated `/app/api/medical-reports/route.ts` GET endpoint to generate signed URLs (1 hour expiry)
 - Created `/app/api/medical-reports/download/route.ts` for dedicated download URLs (5 min expiry)
 - Updated `/app/dashboard/doctor/components/MedicalReportsViewer.tsx` to use signed URLs
@@ -45,12 +49,14 @@ cat supabase/medical-reports-schema.sql | pbcopy
 ```
 
 Then:
+
 1. Go to **SQL Editor** in Supabase Dashboard
 2. Click **"New query"**
 3. Paste the schema
 4. Click **"Run"**
 
 This will create:
+
 - ✅ `medical_reports` table
 - ✅ `medical_report_logs` table (audit trail)
 - ✅ Storage policies for upload/read/delete
@@ -59,6 +65,7 @@ This will create:
 ### Step 3: Verify Storage Policies
 
 The schema automatically creates these policies:
+
 - `Allow authenticated uploads to medical-reports` - For uploading files
 - `Allow authenticated reads from medical-reports` - For viewing/downloading files
 - `Allow authenticated deletes from medical-reports` - For deleting files
@@ -68,6 +75,7 @@ You can verify these in **Storage > Policies** in the Supabase Dashboard.
 ### Step 4: Test the System
 
 #### Upload a Report (Nurse Dashboard)
+
 1. Login as a nurse
 2. Go to **Medical Reports** tab
 3. Enter patient ID (e.g., `P001`)
@@ -76,6 +84,7 @@ You can verify these in **Storage > Policies** in the Supabase Dashboard.
 6. Submit
 
 #### View/Download Report (Doctor Dashboard)
+
 1. Login as a doctor
 2. Go to **Medical Reports** tab
 3. Search for patient ID (e.g., `P001`)
@@ -93,6 +102,7 @@ Files are stored in a **private bucket** for security. To access them:
 3. **View/Download:** Signed URLs allow temporary access without making files public
 
 ### Signed URL Expiry
+
 - **View/List:** 1 hour (3600 seconds)
 - **Download:** 5 minutes (300 seconds)
 
@@ -101,22 +111,26 @@ This ensures files remain private but accessible to authorized users.
 ## Troubleshooting
 
 ### "Failed to upload file"
+
 - ✅ Verify storage bucket `medical-reports` exists
 - ✅ Check bucket is set to **private** (not public)
 - ✅ Verify storage policies are created
 - ✅ Check file size is under 50MB
 
 ### "Failed to generate download link"
+
 - ✅ Verify file exists in storage bucket
 - ✅ Check storage policies allow reads
 - ✅ Verify file path matches database record
 
 ### WebRTC Channel Errors
+
 - ⚠️ These are warnings, not fatal errors
 - ⚠️ Video calling will still work with polling as fallback
 - ✅ To enable realtime, enable **Realtime** for `video_call_signaling` table in Supabase Dashboard
 
 ### Files Upload Successfully but Can't Be Viewed
+
 - ✅ Check signed URL generation is working (check browser console)
 - ✅ Verify API endpoint returns signed URLs (not public URLs)
 - ✅ Make sure bucket is **private** (public buckets don't need signed URLs)
@@ -166,6 +180,7 @@ supabase/
 ---
 
 **Need Help?**
+
 - Check Supabase Dashboard Storage section
 - Verify storage policies are active
 - Check browser console for errors

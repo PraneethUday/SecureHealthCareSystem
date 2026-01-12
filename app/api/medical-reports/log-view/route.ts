@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!;
+const supabaseKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(request: NextRequest) {
@@ -19,16 +21,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the view action
-    const { error } = await supabase
-      .from("medical_report_logs")
-      .insert([
-        {
-          report_id: reportId,
-          action_type: "viewed",
-          performed_by_user_id: userId,
-          performed_by_role: userRole,
-        },
-      ]);
+    const { error } = await supabase.from("medical_report_logs").insert([
+      {
+        report_id: reportId,
+        action_type: "viewed",
+        performed_by_user_id: userId,
+        performed_by_role: userRole,
+      },
+    ]);
 
     if (error) {
       console.error("❌ [Log View] Error:", error);

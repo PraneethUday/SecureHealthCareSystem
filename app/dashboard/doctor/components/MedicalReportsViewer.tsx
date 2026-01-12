@@ -261,7 +261,11 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
                               ]
                             }`}
                           >
-                            {REPORT_TYPE_LABELS[report.report_type as MedicalReportType]}
+                            {
+                              REPORT_TYPE_LABELS[
+                                report.report_type as MedicalReportType
+                              ]
+                            }
                           </span>
                           <span className="text-sm text-gray-600">
                             {formatFileSize(report.file_size)}

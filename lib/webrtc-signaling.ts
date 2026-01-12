@@ -269,7 +269,7 @@ export function subscribeToSignalingMessages(
   onError?: (error: any) => void
 ): () => void {
   console.log(`[WebRTC] 🔔 Subscribing to signaling for call: ${videoCallId}`);
-  
+
   const channel = supabase
     .channel(`video_call:${videoCallId}`)
     .on(
@@ -289,18 +289,22 @@ export function subscribeToSignalingMessages(
     )
     .subscribe((status, err) => {
       console.log(`[WebRTC] 📡 Channel status: ${status}`);
-      
+
       if (status === "SUBSCRIBED") {
-        console.log(`[WebRTC] ✅ Successfully subscribed to call: ${videoCallId}`);
+        console.log(
+          `[WebRTC] ✅ Successfully subscribed to call: ${videoCallId}`
+        );
       } else if (status === "CHANNEL_ERROR") {
-        console.warn(`[WebRTC] ⚠️ Channel error (this may be expected if realtime is not enabled)`);
+        console.warn(
+          `[WebRTC] ⚠️ Channel error (this may be expected if realtime is not enabled)`
+        );
         // Don't treat this as a fatal error - the system can still work with polling
       } else if (status === "TIMED_OUT") {
         console.warn(`[WebRTC] ⏱️ Channel subscription timed out`);
       } else if (status === "CLOSED") {
         console.log(`[WebRTC] 🔌 Channel closed`);
       }
-      
+
       if (err) {
         console.error(`[WebRTC] ❌ Subscription error:`, err);
       }

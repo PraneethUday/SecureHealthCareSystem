@@ -52,7 +52,10 @@ export async function GET(request: NextRequest) {
       .createSignedUrl(filePath!, 300);
 
     if (urlError || !signedUrlData?.signedUrl) {
-      console.error("❌ [Download Report] Error generating signed URL:", urlError);
+      console.error(
+        "❌ [Download Report] Error generating signed URL:",
+        urlError
+      );
       return NextResponse.json(
         { error: "Failed to generate download link" },
         { status: 500 }

@@ -101,9 +101,11 @@ export function MedicalReportUpload({ nurseId }: MedicalReportUploadProps) {
       setReportDate(new Date().toISOString().split("T")[0]);
       setNotes("");
       setFile(null);
-      
+
       // Reset file input
-      const fileInput = document.getElementById("file-upload") as HTMLInputElement;
+      const fileInput = document.getElementById(
+        "file-upload"
+      ) as HTMLInputElement;
       if (fileInput) fileInput.value = "";
 
       setTimeout(() => setSuccess(false), 5000);
@@ -117,7 +119,9 @@ export function MedicalReportUpload({ nurseId }: MedicalReportUploadProps) {
 
   const clearFile = () => {
     setFile(null);
-    const fileInput = document.getElementById("file-upload") as HTMLInputElement;
+    const fileInput = document.getElementById(
+      "file-upload"
+    ) as HTMLInputElement;
     if (fileInput) fileInput.value = "";
   };
 
@@ -163,7 +167,10 @@ export function MedicalReportUpload({ nurseId }: MedicalReportUploadProps) {
       )}
 
       {/* Upload Form */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-md p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white rounded-xl shadow-md p-6"
+      >
         <div className="space-y-6">
           {/* Patient ID */}
           <div>
@@ -190,7 +197,9 @@ export function MedicalReportUpload({ nurseId }: MedicalReportUploadProps) {
             </label>
             <select
               value={reportType}
-              onChange={(e) => setReportType(e.target.value as MedicalReportType)}
+              onChange={(e) =>
+                setReportType(e.target.value as MedicalReportType)
+              }
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               aria-label="Select report type"
               required

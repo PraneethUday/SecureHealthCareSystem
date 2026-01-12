@@ -321,4 +321,3 @@ export interface MedicalReportLog {
   metadata?: Record<string, any>;
   timestamp: string;
 }
-

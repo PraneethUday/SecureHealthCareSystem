@@ -29,9 +29,9 @@ export default function DoctorDashboard() {
     []
   );
   const [loadingAppointments, setLoadingAppointments] = useState(false);
-  const [activeTab, setActiveTab] = useState<"today" | "upcoming" | "past" | "reports">(
-    "today"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "today" | "upcoming" | "past" | "reports"
+  >("today");
   const [
     selectedAppointmentForPrescription,
     setSelectedAppointmentForPrescription,
