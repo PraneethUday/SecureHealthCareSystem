@@ -21,6 +21,7 @@ import {
 import { getAppointmentPrescriptionCount } from "@/lib/prescriptions";
 import { hasAppointmentMedicalRecord } from "@/lib/medicalRecords";
 import { useState, useEffect } from "react";
+import { NurseAssignment } from "./NurseAssignment";
 
 interface DoctorAppointmentCardProps {
   appointment: AppointmentWithDetails;
@@ -162,6 +163,17 @@ export default function DoctorAppointmentCard({
       <div className="flex items-start gap-2 text-gray-600 text-sm mb-4">
         <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
         <span>{appointment.hospital_name}</span>
+      </div>
+
+      {/* Nurse Assignment */}
+      <div className="mb-4">
+        <NurseAssignment
+          appointmentId={appointment.id}
+          currentNurseId={appointment.nurse_id}
+          currentNurseName={appointment.nurse_name}
+          department={appointment.specialization || "General"}
+          onUpdate={onUpdate}
+        />
       </div>
 
       {/* Reason */}

@@ -229,6 +229,12 @@ export async function getDoctorAppointments(
           id,
           name,
           address
+        ),
+        nurses (
+          id,
+          nurse_id,
+          first_name,
+          last_name
         )
       `
       )
@@ -258,6 +264,10 @@ export async function getDoctorAppointments(
       patient_email: apt.patients?.email || "N/A",
       hospital_name: apt.hospitals?.name || "N/A",
       hospital_address: apt.hospitals?.address || "N/A",
+      nurse_name: apt.nurses
+        ? `${apt.nurses.first_name} ${apt.nurses.last_name}`
+        : undefined,
+      nurse_id_string: apt.nurses?.nurse_id || undefined,
     }));
   } catch (err) {
     console.error("❌ Exception fetching doctor appointments:", err);
