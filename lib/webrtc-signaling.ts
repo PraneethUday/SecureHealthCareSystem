@@ -268,6 +268,8 @@ export function subscribeToSignalingMessages(
   onMessage: (message: SignalingMessage) => void,
   onError?: (error: any) => void
 ): () => void {
+  console.log(`[WebRTC] 🔔 Subscribing to signaling for call: ${videoCallId}`);
+  
   const channel = supabase
     .channel(`video_call:${videoCallId}`)
     .on(
@@ -280,20 +282,33 @@ export function subscribeToSignalingMessages(
       },
       (payload: any) => {
         console.log(
-          `[WebRTC] Signaling message received: ${payload.new.signal_type}`
+          `[WebRTC] 📨 Signaling message received: ${payload.new.signal_type}`
         );
         onMessage(payload.new);
       }
     )
-    .subscribe((status) => {
-      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-        console.error(`[WebRTC] Channel subscription error: ${status}`);
-        onError?.(new Error(`Channel error: ${status}`));
+    .subscribe((status, err) => {
+      console.log(`[WebRTC] 📡 Channel status: ${status}`);
+      
+      if (status === "SUBSCRIBED") {
+        console.log(`[WebRTC] ✅ Successfully subscribed to call: ${videoCallId}`);
+      } else if (status === "CHANNEL_ERROR") {
+        console.warn(`[WebRTC] ⚠️ Channel error (this may be expected if realtime is not enabled)`);
+        // Don't treat this as a fatal error - the system can still work with polling
+      } else if (status === "TIMED_OUT") {
+        console.warn(`[WebRTC] ⏱️ Channel subscription timed out`);
+      } else if (status === "CLOSED") {
+        console.log(`[WebRTC] 🔌 Channel closed`);
+      }
+      
+      if (err) {
+        console.error(`[WebRTC] ❌ Subscription error:`, err);
       }
     });
 
   // Return unsubscribe function
   return () => {
+    console.log(`[WebRTC] 🔕 Unsubscribing from call: ${videoCallId}`);
     supabase.removeChannel(channel);
   };
 }

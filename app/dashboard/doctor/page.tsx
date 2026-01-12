@@ -14,11 +14,13 @@ import {
   LogOut,
   Loader2,
   Search,
+  Files,
 } from "lucide-react";
 import DoctorAppointmentCard from "./components/DoctorAppointmentCard";
 import { IncomingCallModal } from "./components/IncomingCallModal";
 import PrescriptionForm from "./components/PrescriptionForm";
 import MedicalRecordForm from "./components/MedicalRecordForm";
+import { MedicalReportsViewer } from "./components/MedicalReportsViewer";
 
 export default function DoctorDashboard() {
   const router = useRouter();
@@ -27,7 +29,7 @@ export default function DoctorDashboard() {
     []
   );
   const [loadingAppointments, setLoadingAppointments] = useState(false);
-  const [activeTab, setActiveTab] = useState<"today" | "upcoming" | "past">(
+  const [activeTab, setActiveTab] = useState<"today" | "upcoming" | "past" | "reports">(
     "today"
   );
   const [
@@ -309,10 +311,23 @@ export default function DoctorDashboard() {
             >
               Past ({filteredPastAppointments.length})
             </button>
+            <button
+              onClick={() => setActiveTab("reports")}
+              className={`pb-2 px-1 font-medium transition-colors flex items-center gap-2 ${
+                activeTab === "reports"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <Files className="w-4 h-4" />
+              Patient Reports
+            </button>
           </div>
 
-          {/* Appointments List */}
-          {loadingAppointments ? (
+          {/* Tab Content */}
+          {activeTab === "reports" ? (
+            <MedicalReportsViewer doctorId={user.doctor_id} />
+          ) : loadingAppointments ? (
             <div className="text-center py-12">
               <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500" />
               <p className="text-gray-500 mt-2">Loading appointments...</p>

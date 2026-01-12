@@ -273,3 +273,52 @@ export interface MedicalRecordLog {
   metadata?: Record<string, any>;
   timestamp: string;
 }
+
+// Medical Reports/Documents
+export type MedicalReportType =
+  | "blood_test"
+  | "scan"
+  | "xray"
+  | "mri"
+  | "ct_scan"
+  | "ultrasound"
+  | "ecg"
+  | "pathology"
+  | "lab_report"
+  | "radiology"
+  | "other";
+
+export interface MedicalReport {
+  id: string;
+  patient_id: string;
+  uploaded_by_user_id: string;
+  uploaded_by_role: "nurse" | "doctor" | "staff";
+  report_type: MedicalReportType;
+  report_name: string;
+  description?: string;
+  file_url: string;
+  file_name: string;
+  file_size: number;
+  file_type: string;
+  report_date: string;
+  uploaded_at: string;
+  notes?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface MedicalReportWithDetails extends MedicalReport {
+  patient_name?: string;
+  patient_email?: string;
+  uploaded_by_name?: string;
+}
+
+export interface MedicalReportLog {
+  id: string;
+  report_id: string;
+  action_type: "uploaded" | "viewed" | "downloaded" | "deleted";
+  performed_by_user_id: string;
+  performed_by_role: string;
+  metadata?: Record<string, any>;
+  timestamp: string;
+}
+
