@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   subscribeToIncomingCalls,
   VideoCall,
-  updateCallStatus,
 } from "@/lib/webrtc-signaling";
 
 export interface IncomingCallModalProps {
@@ -78,19 +77,12 @@ export function IncomingCallModal({
 
     try {
       setIsAccepting(true);
+      console.log("[IncomingCallModal] Doctor accepting call:", incomingCall.id);
 
-      // Update call status to accepted
-      const result = await updateCallStatus(
-        incomingCall.id,
-        "accepted",
-        doctorId,
-        "doctor"
-      );
-
-      if (result.success) {
-        onCallAccepted(incomingCall);
-        setIncomingCall(null);
-      }
+      // Don't update status here - let useWebRTC.acceptCall() handle it
+      // Just navigate to the call page
+      onCallAccepted(incomingCall);
+      setIncomingCall(null);
     } catch (error) {
       console.error("[IncomingCallModal] Error accepting call:", error);
     } finally {
