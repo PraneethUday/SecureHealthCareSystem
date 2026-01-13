@@ -66,7 +66,7 @@ export default function PatientDashboard() {
         userId: session.user.patient_id || session.user.email,
         userRole: "patient",
         action: "dashboard_access",
-        details: "Patient accessed dashboard",
+        resourceType: "auth",
       });
     }
   }, [router]);
@@ -85,7 +85,7 @@ export default function PatientDashboard() {
         userId: user.patient_id || user.email,
         userRole: "patient",
         action: "logout",
-        details: "Patient logged out",
+        resourceType: "auth",
       });
     }
     clearSession();

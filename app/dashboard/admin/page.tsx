@@ -39,7 +39,7 @@ export default function AdminDashboard() {
         userId: session.user.id,
         userRole: "admin",
         action: "dashboard_access",
-        details: "Admin accessed dashboard",
+        resourceType: "auth",
       });
       // Fetch logs
       fetchLogs();
@@ -75,7 +75,7 @@ export default function AdminDashboard() {
         userId: user.id,
         userRole: "admin",
         action: "logout",
-        details: "Admin logged out",
+        resourceType: "auth",
       });
     }
     clearSession();
