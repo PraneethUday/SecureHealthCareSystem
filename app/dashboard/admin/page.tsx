@@ -163,8 +163,9 @@ export default function AdminDashboard() {
         </div>
         
 {/* Data Security Status – Full Width */}
-<div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-600">
-  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+<div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-600 mb-8 w-full">
+  
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
     {/* Left Section */}
     <div className="flex items-center gap-4">
@@ -181,35 +182,32 @@ export default function AdminDashboard() {
       </div>
     </div>
 
-    {/* Right Section */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto">
-
-      {/* Encryption at Rest */}
-      <div className="bg-gray-50 rounded-lg p-4 min-w-[240px]">
-        <p className="text-sm text-gray-500 mb-1">Encryption at Rest</p>
-        <p className="font-semibold text-green-700 flex items-center gap-2">
-          <Lock className="w-4 h-4" />
-          Enabled
-        </p>
-        <p className="text-xs text-gray-400 mt-1">
-          Stored medical data is encrypted and unreadable without keys
-        </p>
-      </div>
-
-      {/* Algorithm */}
-      <div className="bg-gray-50 rounded-lg p-4 min-w-[240px]">
-        <p className="text-sm text-gray-500 mb-1">Encryption Algorithm</p>
-        <p className="font-semibold text-gray-800">
-          AES-256
-        </p>
-        <p className="text-xs text-gray-400 mt-1">
-          Industry-standard strong encryption (read-only)
-        </p>
-      </div>
-
+    {/* Encryption at Rest */}
+    <div className="bg-gray-50 rounded-lg p-4">
+      <p className="text-sm text-gray-500 mb-1">Encryption at Rest</p>
+      <p className="font-semibold text-green-700 flex items-center gap-2">
+        <Lock className="w-4 h-4" />
+        Enabled
+      </p>
+      <p className="text-xs text-gray-400 mt-1">
+        Stored medical data is encrypted and unreadable without keys
+      </p>
     </div>
+
+    {/* Encryption Algorithm */}
+    <div className="bg-gray-50 rounded-lg p-4">
+      <p className="text-sm text-gray-500 mb-1">Encryption Algorithm</p>
+      <p className="font-semibold text-gray-800">
+        AES-256
+      </p>
+      <p className="text-xs text-gray-400 mt-1">
+        Industry-standard strong encryption (read-only)
+      </p>
+    </div>
+
   </div>
 </div>
+
         {/* Admin Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
