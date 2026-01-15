@@ -17,10 +17,11 @@ import {
   Calendar,
 } from "lucide-react";
 import { useRef } from "react";
-const hasLogged = useRef(false);
+
 
 
 export default function AdminDashboard() {
+  const hasLogged = useRef(false);
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
