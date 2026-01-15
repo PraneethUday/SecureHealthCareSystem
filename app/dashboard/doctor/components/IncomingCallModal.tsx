@@ -78,7 +78,10 @@ export function IncomingCallModal({
 
     try {
       setIsAccepting(true);
-      console.log("[IncomingCallModal] Doctor accepting call:", incomingCall.id);
+      console.log(
+        "[IncomingCallModal] Doctor accepting call:",
+        incomingCall.id
+      );
 
       // Don't update status here - let useWebRTC.acceptCall() handle it
       // Just navigate to the call page
