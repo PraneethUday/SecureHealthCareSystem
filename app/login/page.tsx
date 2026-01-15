@@ -10,6 +10,7 @@ import LoginForm from "./components/LoginForm";
 import Footer from "./components/Footer";
 import InfoBanner from "./components/InfoBanner";
 import { login, saveSession } from "@/lib/auth";
+import { logAction } from "@/lib/logging";
 
 export default function LoginPage() {
   const [selectedRole, setSelectedRole] = useState<UserRole>("patient");
@@ -31,12 +32,20 @@ export default function LoginPage() {
       const result = await login(identifier, password, selectedRole);
 
       if (result.success && result.user && result.role) {
-        // Save session
         saveSession(result.user, result.role);
 
-        // Redirect to appropriate dashboard
+        // ✅ LOG LOGIN SUCCESS (ONE TIME)
+        logAction({
+          userId: result.user.id,
+          userRole: result.role,
+          action: "login_success",
+          resourceType: "auth",
+        });
+
         router.push(`/dashboard/${result.role}`);
-      } else {
+      }
+
+ else {
         setError(result.message || "Login failed");
       }
     } catch (err) {

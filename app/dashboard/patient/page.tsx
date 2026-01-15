@@ -1,5 +1,5 @@
 "use client";
-
+import { useRef } from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSession, clearSession } from "@/lib/auth";
@@ -43,33 +43,29 @@ export default function PatientDashboard() {
   const [pastAppointmentFilter, setPastAppointmentFilter] = useState<
     "all" | "completed" | "cancelled" | "no_show"
   >("all");
+  const hasLogged = useRef(false);
 
   useEffect(() => {
     const session = getSession();
     if (!session || session.role !== "patient") {
       router.push("/login");
-    } else {
-      setUser(session.user);
-      // Use the UUID id field, not the TEXT patient_id field
-      const patientUUID = session.user.id;
-      console.log(
-        "🔍 Patient UUID:",
-        patientUUID,
-        "| patient_id (text):",
-        session.user.patient_id,
-        "| email:",
-        session.user.email
-      );
-      loadAppointments(patientUUID);
-      // Log dashboard access
+      return;
+    }
+
+    setUser(session.user);
+    loadAppointments(session.user.id);
+
+    if (!hasLogged.current) {
       logAction({
         userId: session.user.patient_id || session.user.email,
         userRole: "patient",
         action: "dashboard_access",
         resourceType: "auth",
       });
+      hasLogged.current = true;
     }
-  }, [router]);
+  }, []);
+
 
   const loadAppointments = async (patientId: string) => {
     console.log("📞 Calling getPatientAppointments with UUID:", patientId);

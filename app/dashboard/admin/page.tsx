@@ -16,6 +16,9 @@ import {
   FileText,
   Calendar,
 } from "lucide-react";
+import { useRef } from "react";
+const hasLogged = useRef(false);
+
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -27,25 +30,29 @@ export default function AdminDashboard() {
   const [activeLogTab, setActiveLogTab] = useState<"system" | "appointments">(
     "system"
   );
-
   useEffect(() => {
     const session = getSession();
     if (!session || session.role !== "admin") {
       router.push("/login");
-    } else {
-      setUser(session.user);
-      // Log dashboard access
+      return;
+    }
+
+    setUser(session.user);
+
+    if (!hasLogged.current) {
       logAction({
         userId: session.user.id,
         userRole: "admin",
         action: "dashboard_access",
         resourceType: "auth",
       });
-      // Fetch logs
-      fetchLogs();
-      fetchAppointmentLogs();
+      hasLogged.current = true;
     }
-  }, [router]);
+
+    fetchLogs();
+    fetchAppointmentLogs();
+  }, []);
+
 
   const fetchLogs = async () => {
     try {

@@ -1,42 +1,79 @@
+// lib/blockchain/blockchainLogger.ts
+
 import { ethers } from "ethers";
-import crypto from "crypto";
-import AuditLogABI from "./AuditLog.json";
+import AuditLogArtifact from "./AuditLog.json";
 
-export async function logToBlockchain(
-  action: string,
-  payload: object
-) {
-  // Create hash of payload
-  const hash = crypto
-    .createHash("sha256")
-    .update(JSON.stringify(payload))
-    .digest("hex");
+/**
+ * Lazily create contract to avoid API crash at import time
+ */
+function getAuditContract() {
+  const rpcUrl = process.env.GANACHE_RPC_URL || "http://127.0.0.1:7545";
+  const privateKey = process.env.BLOCKCHAIN_PRIVATE_KEY;
+  const contractAddress = process.env.AUDIT_CONTRACT_ADDRESS;
 
-  // Connect to Ganache
-  const provider = new ethers.JsonRpcProvider(
-    process.env.GANACHE_RPC_URL
-  );
+  if (!privateKey || !contractAddress) {
+    throw new Error("Blockchain environment variables missing");
+  }
 
-  // Wallet using Ganache private key
-  const wallet = new ethers.Wallet(
-    process.env.BLOCKCHAIN_PRIVATE_KEY!,
-    provider
-  );
+  const provider = new ethers.JsonRpcProvider(rpcUrl);
+  const wallet = new ethers.Wallet(privateKey, provider);
 
-  // Contract instance
-  const contract = new ethers.Contract(
-    process.env.AUDIT_CONTRACT_ADDRESS!,
-    AuditLogABI.abi,
+  return new ethers.Contract(
+    contractAddress,
+    AuditLogArtifact.abi, // ✅ ABI from artifact
     wallet
   );
+}
 
-  // Call smart contract
-  const tx = await contract.recordLog(
-    action,
-    "0x" + hash
+/**
+ * WRITE to blockchain (mined transaction)
+ * Emits LogRecorded event
+ */
+export async function logToBlockchain(
+  action: string,
+  payload: {
+    user_id: string;
+    user_role: string;
+    resource_type?: string;
+    resource_id?: string;
+    timestamp: string;
+  }
+) {
+  const contract = getAuditContract();
+
+  // Deterministic hash of audit payload
+  const hash = ethers.keccak256(
+    ethers.toUtf8Bytes(JSON.stringify(payload))
   );
+
+  // ✅ Call the ACTUAL Solidity function
+  const tx = await contract.recordLog(action, hash, {
+    gasPrice: ethers.parseUnits("3", "gwei"),
+  });
 
   await tx.wait();
 
-  console.log("✅ Blockchain log recorded:", action);
+  console.log("⛓️ Blockchain audit event emitted:", tx.hash);
+
+  return {
+    hash,
+    txHash: tx.hash,
+  };
+}
+
+/**
+ * EVENT-BASED verification
+ * Checks whether a transaction hash exists on chain
+ */
+export async function verifyAuditOnBlockchain(
+  txHash: string
+): Promise<boolean> {
+  const provider = new ethers.JsonRpcProvider(
+    process.env.GANACHE_RPC_URL || "http://127.0.0.1:7545"
+  );
+
+  const receipt = await provider.getTransactionReceipt(txHash);
+
+  // If receipt exists → transaction was mined
+  return receipt !== null;
 }
