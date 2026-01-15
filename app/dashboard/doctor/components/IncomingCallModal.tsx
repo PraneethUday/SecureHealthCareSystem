@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   subscribeToIncomingCalls,
+  updateCallStatus,
   VideoCall,
 } from "@/lib/webrtc-signaling";
 
