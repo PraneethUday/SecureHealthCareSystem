@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-/**
- * IMPORTANT:
- * This forces the API route to run in Node.js runtime.
- * Without this, Ollama calls will hang in Edge runtime.
- */
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,13 +38,14 @@ User: ${message}
 Assistant:
 `;
 
-    console.log("➡️ Calling Ollama");
+    console.log("➡️ Calling Ollama at http://127.0.0.1:11434/api/generate");
 
     const response = await fetch("http://127.0.0.1:11434/api/generate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
+      // ⬇️ VERY IMPORTANT: no AbortController, no timeout
       body: JSON.stringify({
         model: "llama3.2:3b",
         prompt,
@@ -57,26 +54,37 @@ Assistant:
     });
 
     if (!response.ok) {
-      const errText = await response.text();
-      console.error("❌ Ollama error:", errText);
+      const errText = await response.text().catch(() => "Unable to read error body");
+      console.error("❌ Ollama HTTP error:", response.status, errText);
+
       return NextResponse.json(
-        { reply: "Ollama failed to generate a response." },
+        { reply: "The AI service is currently unavailable. Please try again." },
         { status: 500 }
       );
     }
 
     const data = await response.json();
 
-    console.log("⬅️ Ollama responded");
+    console.log("⬅️ Ollama responded successfully");
 
     return NextResponse.json({
-      reply: data.response ?? "No response from model.",
+      reply: data?.response ?? "No response from model.",
     });
 
-  } catch (error) {
-    console.error("❌ Chatbot API error:", error);
+  } catch (error: any) {
+    // 👇 Handle aborts gracefully
+    if (error?.name === "AbortError") {
+      console.error("⚠️ Ollama request aborted (timeout or reload)");
+      return NextResponse.json(
+        { reply: "The AI took too long to respond. Please try again." },
+        { status: 504 }
+      );
+    }
+
+    console.error("❌ Chatbot API error:", error?.message ?? error);
+
     return NextResponse.json(
-      { reply: "Something went wrong. Please try again." },
+      { reply: "Something went wrong. Please try again later." },
       { status: 500 }
     );
   }
