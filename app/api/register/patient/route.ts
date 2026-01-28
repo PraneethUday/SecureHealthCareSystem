@@ -35,8 +35,7 @@ export async function POST(request: NextRequest) {
       await logAction({
         userId: email,
         userRole: "patient",
-        action: "registration_failed",
-        details: "Missing required fields",
+        action: "registration_failed_missing_fields",
         ipAddress: request.headers.get("x-forwarded-for") || "unknown",
       });
       return NextResponse.json(
@@ -56,8 +55,7 @@ export async function POST(request: NextRequest) {
       await logAction({
         userId: email,
         userRole: "patient",
-        action: "registration_failed",
-        details: "Email already exists",
+        action: "registration_failed_email_exists",
         ipAddress: request.headers.get("x-forwarded-for") || "unknown",
       });
       return NextResponse.json(
@@ -105,8 +103,7 @@ export async function POST(request: NextRequest) {
       await logAction({
         userId: email,
         userRole: "patient",
-        action: "registration_failed",
-        details: `Database error: ${error.message}`,
+        action: "registration_failed_database_error",
         ipAddress: request.headers.get("x-forwarded-for") || "unknown",
       });
       return NextResponse.json(
@@ -120,7 +117,6 @@ export async function POST(request: NextRequest) {
       userId: newPatientId,
       userRole: "patient",
       action: "registration_success",
-      details: `New patient account created: ${firstName} ${lastName}`,
       ipAddress: request.headers.get("x-forwarded-for") || "unknown",
     });
 
