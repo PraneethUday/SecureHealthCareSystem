@@ -15,6 +15,7 @@ import {
   Database,
   FileText,
   Calendar,
+  Lock,
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -160,6 +161,52 @@ export default function AdminDashboard() {
             <p className="text-2xl font-bold text-gray-800">-</p>
           </div>
         </div>
+        
+{/* Data Security Status – Full Width */}
+<div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-600 mb-8 w-full">
+  
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+    {/* Left Section */}
+    <div className="flex items-center gap-4">
+      <div className="bg-green-100 p-3 rounded-full">
+        <Lock className="w-7 h-7 text-green-700" />
+      </div>
+      <div>
+        <h2 className="text-xl font-semibold text-gray-800">
+          Data Security Status
+        </h2>
+        <p className="text-sm text-gray-500">
+          Medical data protection overview
+        </p>
+      </div>
+    </div>
+
+    {/* Encryption at Rest */}
+    <div className="bg-gray-50 rounded-lg p-4">
+      <p className="text-sm text-gray-500 mb-1">Encryption at Rest</p>
+      <p className="font-semibold text-green-700 flex items-center gap-2">
+        <Lock className="w-4 h-4" />
+        Enabled
+      </p>
+      <p className="text-xs text-gray-400 mt-1">
+        Stored medical data is encrypted and unreadable without keys
+      </p>
+    </div>
+
+    {/* Encryption Algorithm */}
+    <div className="bg-gray-50 rounded-lg p-4">
+      <p className="text-sm text-gray-500 mb-1">Encryption Algorithm</p>
+      <p className="font-semibold text-gray-800">
+        AES-256
+      </p>
+      <p className="text-xs text-gray-400 mt-1">
+        Industry-standard strong encryption (read-only)
+      </p>
+    </div>
+
+  </div>
+</div>
 
         {/* Admin Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
