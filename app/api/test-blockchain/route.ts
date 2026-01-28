@@ -7,7 +7,7 @@ export async function GET() {
     user_role: "admin",
     resource_type: "test",
     resource_id: "blockchain_test",
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 
   return NextResponse.json({ success: true });

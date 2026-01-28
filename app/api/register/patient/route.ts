@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json(
         { error: "All required fields must be filled" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json(
         { error: "Email already registered" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json(
         { error: "Failed to create account" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -125,13 +125,13 @@ export async function POST(request: NextRequest) {
         message: "Account created successfully",
         patientId: newPatientId,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error: any) {
     console.error("Registration error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
