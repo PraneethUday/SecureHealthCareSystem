@@ -107,6 +107,12 @@ Before you begin, ensure you have the following installed:
 - **Supabase Account**: Free tier available ([Sign up](https://supabase.com/))
 - **Modern Browser**: Chrome, Firefox, Safari, or Edge (latest version)
 - **Camera & Microphone**: Required for video consultation features
+- **Ollama (AI Chatbot Runtime)**: Required for running the local healthcare chatbot ([Download](https://ollama.com))
+  - Minimum RAM: 8 GB recommended (4 GB minimum for small models)
+  - Storage: ~3 GB free space for AI models
+  - Required Model: `llama3.2:3b` (lightweight and fast, suitable for local use)
+  - Ollama Service must be running on default port `11434`
+
 
 ## 🚀 Quick Start
 
