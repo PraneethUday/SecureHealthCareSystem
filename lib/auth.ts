@@ -10,7 +10,7 @@ interface LoginResult {
 }
 
 export async function login(
-  
+
   identifier: string,
   password: string,
   role: UserRole
@@ -55,7 +55,7 @@ export async function login(
       .single();
 
     if (error || !data) {
-        await logAction({
+      await logAction({
         userId: identifier,
         userRole: role,
         action: "login_failed",
@@ -68,21 +68,21 @@ export async function login(
     // Simple password comparison (no hashing for now)
     if (data.password !== password) {
       await logAction({
-      userId: identifier,
-      userRole: role,
-      action: "login_failed",
-      resourceType: "auth",
-    });
+        userId: identifier,
+        userRole: role,
+        action: "login_failed",
+        resourceType: "auth",
+      });
 
       return { success: false, message: "Invalid credentials" };
     }
 
     // Log successful login
     await logAction({
-    userId: identifier,
-    userRole: role,
-    action: "login_failed",
-    resourceType: "auth",
+      userId: identifier,
+      userRole: role,
+      action: "login_success",
+      resourceType: "auth",
     });
 
 

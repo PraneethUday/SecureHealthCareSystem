@@ -21,6 +21,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the view action
+    // Insert into database (medical_report_logs)
+    const { error: accessError } = await supabase.from("access_logs").insert({
+      user_id: userId,
+      user_role: userRole,
+      action: "view_report",
+      resource_type: "medical_report",
+      resource_id: reportId,
+      timestamp: new Date().toISOString()
+    });
+
+    if (accessError) console.error("Failed to insert into access_logs:", accessError);
+
     const { error } = await supabase.from("medical_report_logs").insert([
       {
         report_id: reportId,

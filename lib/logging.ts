@@ -53,3 +53,17 @@ export async function getAllLogs(limit = 50) {
   const data = await res.json();
   return data.logs;
 }
+
+/**
+ * Fetch access logs for a specific patient
+ */
+export async function getPatientAccessLogs(patientId: string) {
+  const res = await fetch(`/api/audit/logs?patientId=${patientId}&limit=100`);
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch patient access logs");
+  }
+
+  const data = await res.json();
+  return data.logs;
+}

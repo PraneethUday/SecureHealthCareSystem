@@ -19,7 +19,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
-  
+
 
   const themeClasses = getThemeClasses(selectedRole);
 
@@ -34,18 +34,12 @@ export default function LoginPage() {
       if (result.success && result.user && result.role) {
         saveSession(result.user, result.role);
 
-        // ✅ LOG LOGIN SUCCESS (ONE TIME)
-        logAction({
-          userId: result.user.id,
-          userRole: result.role,
-          action: "login_success",
-          resourceType: "auth",
-        });
+        // Login success logging handled in lib/auth.ts
 
         router.push(`/dashboard/${result.role}`);
       }
 
- else {
+      else {
         setError(result.message || "Login failed");
       }
     } catch (err) {
@@ -65,31 +59,26 @@ export default function LoginPage() {
     <div className="min-h-screen flex overflow-hidden">
       {/* Left Side - Information Banner (Only for Patients) */}
       <div
-        className={`transition-all duration-700 ease-in-out ${
-          selectedRole === "patient"
+        className={`transition-all duration-700 ease-in-out ${selectedRole === "patient"
             ? "w-1/2 opacity-100"
             : "w-0 opacity-0 overflow-hidden"
-        }`}
+          }`}
       >
         <InfoBanner selectedRole={selectedRole} themeClasses={themeClasses} />
       </div>
 
       {/* Right Side - Login Form */}
       <div
-        className={`flex ${
-          selectedRole === "patient" ? "items-center" : "items-start"
-        } justify-center min-h-screen py-8 ${
-          themeClasses.container
-        } transition-all duration-700 ease-in-out ${
-          selectedRole === "patient" ? "flex-1" : "flex-1 w-full"
-        }`}
+        className={`flex ${selectedRole === "patient" ? "items-center" : "items-start"
+          } justify-center min-h-screen py-8 ${themeClasses.container
+          } transition-all duration-700 ease-in-out ${selectedRole === "patient" ? "flex-1" : "flex-1 w-full"
+          }`}
       >
         <div
-          className={`w-full ${
-            selectedRole === "patient"
+          className={`w-full ${selectedRole === "patient"
               ? `max-w-md p-6 ${themeClasses.card} rounded-2xl`
               : "max-w-xl"
-          } transition-all duration-500 ease-in-out`}
+            } transition-all duration-500 ease-in-out`}
         >
           <Header themeClasses={themeClasses} selectedRole={selectedRole} />
 

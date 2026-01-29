@@ -16,6 +16,7 @@ import {
   Loader2,
   Pill,
   Search,
+  ShieldCheck,
 } from "lucide-react";
 import AppointmentCard from "./components/AppointmentCard";
 import NewAppointmentForm from "./components/NewAppointmentForm";
@@ -91,13 +92,13 @@ export default function PatientDashboard() {
   const upcomingAppointments = appointments.filter(
     (apt) =>
       new Date(apt.appointment_date + "T" + apt.appointment_time) >=
-        new Date() && apt.status === "scheduled"
+      new Date() && apt.status === "scheduled"
   );
 
   const pastAppointments = appointments.filter(
     (apt) =>
       new Date(apt.appointment_date + "T" + apt.appointment_time) <
-        new Date() ||
+      new Date() ||
       apt.status === "completed" ||
       apt.status === "cancelled" ||
       apt.status === "no_show"
@@ -213,33 +214,30 @@ export default function PatientDashboard() {
             <div className="flex gap-6 border-b border-gray-200 w-full">
               <button
                 onClick={() => setActiveTab("appointments")}
-                className={`pb-3 px-2 font-semibold transition-colors text-base ${
-                  activeTab === "appointments"
-                    ? "text-red-600 border-b-2 border-red-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                className={`pb-3 px-2 font-semibold transition-colors text-base ${activeTab === "appointments"
+                  ? "text-red-600 border-b-2 border-red-600"
+                  : "text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 <Calendar className="w-5 h-5 inline mr-2" />
                 Appointments
               </button>
               <button
                 onClick={() => setActiveTab("prescriptions")}
-                className={`pb-3 px-2 font-semibold transition-colors text-base ${
-                  activeTab === "prescriptions"
-                    ? "text-red-600 border-b-2 border-red-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                className={`pb-3 px-2 font-semibold transition-colors text-base ${activeTab === "prescriptions"
+                  ? "text-red-600 border-b-2 border-red-600"
+                  : "text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 <Pill className="w-5 h-5 inline mr-2" />
                 Prescriptions
               </button>
               <button
                 onClick={() => setActiveTab("records")}
-                className={`pb-3 px-2 font-semibold transition-colors text-base ${
-                  activeTab === "records"
-                    ? "text-red-600 border-b-2 border-red-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                className={`pb-3 px-2 font-semibold transition-colors text-base ${activeTab === "records"
+                  ? "text-red-600 border-b-2 border-red-600"
+                  : "text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 <FileText className="w-5 h-5 inline mr-2" />
                 Medical Records
@@ -293,10 +291,10 @@ export default function PatientDashboard() {
                     onChange={(e) =>
                       setPastAppointmentFilter(
                         e.target.value as
-                          | "all"
-                          | "completed"
-                          | "cancelled"
-                          | "no_show"
+                        | "all"
+                        | "completed"
+                        | "cancelled"
+                        | "no_show"
                       )
                     }
                     className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200"
@@ -312,21 +310,19 @@ export default function PatientDashboard() {
               <div className="flex gap-4 border-b border-gray-200 mb-6">
                 <button
                   onClick={() => setAppointmentSubTab("upcoming")}
-                  className={`pb-2 px-1 font-medium transition-colors ${
-                    appointmentSubTab === "upcoming"
-                      ? "text-red-600 border-b-2 border-red-600"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`pb-2 px-1 font-medium transition-colors ${appointmentSubTab === "upcoming"
+                    ? "text-red-600 border-b-2 border-red-600"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                 >
                   Upcoming ({filteredUpcomingAppointments.length})
                 </button>
                 <button
                   onClick={() => setAppointmentSubTab("past")}
-                  className={`pb-2 px-1 font-medium transition-colors ${
-                    appointmentSubTab === "past"
-                      ? "text-red-600 border-b-2 border-red-600"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`pb-2 px-1 font-medium transition-colors ${appointmentSubTab === "past"
+                    ? "text-red-600 border-b-2 border-red-600"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                 >
                   Past ({filteredPastAppointments.length})
                 </button>
@@ -447,6 +443,22 @@ export default function PatientDashboard() {
             </p>
             <button className="text-red-600 font-medium text-sm hover:underline">
               Edit Profile →
+            </button>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow border border-red-100">
+            <ShieldCheck className="w-12 h-12 text-emerald-500 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Access History
+            </h3>
+            <p className="text-gray-600 text-sm mb-4">
+              See who viewed your records (Secure Audit Log)
+            </p>
+            <button
+              onClick={() => router.push("/dashboard/patient/access-logs")}
+              className="text-emerald-600 font-medium text-sm hover:underline"
+            >
+              View History →
             </button>
           </div>
         </div>
