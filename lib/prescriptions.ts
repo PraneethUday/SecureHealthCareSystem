@@ -2,7 +2,6 @@ import { supabase } from "./supabase";
 import {
   Prescription,
   PrescriptionWithDetails,
-  PrescriptionWithDetails,
   PrescriptionLog,
   UserRole,
 } from "./database.types";

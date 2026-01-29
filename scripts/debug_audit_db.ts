@@ -64,7 +64,7 @@ async function main() {
         .order("timestamp", { ascending: false })
         .limit(5);
 
-    console.log("Recent 5 Logs:", logs?.map(l => ({
+    console.log("Recent 5 Logs:", logs?.map((l: any) => ({
         action: l.action,
         res_type: l.resource_type,
         res_id: l.resource_id,

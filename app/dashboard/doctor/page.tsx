@@ -65,7 +65,6 @@ export default function DoctorDashboard() {
           userId: session.user.doctor_id,
           userRole: "doctor",
           action: "dashboard_access",
-          details: "Doctor accessed dashboard",
         });
       }
     };
