@@ -131,6 +131,7 @@ export interface Appointment {
   video_call_link?: string;
   video_call_started_at?: string;
   video_call_ended_at?: string;
+  nurse_id?: string; // UUID reference to nurses table
   created_at?: string;
   updated_at?: string;
 }
@@ -142,6 +143,8 @@ export interface AppointmentWithDetails extends Appointment {
   specialization?: string;
   hospital_name?: string;
   hospital_address?: string;
+  nurse_name?: string;
+  nurse_id_string?: string; // The nurse's readable ID (e.g., N001)
 }
 
 export interface AppointmentLog {

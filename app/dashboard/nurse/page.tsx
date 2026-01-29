@@ -16,11 +16,12 @@ import {
   Upload,
 } from "lucide-react";
 import { MedicalReportUpload } from "./components/MedicalReportUpload";
+import { PatientCare } from "./components/PatientCare";
 
 export default function NurseDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "upload">("upload");
+  const [activeTab, setActiveTab] = useState<"overview" | "upload" | "patientCare">("overview");
 
   useEffect(() => {
     const session = getSession();
@@ -86,41 +87,11 @@ export default function NurseDashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* Navigation Tabs */}
-        <div className="mb-6 border-b border-gray-200">
-          <nav className="flex gap-4">
-            <button
-              onClick={() => setActiveTab("upload")}
-              className={`px-4 py-3 font-medium transition-colors relative ${
-                activeTab === "upload"
-                  ? "text-green-600 border-b-2 border-green-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Upload className="w-5 h-5" />
-                Upload Medical Reports
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`px-4 py-3 font-medium transition-colors relative ${
-                activeTab === "overview"
-                  ? "text-green-600 border-b-2 border-green-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Activity className="w-5 h-5" />
-                Overview
-              </div>
-            </button>
-          </nav>
-        </div>
-
         {/* Tab Content */}
         {activeTab === "upload" ? (
           <MedicalReportUpload nurseId={user.nurse_id} />
+        ) : activeTab === "patientCare" ? (
+          <PatientCare nurseId={user.nurse_id} />
         ) : (
           <>
             {/* Profile Card */}
@@ -157,8 +128,11 @@ export default function NurseDashboard() {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div 
+                onClick={() => setActiveTab("patientCare")}
+                className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+              >
                 <Users className="w-12 h-12 text-green-500 mb-4" />
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   Patient Care
@@ -166,9 +140,9 @@ export default function NurseDashboard() {
                 <p className="text-gray-600 text-sm mb-4">
                   View assigned patients and care plans
                 </p>
-                <button className="text-green-600 font-medium text-sm hover:underline">
+                <span className="text-green-600 font-medium text-sm hover:underline">
                   View Patients →
-                </button>
+                </span>
               </div>
 
               <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
@@ -195,6 +169,22 @@ export default function NurseDashboard() {
                 <button className="text-green-600 font-medium text-sm hover:underline">
                   View Records →
                 </button>
+              </div>
+
+              <div 
+                onClick={() => setActiveTab("upload")}
+                className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer border-2 border-green-200 hover:border-green-300"
+              >
+                <Upload className="w-12 h-12 text-green-500 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                  Upload Medical Reports
+                </h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Upload patient test results and reports
+                </p>
+                <span className="text-green-600 font-medium text-sm hover:underline">
+                  Upload Now →
+                </span>
               </div>
             </div>
           </>

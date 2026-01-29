@@ -117,42 +117,41 @@ export class PeerConnection {
     video: boolean = true
   ): Promise<MediaStream | null> {
     try {
-      // If we already have a local stream, return it
-      if (this.localStream && this.localStream.active) {
+      // If we don't have a local stream, request it
+      if (!this.localStream || !this.localStream.active) {
+        // First try to get available devices
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const hasAudio = devices.some((device) => device.kind === "audioinput");
+        const hasVideo = devices.some((device) => device.kind === "videoinput");
+
+        console.log(
+          "[WebRTC] Available devices - Audio:",
+          hasAudio,
+          "Video:",
+          hasVideo
+        );
+
+        const constraints: MediaStreamConstraints = {
+          audio:
+            audio && hasAudio
+              ? { echoCancellation: true, noiseSuppression: true }
+              : false,
+          video:
+            video && hasVideo
+              ? { width: { ideal: 1280 }, height: { ideal: 720 } }
+              : false,
+        };
+
+        if (!constraints.audio && !constraints.video) {
+          throw new Error("No audio or video devices available");
+        }
+
+        console.log("[WebRTC] Requesting getUserMedia...");
+        this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        console.log("[WebRTC] getUserMedia successful");
+      } else {
         console.log("[WebRTC] Reusing existing local stream");
-        return this.localStream;
       }
-
-      // First try to get available devices
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const hasAudio = devices.some((device) => device.kind === "audioinput");
-      const hasVideo = devices.some((device) => device.kind === "videoinput");
-
-      console.log(
-        "[WebRTC] Available devices - Audio:",
-        hasAudio,
-        "Video:",
-        hasVideo
-      );
-
-      const constraints: MediaStreamConstraints = {
-        audio:
-          audio && hasAudio
-            ? { echoCancellation: true, noiseSuppression: true }
-            : false,
-        video:
-          video && hasVideo
-            ? { width: { ideal: 1280 }, height: { ideal: 720 } }
-            : false,
-      };
-
-      if (!constraints.audio && !constraints.video) {
-        throw new Error("No audio or video devices available");
-      }
-
-      console.log("[WebRTC] Requesting getUserMedia...");
-      this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log("[WebRTC] getUserMedia successful");
 
       // Check peer connection state and recreate if necessary
       if (
@@ -166,7 +165,7 @@ export class PeerConnection {
         this.setupEventHandlers();
       }
 
-      // Add local tracks to peer connection (only if not already added)
+      // Always ensure tracks are added to peer connection (handles both new and reused streams)
       const senders = this.pc.getSenders();
       this.localStream.getTracks().forEach((track) => {
         // Check if this track is already added
@@ -187,7 +186,7 @@ export class PeerConnection {
         }
       });
 
-      console.log("[WebRTC] Local stream acquired");
+      console.log("[WebRTC] Local stream acquired and tracks added to peer connection");
       return this.localStream;
     } catch (error) {
       console.error("[WebRTC] Error getting user media:", error);
@@ -209,6 +208,27 @@ export class PeerConnection {
       });
       this.localStream = null;
     }
+  }
+
+  /**
+   * Set an existing media stream and add its tracks to the peer connection
+   * Used when reusing a stream from a previous connection
+   */
+  setLocalStream(stream: MediaStream): void {
+    console.log("[WebRTC] Setting existing local stream");
+    this.localStream = stream;
+    
+    // Add all tracks to the peer connection
+    const senders = this.pc.getSenders();
+    stream.getTracks().forEach((track) => {
+      const existingSender = senders.find((s) => s.track?.id === track.id);
+      if (!existingSender) {
+        console.log("[WebRTC] Adding track to peer connection:", track.kind);
+        this.pc.addTrack(track, stream);
+      } else {
+        console.log("[WebRTC] Track already added:", track.kind);
+      }
+    });
   }
 
   /**

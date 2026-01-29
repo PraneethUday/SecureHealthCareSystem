@@ -80,12 +80,6 @@ export function useWebRTC(options: UseWebRTCOptions) {
         return false;
       }
 
-      // If we already have a local stream, reuse it
-      if (state.localStream && state.localStream.active) {
-        console.log("[Hook] ✅ Reusing existing local stream");
-        return true;
-      }
-
       isInitializingMediaRef.current = true;
       console.log(
         "[Hook] 🎥 Initializing local media (camera & microphone)..."
@@ -134,6 +128,15 @@ export function useWebRTC(options: UseWebRTCOptions) {
         }));
       });
 
+      // Check if we already have an active local stream in state
+      if (state.localStream && state.localStream.active) {
+        console.log("[Hook] ✅ Reusing existing local stream from state");
+        // Set the existing stream on the peer connection
+        peerConnectionRef.current.setLocalStream(state.localStream);
+        isInitializingMediaRef.current = false;
+        return true;
+      }
+
       console.log("[Hook] 📸 Requesting camera and microphone access...");
       console.log(
         "[Hook] ⚠️  Your browser should show a permission prompt now!"
@@ -164,6 +167,9 @@ export function useWebRTC(options: UseWebRTCOptions) {
         error instanceof Error ? error.message : "Failed to get local media";
       console.error("[Hook] ❌ Error initializing media:", error);
 
+      // DON'T clean up peer connection on media errors - it can still be used
+      // The peer connection is valid even if we can't get media (for testing, etc.)
+
       // More helpful error messages
       if (message.includes("Permission denied")) {
         console.error("[Hook] 🚫 Camera/microphone permission was denied");
@@ -184,7 +190,7 @@ export function useWebRTC(options: UseWebRTCOptions) {
         }));
       } else {
         console.error(
-          "[Hook] � Tip: Check if you denied camera/microphone permissions"
+          "[Hook] 💡 Tip: Check if you denied camera/microphone permissions"
         );
         setState((prev) => ({ ...prev, error: message }));
       }
@@ -205,15 +211,23 @@ export function useWebRTC(options: UseWebRTCOptions) {
 
         setState((prev) => ({ ...prev, isInitiating: true, error: null }));
 
-        // Initialize local media first
+        // Initialize local media first (creates peer connection even if media fails)
         const mediaReady = await initializeLocalMedia();
-        if (!mediaReady) {
+        
+        // Even if media initialization failed, check if peer connection exists
+        if (!peerConnectionRef.current) {
+          console.error("[Hook] ❌ Peer connection was not created during initialization");
           setState((prev) => ({
             ...prev,
             isInitiating: false,
-            error: "Failed to access camera/microphone",
+            error: "Failed to setup WebRTC connection",
           }));
           return;
+        }
+        
+        if (!mediaReady) {
+          console.warn("[Hook] ⚠️ Media not ready, but peer connection exists. Continuing...");
+          // Continue - we can still establish connection without local media
         }
 
         // Create video call record
@@ -245,33 +259,22 @@ export function useWebRTC(options: UseWebRTCOptions) {
         }));
 
         // Setup ICE candidate handler BEFORE creating offer
-        if (peerConnectionRef.current) {
-          peerConnectionRef.current.onIceCandidateHandler(async (candidate) => {
-            console.log("[Hook] Patient sending ICE candidate to doctor");
-            await sendSignalingMessage(
-              callId,
-              userId,
-              userRole,
-              doctorId,
-              "ice-candidate",
-              {
-                candidate: candidate.candidate,
-                sdpMLineIndex: candidate.sdpMLineIndex,
-                sdpMid: candidate.sdpMid,
-              }
-            );
-          });
-        } else {
-          console.error(
-            "[Hook] ⚠️ Peer connection is null, cannot set ICE handler"
+        // At this point, peer connection MUST exist (we checked above)
+        peerConnectionRef.current.onIceCandidateHandler(async (candidate) => {
+          console.log("[Hook] Patient sending ICE candidate to doctor");
+          await sendSignalingMessage(
+            callId,
+            userId,
+            userRole,
+            doctorId,
+            "ice-candidate",
+            {
+              candidate: candidate.candidate,
+              sdpMLineIndex: candidate.sdpMLineIndex,
+              sdpMid: candidate.sdpMid,
+            }
           );
-          setState((prev) => ({
-            ...prev,
-            isInitiating: false,
-            error: "Failed to setup connection",
-          }));
-          return;
-        }
+        });
 
         // Subscribe to signaling messages
         unsubscribeSignalingRef.current = subscribeToSignalingMessages(
@@ -335,15 +338,25 @@ export function useWebRTC(options: UseWebRTCOptions) {
         );
         setState((prev) => ({ ...prev, isAccepting: true, error: null }));
 
-        // Initialize local media
+        // Initialize local media (creates peer connection even if media fails)
         const mediaReady = await initializeLocalMedia();
-        if (!mediaReady) {
+        
+        // Even if media initialization failed, check if peer connection exists
+        // It might have been created but media permission was denied
+        if (!peerConnectionRef.current) {
+          console.error("[Hook] ❌ Peer connection was not created during initialization");
           setState((prev) => ({
             ...prev,
             isAccepting: false,
-            error: "Failed to access camera/microphone",
+            error: "Failed to setup WebRTC connection",
           }));
           return;
+        }
+        
+        if (!mediaReady) {
+          console.warn("[Hook] ⚠️ Media not ready, but peer connection exists. Continuing...");
+          // Don't return - we can still try to establish connection without local media
+          // The remote stream might still work
         }
 
         // Update call status to accepted
@@ -373,33 +386,22 @@ export function useWebRTC(options: UseWebRTCOptions) {
         }));
 
         // Setup ICE candidate handler BEFORE processing offer
-        if (peerConnectionRef.current) {
-          peerConnectionRef.current.onIceCandidateHandler(async (candidate) => {
-            console.log("[Hook] Doctor sending ICE candidate to patient");
-            await sendSignalingMessage(
-              callId,
-              userId,
-              userRole,
-              patientId,
-              "ice-candidate",
-              {
-                candidate: candidate.candidate,
-                sdpMLineIndex: candidate.sdpMLineIndex,
-                sdpMid: candidate.sdpMid,
-              }
-            );
-          });
-        } else {
-          console.error(
-            "[Hook] ⚠️ Peer connection is null, cannot set ICE handler"
+        // At this point, peer connection MUST exist (we checked above)
+        peerConnectionRef.current.onIceCandidateHandler(async (candidate) => {
+          console.log("[Hook] Doctor sending ICE candidate to patient");
+          await sendSignalingMessage(
+            callId,
+            userId,
+            userRole,
+            patientId,
+            "ice-candidate",
+            {
+              candidate: candidate.candidate,
+              sdpMLineIndex: candidate.sdpMLineIndex,
+              sdpMid: candidate.sdpMid,
+            }
           );
-          setState((prev) => ({
-            ...prev,
-            isAccepting: false,
-            error: "Failed to setup connection",
-          }));
-          return;
-        }
+        });
 
         // Subscribe to signaling messages FIRST
         unsubscribeSignalingRef.current = subscribeToSignalingMessages(
