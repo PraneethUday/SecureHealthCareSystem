@@ -15,12 +15,16 @@ import {
   Loader2,
   Search,
   Files,
+  Activity,
+  Clock,
+  CheckCircle,
 } from "lucide-react";
 import DoctorAppointmentCard from "./components/DoctorAppointmentCard";
 import { IncomingCallModal } from "./components/IncomingCallModal";
 import PrescriptionForm from "./components/PrescriptionForm";
 import MedicalRecordForm from "./components/MedicalRecordForm";
 import { MedicalReportsViewer } from "./components/MedicalReportsViewer";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function DoctorDashboard() {
   const router = useRouter();
@@ -55,16 +59,8 @@ export default function DoctorDashboard() {
         router.push("/login");
       } else {
         setUser(session.user);
-        // Use the UUID id field, not the TEXT doctor_id field
         const doctorUUID = session.user.id;
-        console.log(
-          "🔍 Doctor UUID:",
-          doctorUUID,
-          "| doctor_id (text):",
-          session.user.doctor_id
-        );
         loadAppointments(doctorUUID);
-        // Log dashboard access
         logAction({
           userId: session.user.doctor_id,
           userRole: "doctor",
@@ -77,7 +73,6 @@ export default function DoctorDashboard() {
   }, [router]);
 
   const loadAppointments = async (doctorId: string) => {
-    console.log("📞 Calling getDoctorAppointments with UUID:", doctorId);
     setLoadingAppointments(true);
     const data = await getDoctorAppointments(doctorId);
     setAppointments(data);
@@ -90,7 +85,6 @@ export default function DoctorDashboard() {
         userId: user.doctor_id,
         userRole: "doctor",
         action: "logout",
-        details: "Doctor logged out",
       });
     }
     clearSession();
@@ -107,13 +101,13 @@ export default function DoctorDashboard() {
     (apt) =>
       new Date(apt.appointment_date).toDateString() !== today &&
       new Date(apt.appointment_date + "T" + apt.appointment_time) >=
-        new Date() &&
+      new Date() &&
       apt.status === "scheduled"
   );
   const pastAppointments = appointments.filter(
     (apt) =>
       new Date(apt.appointment_date + "T" + apt.appointment_time) <
-        new Date() ||
+      new Date() ||
       apt.status === "completed" ||
       apt.status === "cancelled" ||
       apt.status === "no_show"
@@ -152,328 +146,260 @@ export default function DoctorDashboard() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-[conic-gradient(at_top,_var(--tw-gradient-stops))] from-blue-100 via-indigo-100 to-sky-100 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950 pb-10 transition-colors duration-500">
+
+      {/* Dynamic Background Mesh */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-60 dark:opacity-30">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-300 dark:bg-blue-900/40 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob"></div>
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-300 dark:bg-indigo-900/40 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-8 left-1/3 w-96 h-96 bg-cyan-300 dark:bg-cyan-900/40 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-4000"></div>
+      </div>
+
+      <style jsx global>{`
+        @keyframes blob {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+      `}</style>
+
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-white/70 dark:bg-gray-900/70 border-b border-white/50 dark:border-gray-800/50 shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full p-2">
+              <div className="bg-gradient-to-br from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-800 rounded-xl p-2.5 shadow-lg shadow-blue-500/20 transform transition-transform hover:scale-105">
                 <Stethoscope className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">
+                <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
                   Doctor Dashboard
                 </h1>
-                <p className="text-sm text-gray-500">
-                  Dr. {user.first_name} {user.last_name} - {user.specialization}
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                  Dr. {user.first_name} {user.last_name} • {user.specialization}
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </button>
+
+            <div className="flex items-center gap-4">
+              <div className="bg-white/80 dark:bg-gray-800/80 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900 text-xs text-blue-600 dark:text-blue-400 font-semibold shadow-sm">
+                ID: {user.doctor_id}
+              </div>
+              <ThemeToggle />
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 text-blue-600 dark:text-blue-400 rounded-lg border border-blue-200 dark:border-blue-800 hover:border-blue-300 active:scale-95 transition-all shadow-sm hover:shadow-md font-medium text-sm group"
+              >
+                <LogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* Profile Card */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Professional Information
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <p className="text-sm text-gray-500">Doctor ID</p>
-              <p className="font-medium">{user.doctor_id}</p>
+      <main className="relative z-10 max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+
+        {/* Quick Stats Row */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Stat: Today's Appointments */}
+          <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-5 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+            <div className="flex justify-between items-start mb-4">
+              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-md shadow-blue-500/20 text-white">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-full border border-blue-100 dark:border-blue-800">
+                Today
+              </span>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Department</p>
-              <p className="font-medium">{user.department}</p>
+            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Appointments</h3>
+            <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+              {todayAppointments.length}
+            </p>
+          </div>
+
+          {/* Stat: Total Patients (Placeholder) */}
+          <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-5 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+            <div className="flex justify-between items-start mb-4">
+              <div className="bg-gradient-to-br from-emerald-400 to-teal-500 p-3 rounded-xl shadow-md shadow-emerald-500/20 text-white">
+                <Users className="w-6 h-6" />
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">License Number</p>
-              <p className="font-medium">{user.license_number}</p>
+            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Total Patients</h3>
+            <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+              --
+            </p>
+          </div>
+
+          {/* Stat: Pending Reports (Placeholder) */}
+          <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-5 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+            <div className="flex justify-between items-start mb-4">
+              <div className="bg-gradient-to-br from-amber-400 to-orange-500 p-3 rounded-xl shadow-md shadow-amber-500/20 text-white">
+                <Files className="w-6 h-6" />
+              </div>
+              <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full border border-amber-100 dark:border-amber-800">
+                Pending
+              </span>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Email</p>
-              <p className="font-medium">{user.email}</p>
+            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Reports to Review</h3>
+            <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+              --
+            </p>
+          </div>
+
+          {/* Stat: Experience */}
+          <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-5 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+            <div className="flex justify-between items-start mb-4">
+              <div className="bg-gradient-to-br from-purple-400 to-pink-500 p-3 rounded-xl shadow-md shadow-purple-500/20 text-white">
+                <Activity className="w-6 h-6" />
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Phone</p>
-              <p className="font-medium">{user.phone || "Not provided"}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Experience</p>
-              <p className="font-medium">{user.years_of_experience} years</p>
-            </div>
+            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Experience</h3>
+            <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+              {user.years_of_experience} <span className="text-sm font-normal text-gray-500 dark:text-gray-400">years</span>
+            </p>
           </div>
         </div>
 
-        {/* Appointments Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800">
-                My Appointments
-              </h2>
-              <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
-                <Calendar className="w-4 h-4" />
-                <span>Total: {appointments.length}</span>
-              </div>
+        {/* Main Content Area (Glass Card) */}
+        <div className="bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 dark:border-white/10 overflow-hidden">
+
+          {/* Navigation Tabs */}
+          <div className="flex flex-col md:flex-row justify-between items-center p-6 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex gap-2 p-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl overflow-x-auto max-w-full">
+              {[
+                { id: "today", label: "Today's Schedule", icon: Clock },
+                { id: "upcoming", label: "Upcoming", icon: Calendar },
+                { id: "past", label: "Past History", icon: Files },
+                { id: "reports", label: "Patient Reports", icon: FileText }
+              ].map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${activeTab === tab.id
+                      ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                      : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50"
+                      }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                )
+              })}
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative w-full sm:w-64">
-                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+
+            {/* Search Bar - Only show for appointment tabs */}
+            {activeTab !== 'reports' && (
+              <div className="mt-4 md:mt-0 relative w-full md:w-64 group">
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search patient name"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  placeholder="Search patients..."
+                  className="w-full pl-10 pr-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:text-gray-200 transition-all shadow-sm"
                 />
               </div>
-              {activeTab === "upcoming" && (
-                <select
-                  aria-label="Filter upcoming appointments"
-                  value={upcomingFilter}
-                  onChange={(e) =>
-                    setUpcomingFilter(
-                      e.target.value as "all" | "telemedicine" | "in_person"
-                    )
-                  }
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
-                >
-                  <option value="all">All Types</option>
-                  <option value="telemedicine">Telemedicine</option>
-                  <option value="in_person">In-person</option>
-                </select>
-              )}
-              {activeTab === "past" && (
-                <select
-                  aria-label="Filter past appointments"
-                  value={pastFilter}
-                  onChange={(e) =>
-                    setPastFilter(
-                      e.target.value as
-                        | "all"
-                        | "completed"
-                        | "cancelled"
-                        | "no_show"
-                    )
-                  }
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                  <option value="no_show">No Show</option>
-                </select>
-              )}
-            </div>
+            )}
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-4 border-b border-gray-200 mb-6">
-            <button
-              onClick={() => setActiveTab("today")}
-              className={`pb-2 px-1 font-medium transition-colors ${
-                activeTab === "today"
-                  ? "text-blue-600 border-b-2 border-blue-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Today ({filteredTodayAppointments.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("upcoming")}
-              className={`pb-2 px-1 font-medium transition-colors ${
-                activeTab === "upcoming"
-                  ? "text-blue-600 border-b-2 border-blue-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Upcoming ({filteredUpcomingAppointments.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("past")}
-              className={`pb-2 px-1 font-medium transition-colors ${
-                activeTab === "past"
-                  ? "text-blue-600 border-b-2 border-blue-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Past ({filteredPastAppointments.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("reports")}
-              className={`pb-2 px-1 font-medium transition-colors flex items-center gap-2 ${
-                activeTab === "reports"
-                  ? "text-blue-600 border-b-2 border-blue-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <Files className="w-4 h-4" />
-              Patient Reports
-            </button>
-          </div>
+          {/* Tab Content Staging Area */}
+          <div className="p-6 md:p-8 min-h-[500px]">
 
-          {/* Tab Content */}
-          {activeTab === "reports" ? (
-            <MedicalReportsViewer doctorId={user.doctor_id} />
-          ) : loadingAppointments ? (
-            <div className="text-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500" />
-              <p className="text-gray-500 mt-2">Loading appointments...</p>
-            </div>
-          ) : (
-            <div className="max-h-[32rem] overflow-y-auto pr-1">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {activeTab === "today" ? (
+            {activeTab === "reports" ? (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <MedicalReportsViewer doctorId={user.doctor_id} />
+              </div>
+            ) : loadingAppointments ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+                <p className="text-gray-400 font-medium">Fetching schedule...</p>
+              </div>
+            ) : (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Today's Appointments */}
+                {activeTab === "today" && (
                   filteredTodayAppointments.length === 0 ? (
-                    <div className="col-span-full text-center py-12 text-gray-500">
-                      <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                      <p>
-                        {todayAppointments.length === 0
-                          ? "No appointments today"
-                          : "No appointments match your search"}
-                      </p>
+                    <div className="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
+                      <Calendar className="w-12 h-12 mb-3 opacity-20" />
+                      <p>No appointments scheduled for today.</p>
                     </div>
                   ) : (
-                    filteredTodayAppointments.map((appointment) => (
+                    filteredTodayAppointments.map((apt) => (
                       <DoctorAppointmentCard
-                        key={appointment.id}
-                        appointment={appointment}
+                        key={apt.id}
+                        appointment={apt}
                         doctorId={user.id}
                         onUpdate={() => loadAppointments(user.id)}
-                        onStartVideoCall={() => {
-                          alert(
-                            "Please wait for patient to initiate the video call. You'll receive a notification."
-                          );
-                        }}
-                        onPrescribe={() =>
-                          setSelectedAppointmentForPrescription(appointment)
-                        }
-                        onCreateMedicalRecord={() =>
-                          setSelectedAppointmentForMedicalRecord(appointment)
-                        }
+                        onStartVideoCall={() => alert("Waiting for patient to join...")}
+                        onPrescribe={() => setSelectedAppointmentForPrescription(apt)}
+                        onCreateMedicalRecord={() => setSelectedAppointmentForMedicalRecord(apt)}
                       />
                     ))
                   )
-                ) : activeTab === "upcoming" ? (
+                )}
+
+                {/* Upcoming Appointments */}
+                {activeTab === "upcoming" && (
                   filteredUpcomingAppointments.length === 0 ? (
-                    <div className="col-span-full text-center py-12 text-gray-500">
-                      <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                      <p>
-                        {upcomingAppointments.length === 0
-                          ? "No upcoming appointments"
-                          : "No appointments match your filters"}
-                      </p>
+                    <div className="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
+                      <Calendar className="w-12 h-12 mb-3 opacity-20" />
+                      <p>No upcoming appointments found.</p>
                     </div>
                   ) : (
-                    filteredUpcomingAppointments.map((appointment) => (
+                    filteredUpcomingAppointments.map((apt) => (
                       <DoctorAppointmentCard
-                        key={appointment.id}
-                        appointment={appointment}
+                        key={apt.id}
+                        appointment={apt}
                         doctorId={user.id}
                         onUpdate={() => loadAppointments(user.id)}
-                        onStartVideoCall={() => {
-                          alert(
-                            "Please wait for patient to initiate the video call. You'll receive a notification."
-                          );
-                        }}
-                        onPrescribe={() =>
-                          setSelectedAppointmentForPrescription(appointment)
-                        }
-                        onCreateMedicalRecord={() =>
-                          setSelectedAppointmentForMedicalRecord(appointment)
-                        }
+                        onStartVideoCall={() => alert("Waiting for patient to join...")}
+                        onPrescribe={() => setSelectedAppointmentForPrescription(apt)}
+                        onCreateMedicalRecord={() => setSelectedAppointmentForMedicalRecord(apt)}
                       />
                     ))
                   )
-                ) : filteredPastAppointments.length === 0 ? (
-                  <div className="col-span-full text-center py-12 text-gray-500">
-                    <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>
-                      {pastAppointments.length === 0
-                        ? "No past appointments"
-                        : "No appointments match your filters"}
-                    </p>
-                  </div>
-                ) : (
-                  filteredPastAppointments.map((appointment) => (
-                    <DoctorAppointmentCard
-                      key={appointment.id}
-                      appointment={appointment}
-                      doctorId={user.id}
-                      onUpdate={() => loadAppointments(user.id)}
-                      onStartVideoCall={() => {
-                        alert(
-                          "Please wait for patient to initiate the video call. You'll receive a notification."
-                        );
-                      }}
-                      onPrescribe={() =>
-                        setSelectedAppointmentForPrescription(appointment)
-                      }
-                      onCreateMedicalRecord={() =>
-                        setSelectedAppointmentForMedicalRecord(appointment)
-                      }
-                    />
-                  ))
+                )}
+
+                {/* Past Appointments */}
+                {activeTab === "past" && (
+                  filteredPastAppointments.length === 0 ? (
+                    <div className="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
+                      <Files className="w-12 h-12 mb-3 opacity-20" />
+                      <p>No past appointments found.</p>
+                    </div>
+                  ) : (
+                    filteredPastAppointments.map((apt) => (
+                      <DoctorAppointmentCard
+                        key={apt.id}
+                        appointment={apt}
+                        doctorId={user.id}
+                        onUpdate={() => loadAppointments(user.id)}
+                        onStartVideoCall={() => alert("Session completed.")}
+                        onPrescribe={() => setSelectedAppointmentForPrescription(apt)}
+                        onCreateMedicalRecord={() => setSelectedAppointmentForMedicalRecord(apt)}
+                      />
+                    ))
+                  )
                 )}
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-            <Users className="w-12 h-12 text-blue-500 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              My Patients
-            </h3>
-            <p className="text-gray-600 text-sm mb-4">
-              View and manage your patient list
-            </p>
-            <button className="text-blue-600 font-medium text-sm hover:underline">
-              View Patients →
-            </button>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-            <Calendar className="w-12 h-12 text-blue-500 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              Appointments
-            </h3>
-            <p className="text-gray-600 text-sm mb-4">
-              Manage your appointment schedule
-            </p>
-            <div className="text-2xl font-bold text-blue-600 mb-2">
-              {todayAppointments.length}
-            </div>
-            <p className="text-xs text-gray-500">appointments today</p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-            <FileText className="w-12 h-12 text-blue-500 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              Medical Records
-            </h3>
-            <p className="text-gray-600 text-sm mb-4">
-              Access patient medical records
-            </p>
-            <button className="text-blue-600 font-medium text-sm hover:underline">
-              View Records →
-            </button>
+            )}
           </div>
         </div>
+
       </main>
 
       {/* Incoming Call Modal - Only render when user is loaded */}
@@ -492,31 +418,40 @@ export default function DoctorDashboard() {
 
       {/* Prescription Modal */}
       {selectedAppointmentForPrescription && (
-        <PrescriptionForm
-          appointment={selectedAppointmentForPrescription}
-          doctorId={user.id}
-          onClose={() => setSelectedAppointmentForPrescription(null)}
-          onSuccess={() => {
-            setSelectedAppointmentForPrescription(null);
-            loadAppointments(user.id);
-            alert("Prescription issued successfully!");
-          }}
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto anime-in fade-in zoom-in duration-300">
+            <PrescriptionForm
+              appointment={selectedAppointmentForPrescription}
+              doctorId={user.id}
+              onClose={() => setSelectedAppointmentForPrescription(null)}
+              onSuccess={() => {
+                setSelectedAppointmentForPrescription(null);
+                loadAppointments(user.id);
+                alert("Prescription issued successfully!");
+              }}
+            />
+          </div>
+        </div>
       )}
 
       {/* Medical Record Modal */}
       {selectedAppointmentForMedicalRecord && (
-        <MedicalRecordForm
-          appointment={selectedAppointmentForMedicalRecord}
-          doctorId={user.id}
-          onClose={() => setSelectedAppointmentForMedicalRecord(null)}
-          onSuccess={() => {
-            setSelectedAppointmentForMedicalRecord(null);
-            loadAppointments(user.id);
-            alert("Medical record created successfully!");
-          }}
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto anime-in fade-in zoom-in duration-300">
+            <MedicalRecordForm
+              appointment={selectedAppointmentForMedicalRecord}
+              doctorId={user.id}
+              onClose={() => setSelectedAppointmentForMedicalRecord(null)}
+              onSuccess={() => {
+                setSelectedAppointmentForMedicalRecord(null);
+                loadAppointments(user.id);
+                alert("Medical record created successfully!");
+              }}
+            />
+          </div>
+        </div>
       )}
+
     </div>
   );
 }

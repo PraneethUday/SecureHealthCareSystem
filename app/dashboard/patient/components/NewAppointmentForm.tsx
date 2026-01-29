@@ -124,15 +124,15 @@ export default function NewAppointmentForm({
     .split("T")[0];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-800">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+        <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex justify-between items-center z-10">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
               Book New Appointment
             </h2>
-            <p className="text-sm text-gray-500">Step {step} of 4</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Step {step} of 4</p>
           </div>
           <button
             onClick={onClose}
@@ -144,30 +144,28 @@ export default function NewAppointmentForm({
         </div>
 
         {/* Progress Bar */}
-        <div className="px-6 py-4 bg-gray-50">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50">
           <div className="flex items-center justify-between mb-2">
             {[1, 2, 3, 4].map((s) => (
               <div key={s} className="flex items-center flex-1">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    s <= step
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${s <= step
                       ? "bg-red-500 text-white"
-                      : "bg-gray-200 text-gray-500"
-                  }`}
+                      : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                    }`}
                 >
                   {s}
                 </div>
                 {s < 4 && (
                   <div
-                    className={`flex-1 h-1 mx-2 ${
-                      s < step ? "bg-red-500" : "bg-gray-200"
-                    }`}
+                    className={`flex-1 h-1 mx-2 ${s < step ? "bg-red-500" : "bg-gray-200"
+                      }`}
                   />
                 )}
               </div>
             ))}
           </div>
-          <div className="flex justify-between text-xs text-gray-600">
+          <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
             <span>Hospital</span>
             <span>Doctor</span>
             <span>Date & Time</span>
@@ -178,7 +176,7 @@ export default function NewAppointmentForm({
         {/* Step Content */}
         <div className="p-6">
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
@@ -186,8 +184,8 @@ export default function NewAppointmentForm({
           {/* Step 1: Select Hospital */}
           {step === 1 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-red-500" />
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-red-500 dark:text-red-400" />
                 Select Hospital
               </h3>
               {loading ? (
@@ -200,19 +198,18 @@ export default function NewAppointmentForm({
                     <button
                       key={hospital.id}
                       onClick={() => setSelectedHospital(hospital.id)}
-                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                        selectedHospital === hospital.id
-                          ? "border-red-500 bg-red-50"
-                          : "border-gray-200 hover:border-red-300"
-                      }`}
+                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${selectedHospital === hospital.id
+                          ? "border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-500"
+                          : "border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 bg-white dark:bg-gray-800"
+                        }`}
                     >
-                      <h4 className="font-semibold text-gray-800">
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-100">
                         {hospital.name}
                       </h4>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         {hospital.address}, {hospital.city}, {hospital.state}
                       </p>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         {hospital.phone}
                       </p>
                     </button>
@@ -225,8 +222,8 @@ export default function NewAppointmentForm({
           {/* Step 2: Select Doctor */}
           {step === 2 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <User className="w-5 h-5 text-red-500" />
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+                <User className="w-5 h-5 text-red-500 dark:text-red-400" />
                 Select Doctor
               </h3>
               {loading ? (
@@ -239,20 +236,19 @@ export default function NewAppointmentForm({
                     <button
                       key={doctor.id}
                       onClick={() => setSelectedDoctor(doctor.id)}
-                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                        selectedDoctor === doctor.id
-                          ? "border-red-500 bg-red-50"
-                          : "border-gray-200 hover:border-red-300"
-                      }`}
+                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${selectedDoctor === doctor.id
+                          ? "border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-500"
+                          : "border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 bg-white dark:bg-gray-800"
+                        }`}
                     >
-                      <h4 className="font-semibold text-gray-800">
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-100">
                         Dr. {doctor.first_name} {doctor.last_name}
                       </h4>
-                      <p className="text-sm text-red-600">
+                      <p className="text-sm text-red-600 dark:text-red-400">
                         {doctor.specialization}
                       </p>
                       {doctor.department && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           {doctor.department}
                         </p>
                       )}
@@ -266,15 +262,15 @@ export default function NewAppointmentForm({
           {/* Step 3: Select Date & Time */}
           {step === 3 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-red-500" />
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-red-500 dark:text-red-400" />
                 Select Date & Time
               </h3>
 
               <div className="mb-6">
                 <label
                   htmlFor="appointment-date"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Appointment Date
                 </label>
@@ -285,13 +281,13 @@ export default function NewAppointmentForm({
                   onChange={(e) => setSelectedDate(e.target.value)}
                   min={minDate}
                   max={maxDate}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent accent-red-500"
                 />
               </div>
 
               {selectedDate && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Available Time Slots
                   </label>
                   {loading ? (
@@ -299,7 +295,7 @@ export default function NewAppointmentForm({
                       <Loader2 className="w-8 h-8 animate-spin mx-auto text-red-500" />
                     </div>
                   ) : timeSlots.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8">
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">
                       No available slots for this date
                     </p>
                   ) : (
@@ -308,11 +304,10 @@ export default function NewAppointmentForm({
                         <button
                           key={slot}
                           onClick={() => setSelectedTime(slot)}
-                          className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
-                            selectedTime === slot
+                          className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${selectedTime === slot
                               ? "border-red-500 bg-red-500 text-white"
-                              : "border-gray-300 hover:border-red-300 text-gray-700"
-                          }`}
+                              : "border-gray-300 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800"
+                            }`}
                         >
                           {slot}
                         </button>
@@ -327,12 +322,12 @@ export default function NewAppointmentForm({
           {/* Step 4: Details */}
           {step === 4 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
                 Appointment Details
               </h3>
 
               {/* Telemedicine Toggle */}
-              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <input
                     type="checkbox"
@@ -344,18 +339,18 @@ export default function NewAppointmentForm({
                   <div className="flex-1">
                     <label
                       htmlFor="telemedicine"
-                      className="font-semibold text-gray-800 flex items-center gap-2 cursor-pointer"
+                      className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2 cursor-pointer"
                     >
-                      <Video className="w-5 h-5 text-blue-600" />
+                      <Video className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       Telemedicine (Video Consultation)
                     </label>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       Connect with your doctor via secure video call for quick
                       consultations, follow-ups, or minor health concerns. Ideal
                       for non-emergency situations.
                     </p>
                     {isTelemedicine && (
-                      <div className="mt-2 text-xs text-blue-700 bg-blue-100 px-3 py-2 rounded">
+                      <div className="mt-2 text-xs text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 px-3 py-2 rounded">
                         ✓ Video call link will be provided before your
                         appointment
                       </div>
@@ -365,41 +360,41 @@ export default function NewAppointmentForm({
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Reason for Visit{" "}
-                  <span className="text-gray-400">(Optional)</span>
+                  <span className="text-gray-400 dark:text-gray-500">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="e.g., Regular checkup, Follow-up, Consultation"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 />
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Additional Notes{" "}
-                  <span className="text-gray-400">(Optional)</span>
+                  <span className="text-gray-400 dark:text-gray-500">(Optional)</span>
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={4}
                   placeholder="Any additional information you'd like to share..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 />
               </div>
 
               {/* Summary */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-800 mb-3">
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3">
                   Appointment Summary
                 </h4>
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Type:</span>
+                    <span className="text-gray-600 dark:text-gray-400">Type:</span>
                     <span className="font-medium flex items-center gap-1">
                       {isTelemedicine ? (
                         <>
@@ -408,20 +403,20 @@ export default function NewAppointmentForm({
                         </>
                       ) : (
                         <>
-                          <MapPin className="w-4 h-4 text-gray-600" />
+                          <MapPin className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                           In-Person
                         </>
                       )}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Hospital:</span>
+                    <span className="text-gray-600 dark:text-gray-400">Hospital:</span>
                     <span className="font-medium">
                       {hospitals.find((h) => h.id === selectedHospital)?.name}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Doctor:</span>
+                    <span className="text-gray-600 dark:text-gray-400">Doctor:</span>
                     <span className="font-medium">
                       Dr.{" "}
                       {doctors.find((d) => d.id === selectedDoctor)?.first_name}{" "}
@@ -429,13 +424,13 @@ export default function NewAppointmentForm({
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Date:</span>
+                    <span className="text-gray-600 dark:text-gray-400">Date:</span>
                     <span className="font-medium">
                       {new Date(selectedDate).toLocaleDateString()}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Time:</span>
+                    <span className="text-gray-600 dark:text-gray-400">Time:</span>
                     <span className="font-medium">{selectedTime}</span>
                   </div>
                 </div>
@@ -445,11 +440,11 @@ export default function NewAppointmentForm({
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex justify-between">
+        <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 px-6 py-4 flex justify-between rounded-b-xl">
           <button
             onClick={() => setStep(Math.max(1, step - 1))}
             disabled={step === 1}
-            className="px-6 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Back
           </button>
