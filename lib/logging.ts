@@ -1,91 +1,69 @@
-import { supabase } from "./supabase";
+// lib/logging.ts
 
 interface LogActionParams {
   userId: string;
   userRole: "admin" | "patient" | "doctor" | "nurse" | "staff";
   action: string;
-  details?: string;
+  resourceType?: string;
+  resourceId?: string;
   ipAddress?: string;
-  status?: "success" | "failure";
+  userAgent?: string;
 }
 
+/**
+ * Centralized audit logger
+ * Client → /api/audit → DB + Blockchain
+ */
 export async function logAction(params: LogActionParams): Promise<void> {
   try {
-    const { userId, userRole, action, details, ipAddress, status } = params;
-
-    await supabase.from("access_logs").insert({
-      user_id: userId,
-      user_role: userRole,
-      action,
-      details: details || null,
-      ip_address: ipAddress || "unknown",
-      status: status || "success",
-      timestamp: new Date().toISOString(),
+    const res = await fetch("/api/audit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: params.userId,
+        user_role: params.userRole,
+        action: params.action,
+        resource_type: params.resourceType,
+        resource_id: params.resourceId,
+        ip_address: params.ipAddress,
+        user_agent: params.userAgent,
+      }),
     });
-  } catch (error) {
-    console.error("Failed to log action:", error);
-    // Don't throw error - logging failure shouldn't break the main flow
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Audit API failed:", text);
+    }
+  } catch (err) {
+    console.error("Audit logging crashed:", err);
   }
 }
 
-export async function getAllLogs(limit: number = 100) {
-  try {
-    const { data, error } = await supabase
-      .from("access_logs")
-      .select("*")
-      .order("timestamp", { ascending: false })
-      .limit(limit);
+/**
+ * Fetch all audit logs (admin only)
+ * Goes through secure API
+ */
+export async function getAllLogs(limit = 50) {
+  const res = await fetch(`/api/audit/logs?limit=${limit}`);
 
-    if (error) {
-      console.error("Failed to fetch logs:", error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error("Failed to fetch logs:", error);
-    return [];
+  if (!res.ok) {
+    throw new Error("Failed to fetch audit logs");
   }
+
+  const data = await res.json();
+  return data.logs;
 }
 
-export async function getLogsByUser(userId: string, limit: number = 50) {
-  try {
-    const { data, error } = await supabase
-      .from("access_logs")
-      .select("*")
-      .eq("user_id", userId)
-      .order("timestamp", { ascending: false })
-      .limit(limit);
+/**
+ * Fetch access logs for a specific patient
+ */
+export async function getPatientAccessLogs(patientId: string) {
+  const res = await fetch(`/api/audit/logs?patientId=${patientId}&limit=100`);
 
-    if (error) {
-      console.error("Failed to fetch user logs:", error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error("Failed to fetch user logs:", error);
-    return [];
+  if (!res.ok) {
+    throw new Error("Failed to fetch patient access logs");
   }
-}
 
-export async function getLogsByRole(userRole: string, limit: number = 50) {
-  try {
-    const { data, error } = await supabase
-      .from("access_logs")
-      .select("*")
-      .eq("user_role", userRole)
-      .order("timestamp", { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      console.error("Failed to fetch role logs:", error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error("Failed to fetch role logs:", error);
-    return [];
-  }
+  const data = await res.json();
+  return data.logs;
 }

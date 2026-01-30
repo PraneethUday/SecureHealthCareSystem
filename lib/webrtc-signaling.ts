@@ -1,10 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { RealtimeChannel } from "@supabase/realtime-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
-);
+import { supabase } from "./supabase";
 
 export type SignalType = "offer" | "answer" | "ice-candidate" | "renegotiate";
 export type CallStatus =
@@ -330,7 +325,7 @@ export function subscribeToIncomingCalls(
 
   if (!doctorId) {
     console.error("[WebRTC] Cannot subscribe - doctorId is empty!");
-    return () => {};
+    return () => { };
   }
 
   const channel = supabase

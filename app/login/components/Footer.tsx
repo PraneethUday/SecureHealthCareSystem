@@ -12,7 +12,7 @@ export default function Footer({ selectedRole, themeClasses }: FooterProps) {
   if (isPatient) {
     return (
       <div className="mt-4 text-center">
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-gray-600 dark:text-gray-400">
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
@@ -27,7 +27,7 @@ export default function Footer({ selectedRole, themeClasses }: FooterProps) {
 
   return (
     <div className="mt-6 text-center">
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-gray-500 dark:text-gray-400">
         Staff access only. Contact IT support for assistance.
       </p>
     </div>

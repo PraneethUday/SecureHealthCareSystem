@@ -85,7 +85,7 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
 
   useEffect(() => {
     fetchReports();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSearch = () => {
     fetchReports();
@@ -255,15 +255,14 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
                         </h3>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium border ${
-                              REPORT_TYPE_COLORS[
-                                report.report_type as MedicalReportType
+                            className={`px-2 py-1 rounded-full text-xs font-medium border ${REPORT_TYPE_COLORS[
+                              report.report_type as MedicalReportType
                               ]
-                            }`}
+                              }`}
                           >
                             {
                               REPORT_TYPE_LABELS[
-                                report.report_type as MedicalReportType
+                              report.report_type as MedicalReportType
                               ]
                             }
                           </span>

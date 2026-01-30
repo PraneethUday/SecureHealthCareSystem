@@ -130,7 +130,7 @@ export default function VideoCallInterface({
                 <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p className="text-lg mb-2">Ready to connect</p>
                 <p className="text-sm text-gray-400">
-                  Click "Start Call" to begin video consultation
+                  Click &quot;Start Call&quot; to begin video consultation
                 </p>
               </div>
             )}
@@ -166,11 +166,10 @@ export default function VideoCallInterface({
               <>
                 <button
                   onClick={() => setVideoEnabled(!videoEnabled)}
-                  className={`p-4 rounded-full transition ${
-                    videoEnabled
+                  className={`p-4 rounded-full transition ${videoEnabled
                       ? "bg-gray-200 hover:bg-gray-300 text-gray-700"
                       : "bg-red-500 hover:bg-red-600 text-white"
-                  }`}
+                    }`}
                   title={videoEnabled ? "Turn off camera" : "Turn on camera"}
                 >
                   {videoEnabled ? (
@@ -182,11 +181,10 @@ export default function VideoCallInterface({
 
                 <button
                   onClick={() => setAudioEnabled(!audioEnabled)}
-                  className={`p-4 rounded-full transition ${
-                    audioEnabled
+                  className={`p-4 rounded-full transition ${audioEnabled
                       ? "bg-gray-200 hover:bg-gray-300 text-gray-700"
                       : "bg-red-500 hover:bg-red-600 text-white"
-                  }`}
+                    }`}
                   title={audioEnabled ? "Mute microphone" : "Unmute microphone"}
                 >
                   {audioEnabled ? (
@@ -197,7 +195,7 @@ export default function VideoCallInterface({
                 </button>
 
                 <button
-                  onClick={() => {}}
+                  onClick={() => { }}
                   className="p-4 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 transition"
                   title="Share screen"
                 >

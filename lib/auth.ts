@@ -10,10 +10,13 @@ interface LoginResult {
 }
 
 export async function login(
+
   identifier: string,
   password: string,
   role: UserRole
 ): Promise<LoginResult> {
+  console.log("CUSTOM LOGIN FUNCTION CALLED");
+
   try {
     // Determine the table based on role
     let table: string;
@@ -56,9 +59,9 @@ export async function login(
         userId: identifier,
         userRole: role,
         action: "login_failed",
-        details: "Invalid credentials",
-        status: "failure",
+        resourceType: "auth",
       });
+
       return { success: false, message: "Invalid credentials" };
     }
 
@@ -68,9 +71,9 @@ export async function login(
         userId: identifier,
         userRole: role,
         action: "login_failed",
-        details: "Invalid password",
-        status: "failure",
+        resourceType: "auth",
       });
+
       return { success: false, message: "Invalid credentials" };
     }
 
@@ -79,9 +82,9 @@ export async function login(
       userId: identifier,
       userRole: role,
       action: "login_success",
-      details: "User logged in successfully",
-      status: "success",
+      resourceType: "auth",
     });
+
 
     // Remove password from user data
     const { password: _, ...userWithoutPassword } = data;
@@ -97,10 +100,10 @@ export async function login(
     await logAction({
       userId: identifier,
       userRole: role,
-      action: "login_error",
-      details: `Login error: ${error}`,
-      status: "failure",
+      action: "login_failed",
+      resourceType: "auth",
     });
+
     return { success: false, message: "An error occurred during login" };
   }
 }

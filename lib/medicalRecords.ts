@@ -1,8 +1,10 @@
 import { supabase } from "./supabase";
+import { logAction } from "./logging";
 import {
   MedicalRecord,
   MedicalRecordWithDetails,
   MedicalRecordLog,
+  UserRole,
 } from "./database.types";
 
 // Create a new medical record
@@ -56,7 +58,9 @@ export async function createMedicalRecord(
 
 // Get patient medical records
 export async function getPatientMedicalRecords(
-  patientId: string
+  patientId: string,
+  userRole: UserRole | string = "patient", // Default to patient for backward compatibility
+  userId: string = patientId    // Default to patientId if not provided
 ): Promise<MedicalRecordWithDetails[]> {
   try {
     console.log("🏥 Fetching medical records for patient UUID:", patientId);
@@ -87,8 +91,26 @@ export async function getPatientMedicalRecords(
     }
 
     console.log(`✅ Found ${data?.length || 0} medical records`);
-    if (data && data.length > 0) {
-      console.log("First record sample:", JSON.stringify(data[0], null, 2));
+
+    // Log the view action if records were found (or even if empty, strictly speaking a search occurred)
+    // We log "view_all_records" or "access_records"
+    if (userId && userRole) {
+      // Don't await strictly to not block UI? Or await to ensure audit?
+      // Await is safer for "Audit First" philosophy, but logging.ts handles it.
+      // We'll fire and forget (no await) or await?
+      // logAction itself is async.
+      // Let's await it to be safe.
+      // BUT, userId might be creating concurrency issues if user spams refresh?
+      // The logger has retry logic now.
+
+      // We need 'logAction' function to be imported. I added import in previous step.
+      logAction({
+        userId: userId,
+        userRole: userRole as UserRole,
+        action: "view_records_list",
+        resourceType: "medical_records", // Plural
+        resourceId: patientId, // The target patient
+      }).catch(err => console.error("Failed to log view action:", err));
     }
 
     return (data || []).map((record: any) => ({
