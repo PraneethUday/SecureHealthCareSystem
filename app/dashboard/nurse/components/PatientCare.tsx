@@ -2,12 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Users, Calendar, Clock, MapPin, User, Phone, Mail } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
-);
+import { supabase } from "@/lib/supabase";
 
 interface AssignedPatient {
   appointment_id: string;

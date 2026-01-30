@@ -2,12 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { User, Check } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
-);
+import { supabase } from "@/lib/supabase";
 
 interface Nurse {
   id: string;
