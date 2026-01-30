@@ -69,7 +69,7 @@ export default function DoctorDashboard() {
       }
     };
     checkSession();
-  }, [router]);
+  }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadAppointments = async (doctorId: string) => {
     setLoadingAppointments(true);

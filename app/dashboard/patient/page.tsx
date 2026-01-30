@@ -69,7 +69,7 @@ export default function PatientDashboard() {
       });
       hasLogged.current = true;
     }
-  }, []);
+  }, [router]);
 
 
   const loadAppointments = async (patientId: string) => {
@@ -355,7 +355,7 @@ export default function PatientDashboard() {
                             <Calendar className="w-8 h-8 text-gray-300" />
                           </div>
                           <h3 className="text-gray-900 font-medium">No appointments scheduled</h3>
-                          <p className="text-gray-500 text-sm mt-1 mb-4">You're all clear for now!</p>
+                          <p className="text-gray-500 text-sm mt-1 mb-4">You&apos;re all clear for now!</p>
                           <button onClick={() => setShowNewAppointment(true)} className="text-rose-600 font-semibold text-sm hover:underline">
                             Book a new visit
                           </button>

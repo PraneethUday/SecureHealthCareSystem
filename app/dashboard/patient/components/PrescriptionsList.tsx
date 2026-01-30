@@ -28,7 +28,7 @@ export default function PrescriptionsList({
 
   useEffect(() => {
     loadPrescriptions();
-  }, [patientId]);
+  }, [patientId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadPrescriptions = async () => {
     setLoading(true);
@@ -66,8 +66,8 @@ export default function PrescriptionsList({
           <button
             onClick={() => setFilter("all")}
             className={`px-3 py-1 text-sm rounded-lg transition ${filter === "all"
-                ? "bg-purple-600 text-white"
-                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              ? "bg-purple-600 text-white"
+              : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
               }`}
           >
             All ({prescriptions.length})
@@ -75,8 +75,8 @@ export default function PrescriptionsList({
           <button
             onClick={() => setFilter("active")}
             className={`px-3 py-1 text-sm rounded-lg transition ${filter === "active"
-                ? "bg-green-600 text-white"
-                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              ? "bg-green-600 text-white"
+              : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
               }`}
           >
             Active ({prescriptions.filter((p) => p.status === "active").length})
@@ -84,8 +84,8 @@ export default function PrescriptionsList({
           <button
             onClick={() => setFilter("completed")}
             className={`px-3 py-1 text-sm rounded-lg transition ${filter === "completed"
-                ? "bg-gray-600 text-white"
-                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              ? "bg-gray-600 text-white"
+              : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
               }`}
           >
             Completed (
@@ -211,7 +211,7 @@ export default function PrescriptionsList({
                     <FileText className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-bold text-yellow-900 dark:text-yellow-100 mb-1">
-                        Doctor's Notes:
+                        Doctor&apos;s Notes:
                       </p>
                       <p className="text-sm text-yellow-800 dark:text-yellow-200 leading-relaxed">
                         {prescription.notes}

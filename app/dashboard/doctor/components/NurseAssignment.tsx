@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { User, Check } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -37,13 +37,9 @@ export function NurseAssignment({
   const [isLoading, setIsLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && nurses.length === 0) {
-      fetchNurses();
-    }
-  }, [isOpen]);
 
-  const fetchNurses = async () => {
+
+  const fetchNurses = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -60,7 +56,13 @@ export function NurseAssignment({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [department]);
+
+  useEffect(() => {
+    if (isOpen && nurses.length === 0) {
+      fetchNurses();
+    }
+  }, [isOpen, nurses.length, fetchNurses]);
 
   const handleAssignNurse = async (nurseId: string) => {
     setUpdating(true);
@@ -130,9 +132,8 @@ export function NurseAssignment({
                     key={nurse.id}
                     onClick={() => handleAssignNurse(nurse.id)}
                     disabled={updating}
-                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between ${
-                      nurse.id === currentNurseId ? "bg-blue-50" : ""
-                    }`}
+                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between ${nurse.id === currentNurseId ? "bg-blue-50" : ""
+                      }`}
                   >
                     <div>
                       <p className="font-medium text-gray-800">

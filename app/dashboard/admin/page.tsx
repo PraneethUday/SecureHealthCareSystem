@@ -54,7 +54,7 @@ export default function AdminDashboard() {
 
     fetchLogs();
     fetchAppointmentLogs();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchLogs = async () => {
     try {

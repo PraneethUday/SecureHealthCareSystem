@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Users, Calendar, Clock, MapPin, User, Phone, Mail } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -35,11 +35,9 @@ export function PatientCare({ nurseId }: PatientCareProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "today" | "upcoming">("today");
 
-  useEffect(() => {
-    fetchAssignedPatients();
-  }, [nurseId, filter]);
 
-  const fetchAssignedPatients = async () => {
+
+  const fetchAssignedPatients = useCallback(async () => {
     setIsLoading(true);
     try {
       // Get nurse UUID from nurse_id
@@ -129,7 +127,11 @@ export function PatientCare({ nurseId }: PatientCareProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [nurseId, filter]);
+
+  useEffect(() => {
+    fetchAssignedPatients();
+  }, [fetchAssignedPatients]);
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -180,31 +182,28 @@ export function PatientCare({ nurseId }: PatientCareProps) {
         <div className="flex gap-2">
           <button
             onClick={() => setFilter("today")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === "today"
-                ? "bg-green-500 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === "today"
+              ? "bg-green-500 text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
           >
             Today
           </button>
           <button
             onClick={() => setFilter("upcoming")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === "upcoming"
-                ? "bg-green-500 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === "upcoming"
+              ? "bg-green-500 text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
           >
             Upcoming
           </button>
           <button
             onClick={() => setFilter("all")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === "all"
-                ? "bg-green-500 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === "all"
+              ? "bg-green-500 text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
           >
             All
           </button>
@@ -226,7 +225,7 @@ export function PatientCare({ nurseId }: PatientCareProps) {
             No Patients Assigned
           </h3>
           <p className="text-gray-500">
-            You don't have any assigned patients for the selected filter.
+            You don&apos;t have any assigned patients for the selected filter.
           </p>
         </div>
       )}

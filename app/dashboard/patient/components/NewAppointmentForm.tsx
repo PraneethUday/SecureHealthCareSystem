@@ -56,7 +56,7 @@ export default function NewAppointmentForm({
     if (selectedDoctor && selectedDate) {
       loadTimeSlots();
     }
-  }, [selectedDoctor, selectedDate]);
+  }, [selectedDate, selectedDoctor]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadHospitals = async () => {
     setLoading(true);
@@ -150,8 +150,8 @@ export default function NewAppointmentForm({
               <div key={s} className="flex items-center flex-1">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${s <= step
-                      ? "bg-red-500 text-white"
-                      : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                    ? "bg-red-500 text-white"
+                    : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                     }`}
                 >
                   {s}
@@ -199,8 +199,8 @@ export default function NewAppointmentForm({
                       key={hospital.id}
                       onClick={() => setSelectedHospital(hospital.id)}
                       className={`w-full text-left p-4 rounded-lg border-2 transition-all ${selectedHospital === hospital.id
-                          ? "border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-500"
-                          : "border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 bg-white dark:bg-gray-800"
+                        ? "border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-500"
+                        : "border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 bg-white dark:bg-gray-800"
                         }`}
                     >
                       <h4 className="font-semibold text-gray-800 dark:text-gray-100">
@@ -237,8 +237,8 @@ export default function NewAppointmentForm({
                       key={doctor.id}
                       onClick={() => setSelectedDoctor(doctor.id)}
                       className={`w-full text-left p-4 rounded-lg border-2 transition-all ${selectedDoctor === doctor.id
-                          ? "border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-500"
-                          : "border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 bg-white dark:bg-gray-800"
+                        ? "border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-500"
+                        : "border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 bg-white dark:bg-gray-800"
                         }`}
                     >
                       <h4 className="font-semibold text-gray-800 dark:text-gray-100">
@@ -305,8 +305,8 @@ export default function NewAppointmentForm({
                           key={slot}
                           onClick={() => setSelectedTime(slot)}
                           className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${selectedTime === slot
-                              ? "border-red-500 bg-red-500 text-white"
-                              : "border-gray-300 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800"
+                            ? "border-red-500 bg-red-500 text-white"
+                            : "border-gray-300 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800"
                             }`}
                         >
                           {slot}

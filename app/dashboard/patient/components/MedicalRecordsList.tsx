@@ -33,7 +33,7 @@ export default function MedicalRecordsList({
 
   useEffect(() => {
     loadRecords();
-  }, [patientId]);
+  }, [patientId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadRecords = async () => {
     setLoading(true);
