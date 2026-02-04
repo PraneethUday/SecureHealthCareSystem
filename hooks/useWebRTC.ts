@@ -74,18 +74,12 @@ export function useWebRTC(options: UseWebRTCOptions) {
    */
   const initializeLocalMedia = useCallback(async (): Promise<boolean> => {
     try {
-      // Prevent multiple simultaneous initializations
-      if (isInitializingMediaRef.current) {
-        console.log("[Hook] ⚠️  Media initialization already in progress");
-        return false;
-      }
-
-      isInitializingMediaRef.current = true;
       console.log(
         "[Hook] 🎥 Initializing local media (camera & microphone)..."
       );
 
-      // Create or recreate peer connection if needed
+      // Create peer connection FIRST, before any early returns
+      // This ensures peerConnectionRef.current is always set
       if (!peerConnectionRef.current) {
         console.log("[Hook] Creating new PeerConnection...");
         peerConnectionRef.current = new PeerConnection();
@@ -127,6 +121,15 @@ export function useWebRTC(options: UseWebRTCOptions) {
           isConnected: false,
         }));
       });
+
+      // Prevent multiple simultaneous media initializations
+      // But peer connection is already created above
+      if (isInitializingMediaRef.current) {
+        console.log("[Hook] ⚠️  Media initialization already in progress, peer connection exists");
+        return false;
+      }
+
+      isInitializingMediaRef.current = true;
 
       // Check if we already have an active local stream in state
       if (state.localStream && state.localStream.active) {
@@ -509,6 +512,12 @@ export function useWebRTC(options: UseWebRTCOptions) {
    */
   const handleSignalingMessage = useCallback(
     async (callId: string, message: SignalingMessage, remoteUserId: string) => {
+      // Skip messages from ourselves - Supabase Realtime sends all messages to all subscribers
+      if (message.from_user_id === userId) {
+        console.log(`[Hook] ⏭️ Skipping own ${message.signal_type} message`);
+        return;
+      }
+
       if (!peerConnectionRef.current) {
         console.warn("[Hook] No peer connection available");
         return;
