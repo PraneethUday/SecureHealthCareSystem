@@ -33,7 +33,7 @@ export default function MedicalRecordsList({
 
   useEffect(() => {
     loadRecords();
-  }, [patientId]);
+  }, [patientId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadRecords = async () => {
     setLoading(true);
@@ -229,9 +229,8 @@ export default function MedicalRecordsList({
     pdf.text(`Generated on ${new Date().toLocaleString()}`, 20, 290);
 
     // Save PDF
-    const fileName = `Medical_Record_${
-      new Date(record.record_date).toISOString().split("T")[0]
-    }.pdf`;
+    const fileName = `Medical_Record_${new Date(record.record_date).toISOString().split("T")[0]
+      }.pdf`;
     pdf.save(fileName);
 
     // Log the download (only if record has ID)
@@ -248,8 +247,8 @@ export default function MedicalRecordsList({
           <p className="text-gray-500 mt-2">Loading medical records...</p>
         </div>
       ) : records.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+          <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
           <p>No medical records found</p>
           <p className="text-sm mt-1">
             Medical records from completed appointments will appear here
@@ -260,25 +259,25 @@ export default function MedicalRecordsList({
           {records.map((record) => (
             <div
               key={record.id}
-              className="border-2 border-gray-200 rounded-lg p-5 hover:border-green-300 transition bg-white shadow-sm"
+              className="border-2 border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:border-green-300 dark:hover:border-green-700 transition bg-white dark:bg-gray-800 shadow-sm"
             >
               {/* Header */}
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <FileText className="w-5 h-5 text-green-600" />
-                    <h3 className="text-lg font-bold text-gray-900">
+                    <FileText className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                       Medical Record
                     </h3>
-                    <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
+                    <span className="px-2 py-1 text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full">
                       {new Date(record.record_date).toLocaleDateString()}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                     <User className="w-4 h-4" />
                     <span>Dr. {record.doctor_name}</span>
                     {record.doctor_specialization && (
-                      <span className="text-green-600">
+                      <span className="text-green-600 dark:text-green-400">
                         • {record.doctor_specialization}
                       </span>
                     )}
@@ -287,14 +286,14 @@ export default function MedicalRecordsList({
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSelectedRecord(record)}
-                    className="px-3 py-2 text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium flex items-center gap-2"
+                    className="px-3 py-2 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-sm font-medium flex items-center gap-2"
                   >
                     <Eye className="w-4 h-4" />
                     View
                   </button>
                   <button
                     onClick={() => downloadAsPDF(record)}
-                    className="px-3 py-2 text-green-600 border border-green-300 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium flex items-center gap-2"
+                    className="px-3 py-2 text-green-600 dark:text-green-400 border border-green-300 dark:border-green-700 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors text-sm font-medium flex items-center gap-2"
                   >
                     <Download className="w-4 h-4" />
                     PDF
@@ -303,21 +302,21 @@ export default function MedicalRecordsList({
               </div>
 
               {/* Quick Summary */}
-              <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-gray-500 font-semibold mb-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1">
                       Chief Complaint
                     </p>
-                    <p className="text-sm text-gray-800">
+                    <p className="text-sm text-gray-800 dark:text-gray-200">
                       {record.chief_complaint}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 font-semibold mb-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1">
                       Diagnosis
                     </p>
-                    <p className="text-sm text-gray-800">{record.diagnosis}</p>
+                    <p className="text-sm text-gray-800 dark:text-gray-200">{record.diagnosis}</p>
                   </div>
                 </div>
               </div>
@@ -328,15 +327,15 @@ export default function MedicalRecordsList({
 
       {/* Detail Modal */}
       {selectedRecord && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full my-8">
-            <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-3xl w-full my-8 border border-gray-200 dark:border-gray-800">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-800">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 Medical Record Details
               </h2>
               <button
                 onClick={() => setSelectedRecord(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 aria-label="Close modal"
               >
                 <AlertCircle className="w-6 h-6" />
@@ -347,14 +346,14 @@ export default function MedicalRecordsList({
               {/* Full record details - similar to PDF layout */}
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-red-600 mb-2">
+                  <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">
                     Chief Complaint & Diagnosis
                   </h3>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
                     <strong>Chief Complaint:</strong>{" "}
                     {selectedRecord.chief_complaint}
                   </p>
-                  <p className="text-sm text-gray-700 mt-2">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
                     <strong>Diagnosis:</strong> {selectedRecord.diagnosis}
                   </p>
                 </div>
@@ -362,51 +361,51 @@ export default function MedicalRecordsList({
                 {(selectedRecord.blood_pressure ||
                   selectedRecord.heart_rate ||
                   selectedRecord.temperature) && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-blue-600 mb-2">
-                      Vital Signs
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {selectedRecord.blood_pressure && (
-                        <div className="bg-blue-50 p-3 rounded-lg">
-                          <p className="text-xs text-blue-600 font-semibold">
-                            Blood Pressure
-                          </p>
-                          <p className="text-sm text-blue-900 font-bold">
-                            {selectedRecord.blood_pressure}
-                          </p>
-                        </div>
-                      )}
-                      {selectedRecord.heart_rate && (
-                        <div className="bg-blue-50 p-3 rounded-lg">
-                          <p className="text-xs text-blue-600 font-semibold">
-                            Heart Rate
-                          </p>
-                          <p className="text-sm text-blue-900 font-bold">
-                            {selectedRecord.heart_rate} bpm
-                          </p>
-                        </div>
-                      )}
-                      {selectedRecord.temperature && (
-                        <div className="bg-blue-50 p-3 rounded-lg">
-                          <p className="text-xs text-blue-600 font-semibold">
-                            Temperature
-                          </p>
-                          <p className="text-sm text-blue-900 font-bold">
-                            {selectedRecord.temperature}°F
-                          </p>
-                        </div>
-                      )}
+                    <div>
+                      <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-2">
+                        Vital Signs
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {selectedRecord.blood_pressure && (
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                            <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold">
+                              Blood Pressure
+                            </p>
+                            <p className="text-sm text-blue-900 dark:text-blue-100 font-bold">
+                              {selectedRecord.blood_pressure}
+                            </p>
+                          </div>
+                        )}
+                        {selectedRecord.heart_rate && (
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                            <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold">
+                              Heart Rate
+                            </p>
+                            <p className="text-sm text-blue-900 dark:text-blue-100 font-bold">
+                              {selectedRecord.heart_rate} bpm
+                            </p>
+                          </div>
+                        )}
+                        {selectedRecord.temperature && (
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                            <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold">
+                              Temperature
+                            </p>
+                            <p className="text-sm text-blue-900 dark:text-blue-100 font-bold">
+                              {selectedRecord.temperature}°F
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {selectedRecord.treatment_plan && (
                   <div>
-                    <h3 className="text-lg font-semibold text-green-600 mb-2">
+                    <h3 className="text-lg font-semibold text-green-600 dark:text-green-400 mb-2">
                       Treatment Plan
                     </h3>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                       {selectedRecord.treatment_plan}
                     </p>
                   </div>
@@ -414,10 +413,10 @@ export default function MedicalRecordsList({
 
                 {selectedRecord.recommendations && (
                   <div>
-                    <h3 className="text-lg font-semibold text-orange-600 mb-2">
+                    <h3 className="text-lg font-semibold text-orange-600 dark:text-orange-400 mb-2">
                       Recommendations
                     </h3>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                       {selectedRecord.recommendations}
                     </p>
                   </div>
@@ -425,10 +424,10 @@ export default function MedicalRecordsList({
 
                 {selectedRecord.follow_up_instructions && (
                   <div>
-                    <h3 className="text-lg font-semibold text-purple-600 mb-2">
+                    <h3 className="text-lg font-semibold text-purple-600 dark:text-purple-400 mb-2">
                       Follow-up Instructions
                     </h3>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                       {selectedRecord.follow_up_instructions}
                     </p>
                   </div>
@@ -436,10 +435,10 @@ export default function MedicalRecordsList({
               </div>
             </div>
 
-            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+            <div className="p-6 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3">
               <button
                 onClick={() => setSelectedRecord(null)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 Close
               </button>

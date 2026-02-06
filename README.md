@@ -1,65 +1,87 @@
 # Secure Healthcare System
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.1.6-black)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-18.3.1-blue)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green)](https://supabase.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-15.1.6-black)](https://nextjs.org/) [![React](https://img.shields.io/badge/React-18.3.1-blue)](https://reactjs.org/) [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/) [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green)](https://supabase.com/) [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A modern, full-stack healthcare management system built with Next.js 15, featuring secure patient management, appointment scheduling, and real-time telemedicine capabilities. The system provides role-based access for patients, doctors, nurses, and administrative staff, with WebRTC-powered video consultations and comprehensive medical record management.
 
-## 🌟 Key Features
+---
+
+## Table of Contents
+
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [Development](#development)
+- [Video Call System](#video-call-system)
+- [Database Schema](#database-schema)
+- [Security Features](#security-features)
+- [Deployment](#deployment)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support & Contact](#support--contact)
+- [Roadmap](#roadmap)
+
+---
+
+## Key Features
 
 ### Patient Management
 
-- ✅ Secure patient registration with email verification
-- ✅ Complete patient profile management
-- ✅ Medical history tracking
-- ✅ Emergency contact information
-- ✅ Patient search and filtering
+- Secure patient registration with email verification
+- Complete patient profile management
+- Medical history tracking
+- Emergency contact information
+- Patient search and filtering
 
 ### Appointment System
 
-- 📅 Schedule appointments with healthcare providers
-- 🔔 Real-time appointment notifications
-- ⏰ Appointment reminders
-- ✏️ Reschedule and cancel appointments
-- 📊 Appointment history tracking
+- Schedule appointments with healthcare providers
+- Real-time appointment notifications
+- Appointment reminders
+- Reschedule and cancel appointments
+- Appointment history tracking
 
 ### Telemedicine & Video Consultations
 
-- 🎥 Real-time WebRTC video calls
-- 🎤 High-quality audio streaming
-- 🔊 Mute/unmute controls
-- 📹 Video enable/disable
-- 📞 Incoming call notifications (real-time)
-- ⏱️ Call duration tracking
-- 🔒 Secure peer-to-peer connections
+- Real-time WebRTC video calls
+- High-quality audio streaming
+- Mute/unmute controls
+- Video enable/disable
+- Incoming call notifications (real-time)
+- Call duration tracking
+- Secure peer-to-peer connections
 
 ### Role-Based Access Control
 
-- 👤 **Patients**: Book appointments, start video calls, view medical records
-- 👨‍⚕️ **Doctors**: Manage patient appointments, accept video calls, prescribe medications
-- 👩‍⚕️ **Nurses**: Assist with patient care, manage schedules
-- 🏥 **Admin Staff**: System administration, user management
+- **Patients**: Book appointments, start video calls, view medical records
+- **Doctors**: Manage patient appointments, accept video calls, prescribe medications
+- **Nurses**: Assist with patient care, manage schedules
+- **Admin Staff**: System administration, user management
 
 ### Medical Records & E-Prescriptions
 
-- 📋 Digital medical record storage
-- 💊 Electronic prescription management
-- 🔐 Secure document handling
-- 📄 PDF generation for prescriptions
-- 📂 Organized record history
+- Digital medical record storage
+- Electronic prescription management
+- Secure document handling
+- PDF generation for prescriptions
+- Organized record history
 
 ### Security Features
 
-- 🔐 Bcrypt password hashing
-- 🍪 Secure HTTP-only session cookies
-- 🛡️ Row Level Security (RLS) policies
-- 🔒 HTTPS required for production
-- 🚫 XSS and CSRF protection
+- Bcrypt password hashing
+- Secure HTTP-only session cookies
+- Row Level Security (RLS) policies
+- HTTPS required for production
+- XSS and CSRF protection
 
-## 🛠️ Tech Stack
+---
+
+## Tech Stack
 
 ### Frontend
 
@@ -97,7 +119,9 @@ A modern, full-stack healthcare management system built with Next.js 15, featuri
 - **Build Tool**: Next.js built-in
 - **Package Manager**: npm
 
-## 📋 Prerequisites
+---
+
+## Prerequisites
 
 Before you begin, ensure you have the following installed:
 
@@ -107,13 +131,19 @@ Before you begin, ensure you have the following installed:
 - **Supabase Account**: Free tier available ([Sign up](https://supabase.com/))
 - **Modern Browser**: Chrome, Firefox, Safari, or Edge (latest version)
 - **Camera & Microphone**: Required for video consultation features
+- **Ollama (AI Chatbot Runtime)**: Required for running the local healthcare chatbot ([Download](https://ollama.com))
+  - Minimum RAM: 8 GB recommended (4 GB minimum for small models)
+  - Storage: ~3 GB free space for AI models
+  - Required Model: `llama3.2:3b` (lightweight and fast, suitable for local use)
+  - Ollama Service must be running on default port `11434`
 
-## 🚀 Quick Start
+---
+
+## Quick Start
 
 For first-time setup, see **[docs/guides/RUN_THIS_FIRST.md](docs/guides/RUN_THIS_FIRST.md)** for detailed instructions.
 
 **TL;DR:**
-
 ```bash
 git clone <repository-url>
 cd SecureHealthCareSystem
@@ -123,19 +153,17 @@ npm run setup-db
 npm run dev
 ```
 
-## 📚 Documentation
+---
 
-🏁 Getting Started
+## Getting Started
 
 ### 1. Clone the Repository
-
 ```bash
 git clone https://github.com/yourusername/SecureHealthCareSystem.git
 cd SecureHealthCareSystem
 ```
 
 ### 2. Install Dependencies
-
 ```bash
 npm install
 ```
@@ -150,7 +178,6 @@ This will install all required packages including:
 ### 3. Set Up Environment Variables
 
 Create a `.env.local` file in the root directory:
-
 ```env
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
@@ -176,14 +203,56 @@ NEXT_PUBLIC_TURN_PASSWORD=password
 ### 4. Set Up the Database
 
 Run the database setup script to create all necessary tables and seed data:
-
 ```bash
 npm run setup-db
 ```
 
-📁 Project Structure
+### 5. Enable Supabase Realtime
 
-````
+**Critical for video call notifications!**
+
+Via Supabase Dashboard:
+
+1. Go to Database → Replication
+2. Enable Realtime for these tables:
+   - `video_calls`
+   - `video_call_signaling`
+
+Or run this SQL:
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE video_calls;
+ALTER PUBLICATION supabase_realtime ADD TABLE video_call_signaling;
+```
+
+### 6. Start Development Server
+```bash
+npm run dev
+```
+
+The application will be available at [http://localhost:3000](http://localhost:3000)
+
+### 7. Access the Application
+
+**Test Accounts** (created by seed script):
+
+| Role    | Email               | Password   | Description          |
+| ------- | ------------------- | ---------- | -------------------- |
+| Patient | patient@example.com | patient123 | Test patient account |
+| Doctor  | doctor@example.com  | doctor123  | Test doctor account  |
+| Nurse   | nurse@example.com   | nurse123   | Test nurse account   |
+| Admin   | admin@example.com   | admin123   | Test admin account   |
+
+**Login Process:**
+
+1. Navigate to [http://localhost:3000](http://localhost:3000)
+2. Select user role (Patient, Doctor, Nurse, or Admin)
+3. Enter credentials from the table above
+4. Click "Sign In"
+
+---
+
+## Project Structure
+```
 SecureHealthCareSystem/
 ├── app/                              # Next.js 15 App Router
 │   ├── api/                          # API Routes
@@ -200,10 +269,128 @@ SecureHealthCareSystem/
 │   │   │       ├── DoctorAppointmentCard.tsx
 │   │   │       └── IncomingCallModal.tsx  # Real-time call notifications
 │   │   ├── nurse/
-│  💻 Development
+│   │   │   └── page.tsx              # Nurse dashboard
+│   │   └── patient/
+│   │       ├── page.tsx              # Patient dashboard
+│   │       └── components/
+│   │           └── PatientAppointmentCard.tsx
+│   │
+│   ├── login/                        # Authentication
+│   │   ├── page.tsx                  # Login page
+│   │   └── components/
+│   │       ├── Header.tsx
+│   │       ├── Footer.tsx
+│   │       └── InfoBanner.tsx
+│   │
+│   ├── register/                     # User registration
+│   │   ├── page.tsx                  # Registration home
+│   │   ├── patient/
+│   │   │   └── page.tsx              # Patient registration form
+│   │   └── components/
+│   │       └── RegisterInfoBanner.tsx
+│   │
+│   ├── layout.tsx                    # Root layout
+│   ├── page.tsx                      # Home page
+│   └── globals.css                   # Global styles
+│
+├── hooks/                            # Custom React Hooks
+│   └── useWebRTC.ts                  # WebRTC call management hook
+│
+├── lib/                              # Core Libraries & Utilities
+│   ├── supabase.ts                   # Supabase client configuration
+│   ├── database.types.ts             # TypeScript database types
+│   ├── auth.ts                       # Authentication utilities
+│   ├── logging.ts                    # Logging utilities
+│   ├── appointments.ts               # Appointment management
+│   ├── webrtc-signaling.ts           # WebRTC signaling via Supabase
+│   └── webrtc-peer-connection.ts     # WebRTC peer connection wrapper
+│
+├── scripts/                          # Database & Setup Scripts
+│   ├── setup-database.ts             # Main database setup
+│   ├── check-schema.ts               # Schema validation
+│   ├── test-database.ts              # Database connection test
+│   ├── test-appointments.ts          # Appointment system test
+│   ├── migrate-database.ts           # Migration runner
+│   └── update-passwords.ts           # Password update utility
+│
+├── supabase/                         # Database Schemas & Migrations
+│   ├── schema.sql                    # Main database schema
+│   ├── seed.sql                      # Seed data (test users)
+│   ├── webrtc-schema.sql             # Video call tables
+│   ├── appointments-schema.sql       # Appointment system
+│   ├── fix-rls-policies.sql          # RLS policy fixes
+│   ├── migrate-patients.sql          # Patient migration
+│   ├── update-passwords.sql          # Password updates
+│   └── README.md                     # Database documentation
+│
+├── docs/                             # Documentation
+│   ├── README.md                     # Documentation index
+│   ├── SETUP_INSTRUCTIONS.md         # Setup guide
+│   ├── DEVELOPMENT.md                # Development guide
+│   ├── PROJECT_STRUCTURE.md          # Architecture docs
+│   ├── QUICK_REFERENCE.md            # Quick commands
+│   ├── API_DOCUMENTATION.md          # API reference
+│   ├── DEPLOYMENT_GUIDE.md           # Deployment instructions
+│   ├── TELEMEDICINE_IMPLEMENTATION.md # Telemedicine details
+│   │
+│   ├── guides/                       # User Guides
+│   │   ├── RUN_THIS_FIRST.md         # First-time setup
+│   │   ├── VIDEO_CALL_SYSTEM.md      # Video system docs
+│   │   ├── VIDEO_CALL_TEST_GUIDE.md  # Testing guide
+│   │   ├── WEBRTC_GUIDE.md           # WebRTC technical guide
+│   │   ├── WEBRTC_QUICKSTART.md      # Quick WebRTC setup
+│   │   └── ENABLE_REALTIME.md        # Realtime configuration
+│   │
+│   ├── deployment/                   # Deployment Documentation
+│   └── archives/                     # Historical Documentation
+│
+├── .env.local                        # Environment variables (create this)
+├── .gitignore                        # Git ignore rules
+├── next.config.ts                    # Next.js configuration
+├── tsconfig.json                     # TypeScript configuration
+├── tailwind.config.ts                # Tailwind CSS configuration
+├── postcss.config.mjs                # PostCSS configuration
+├── package.json                      # Dependencies & scripts
+├── package-lock.json                 # Dependency lock file
+├── LICENSE                           # License information
+└── README.md                         # This file
+```
+
+### Key Directories Explained
+
+#### `/app` - Application Code
+
+Next.js 15 App Router structure with file-based routing. Each folder with a `page.tsx` becomes a route.
+
+#### `/hooks` - Custom React Hooks
+
+- **useWebRTC.ts**: Manages entire video call lifecycle, WebRTC connections, signaling, and state
+
+#### `/lib` - Core Business Logic
+
+- **supabase.ts**: Database client singleton
+- **auth.ts**: Session management, login/logout
+- **webrtc-signaling.ts**: Handles offer/answer/ICE candidate exchange via Supabase Realtime
+- **webrtc-peer-connection.ts**: Low-level WebRTC peer connection wrapper
+- **appointments.ts**: Appointment CRUD operations
+
+#### `/scripts` - Automation Scripts
+
+Database setup, testing, and migration scripts written in TypeScript.
+
+#### `/supabase` - Database Definitions
+
+SQL files for schema creation, migrations, and seed data.
+
+#### `/docs` - Documentation
+
+Comprehensive guides for setup, development, deployment, and feature usage.
+
+---
+
+## Development
 
 ### Available Scripts
-
 ```bash
 # Start development server with hot reload
 npm run dev
@@ -222,39 +409,35 @@ npm run setup-db              # Initialize database schema
 npm run check-schema          # Validate database schema
 npm run test-db               # Test database connection
 npm run test-appointments     # Test appointment system
-````
+```
 
 ### Development Workflow
 
 1. **Create a feature branch**
-
-   ```bash
+```bash
    git checkout -b feature/your-feature-name
-   ```
+```
 
 2. **Make your changes**
-
    - Follow TypeScript best practices
    - Use Tailwind CSS for styling
    - Add proper error handling
 
 3. **Test your changes**
-
-   ```bash
+```bash
    npm run lint
    npm run build
-   ```
+```
 
 4. **Commit with descriptive messages**
-
-   ```bash
+```bash
    git commit -m "feat: add patient search functionality"
-   ```
+```
 
 5. **Push and create pull request**
-   ```bash
+```bash
    git push origin feature/your-feature-name
-   ```
+```
 
 ### Code Style Guidelines
 
@@ -276,7 +459,9 @@ npm run test-appointments     # Test appointment system
 | `NEXT_PUBLIC_TURN_USERNAME`     | TURN server username       | No       | username                |
 | `NEXT_PUBLIC_TURN_PASSWORD`     | TURN server password       | No       | password                |
 
-## 🎥 Video Call System
+---
+
+## Video Call System
 
 ### Architecture Overview
 
@@ -316,7 +501,9 @@ See [docs/guides/VIDEO_CALL_TEST_GUIDE.md](docs/guides/VIDEO_CALL_TEST_GUIDE.md)
 4. Doctor: Accept incoming call notification
 5. Both should see each other's video
 
-## 🗄️ Database Schema
+---
+
+## Database Schema
 
 ### Core Tables
 
@@ -331,7 +518,6 @@ See [docs/guides/VIDEO_CALL_TEST_GUIDE.md](docs/guides/VIDEO_CALL_TEST_GUIDE.md)
 - **video_call_signaling**: WebRTC signaling messages
 
 ### Relationships
-
 ```
 users (1) ─────→ (1) patients
 users (1) ─────→ (1) doctors
@@ -347,7 +533,9 @@ patients (1) ───→ (∞) medical_records
 doctors (1) ────→ (∞) prescriptions
 ```
 
-## 🔒 Security Features
+---
+
+## Security Features
 
 ### Authentication
 
@@ -374,19 +562,19 @@ doctors (1) ────→ (∞) prescriptions
 - Secure signaling channel via Supabase
 - No video data stored on server
 
-## 🚀 Deployment
+---
+
+## Deployment
 
 ### Production Deployment Options
 
 1. **Vercel** (Recommended)
-
    - Automatic SSL
    - Zero configuration
    - Global CDN
    - See [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)
 
 2. **Docker**
-
    - Self-hosted option
    - Full control
    - Custom infrastructure
@@ -408,7 +596,9 @@ doctors (1) ────→ (∞) prescriptions
 
 See [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) for detailed deployment instructions.
 
-## 🧪 Testing
+---
+
+## Testing
 
 ### Manual Testing
 
@@ -429,7 +619,6 @@ See [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) for detailed deployment
 5. End consultation
 
 ### Database Testing
-
 ```bash
 # Test database connection
 npm run test-db
@@ -441,7 +630,9 @@ npm run test-appointments
 npm run check-schema
 ```
 
-## 🐛 Troubleshooting
+---
+
+## Troubleshooting
 
 ### Common Issues
 
@@ -471,7 +662,9 @@ npm run check-schema
 
 For more troubleshooting, see [docs/guides/VIDEO_CALL_SYSTEM.md](docs/guides/VIDEO_CALL_SYSTEM.md)
 
-## 🤝 Contributing
+---
+
+## Contributing
 
 Contributions are welcome! Please follow these steps:
 
@@ -489,36 +682,46 @@ Contributions are welcome! Please follow these steps:
 - Follow existing code style
 - Ensure all tests pass before submitting
 
-## 📄 License
+---
+
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👥 Authors
+---
+
+## Authors
 
 - **Your Name** - Initial work
 
-## 🙏 Acknowledgments
+---
+
+## Acknowledgments
 
 - Next.js team for the amazing framework
 - Supabase for the backend infrastructure
 - WebRTC community for video call technology
 - Tailwind CSS for the styling system
 
-## 📞 Support & Contact
+---
+
+## Support & Contact
 
 - **Documentation**: Check the [docs](docs/) folder
 - **Issues**: Open an issue on GitHub
 - **Email**: support@yourdomain.com
 
-## 🗺️ Roadmap
+---
+
+## Roadmap
 
 ### Current Version (v0.1.0)
 
-- ✅ Patient registration and management
-- ✅ Appointment scheduling
-- ✅ Role-based dashboards
-- ✅ WebRTC video consultations
-- ✅ Real-time notifications
+- Patient registration and management
+- Appointment scheduling
+- Role-based dashboards
+- WebRTC video consultations
+- Real-time notifications
 
 ### Planned Features
 
@@ -533,7 +736,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Multi-language support
 - [ ] Dark mode
 
-## 📊 Project Status
+---
+
+## Project Status
 
 - **Version**: 0.1.0
 - **Status**: Active Development
@@ -543,218 +748,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Built with ❤️ using Next.js, TypeScript, and Supabase**
-│ │ │ ├── Footer.tsx  
-│ │ │ └── InfoBanner.tsx  
-│ │ └── utils/  
-│ │ └── validation.ts # Input validation
-│ │
-│ ├── register/ # User registration
-│ │ ├── page.tsx # Registration home
-│ │ ├── patient/  
-│ │ │ └── page.tsx # Patient registration form
-│ │ └── components/  
-│ │ └── RegisterInfoBanner.tsx
-│ │
-│ ├── layout.tsx # Root layout
-│ ├── page.tsx # Home page
-│ └── globals.css # Global styles
-│
-├── hooks/ # Custom React Hooks
-│ └── useWebRTC.ts # WebRTC call management hook
-│
-├── lib/ # Core Libraries & Utilities
-│ ├── supabase.ts # Supabase client configuration
-│ ├── database.types.ts # TypeScript database types
-│ ├── auth.ts # Authentication utilities
-│ ├── logging.ts # Logging utilities
-│ ├── appointments.ts # Appointment management
-│ ├── webrtc-signaling.ts # WebRTC signaling via Supabase
-│ └── webrtc-peer-connection.ts # WebRTC peer connection wrapper
-│
-├── scripts/ # Database & Setup Scripts
-│ ├── setup-database.ts # Main database setup
-│ ├── check-schema.ts # Schema validation
-│ ├── test-database.ts # Database connection test
-│ ├── test-appointments.ts # Appointment system test
-│ ├── migrate-database.ts # Migration runner
-│ └── update-passwords.ts # Password update utility
-│
-├── supabase/ # Database Schemas & Migrations
-│ ├── schema.sql # Main database schema
-│ ├── seed.sql # Seed data (test users)
-│ ├── webrtc-schema.sql # Video call tables
-│ ├── appointments-schema.sql # Appointment system
-│ ├── fix-rls-policies.sql # RLS policy fixes
-│ ├── migrate-patients.sql # Patient migration
-│ ├── update-passwords.sql # Password updates
-│ └── README.md # Database documentation
-│
-├── docs/ # Documentation
-│ ├── README.md # Documentation index
-│ ├── SETUP_INSTRUCTIONS.md # Setup guide
-│ ├── DEVELOPMENT.md # Development guide
-│ ├── PROJECT_STRUCTURE.md # Architecture docs
-│ ├── QUICK_REFERENCE.md # Quick commands
-│ ├── API_DOCUMENTATION.md # API reference
-│ ├── DEPLOYMENT_GUIDE.md # Deployment instructions
-│ ├── TELEMEDICINE_IMPLEMENTATION.md # Telemedicine details
-│ │
-│ ├── guides/ # User Guides
-│ │ ├── RUN_THIS_FIRST.md # First-time setup
-│ │ ├── VIDEO_CALL_SYSTEM.md # Video system docs
-│ │ ├── VIDEO_CALL_TEST_GUIDE.md # Testing guide
-│ │ ├── WEBRTC_GUIDE.md # WebRTC technical guide
-│ │ ├── WEBRTC_QUICKSTART.md # Quick WebRTC setup
-│ │ └── ENABLE_REALTIME.md # Realtime configuration
-│ │
-│ ├── deployment/ # Deployment Documentation
-│ └── archives/ # Historical Documentation
-│
-├── .env.local # Environment variables (create this)
-├── .gitignore # Git ignore rules
-├── next.config.ts # Next.js configuration
-├── tsconfig.json # TypeScript configuration
-├── tailwind.config.ts # Tailwind CSS configuration
-├── postcss.config.mjs # PostCSS configuration
-├── package.json # Dependencies & scripts
-├── package-lock.json # Dependency lock file
-├── LICENSE # License information
-└── README.md # This file
-
-````
-
-### Key Directories Explained
-
-#### `/app` - Application Code
-Next.js 15 App Router structure with file-based routing. Each folder with a `page.tsx` becomes a route.
-
-#### `/hooks` - Custom React Hooks
-- **useWebRTC.ts**: Manages entire video call lifecycle, WebRTC connections, signaling, and state
-
-#### `/lib` - Core Business Logic
-- **supabase.ts**: Database client singleton
-- **auth.ts**: Session management, login/logout
-- **webrtc-signaling.ts**: Handles offer/answer/ICE candidate exchange via Supabase Realtime
-- **webrtc-peer-connection.ts**: Low-level WebRTC peer connection wrapper
-- **appointments.ts**: Appointment CRUD operations
-
-#### `/scripts` - Automation Scripts
-Database setup, testing, and migration scripts written in TypeScript.
-
-#### `/supabase` - Database Definitions
-SQL files for schema creation, migrations, and seed data.
-
-#### `/docs` - Documentation
-Comprehensive guides for setup, development, deployment, and feature usage.ritical for video call notifications!**
-
-Via Supabase Dashboard:
-1. Go to Database → Replication
-2. Enable Realtime for these tables:
-   - `video_calls`
-   - `video_call_signaling`
-
-Or run this SQL:
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE video_calls;
-ALTER PUBLICATION supabase_realtime ADD TABLE video_call_signaling;
-````
-
-### 6. Start Development Server
-
-```bash
-npm run dev
-```
-
-The application will be available at [http://localhost:3000](http://localhost:3000)
-
-### 7. Access the Application
-
-**Test Accounts** (created by seed script):
-
-| Role    | Email               | Password   | Description          |
-| ------- | ------------------- | ---------- | -------------------- |
-| Patient | patient@example.com | patient123 | Test patient account |
-| Doctor  | doctor@example.com  | doctor123  | Test doctor account  |
-| Nurse   | nurse@example.com   | nurse123   | Test nurse account   |
-| Admin   | admin@example.com   | admin123   | Test admin account   |
-
-**Login Process:**
-
-1. Navigate to [http://localhost:3000](http://localhost:3000)
-2. Select user role (Patient, Doctor, Nurse, or Admin)
-3. Enter credentials from the table above
-4. Click "Sign In"
-
-   ```
-
-   ```
-
-5. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-6. **Set up environment variables**
-
-   - Copy `.env.example` to `.env`
-   - Add your Supabase credentials
-
-7. **Run database migrations**
-
-   ```bash
-   npm run setup:db
-   ```
-
-8. **Start development server**
-
-   ```bash
-   npm run dev
-   ```
-
-9. **Open in browser**
-   - Navigate to [http://localhost:3000](http://localhost:3000)
-
-## Project Structure
-
-```
-SecureHealthCareSystem/
-├── app/                    # Next.js app directory
-│   ├── api/               # API routes
-│   ├── dashboard/         # Role-specific dashboards
-│   ├── login/             # Authentication pages
-│   └── register/          # Registration pages
-├── docs/                   # Documentation
-│   ├── guides/            # User guides
-│   ├── deployment/        # Deployment docs
-│   └── archives/          # Historical docs
-├── hooks/                  # Custom React hooks
-├── lib/                    # Utility libraries
-├── scripts/                # Database and setup scripts
-└── supabase/              # Database schemas and migrations
-```
-
-## Development
-
-```bash
-# Development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
-
-# Run linting
-npm run lint
-```
-
-## License
-
-See [LICENSE](LICENSE) file for details.
-
-## Support
-
-For detailed documentation, check the [docs](docs/) folder or refer to the [Documentation Index](docs/README.md).
+**Built with care using Next.js, TypeScript, and Supabase**

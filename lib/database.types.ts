@@ -82,6 +82,10 @@ export interface AccessLog {
   timestamp?: string;
   ip_address?: string;
   user_agent?: string;
+  audit_hash?: string;
+  blockchain_tx_hash?: string;
+  blockchain_verified?: boolean;
+  verified_at?: string;
 }
 
 export interface Hospital {

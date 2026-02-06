@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -6,22 +6,6 @@ export async function GET(
   { params }: { params: Promise<{ appointmentId: string }> }
 ) {
   try {
-    // Verify environment variables exist
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
-    ) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
-    }
-
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
-    );
-
     const { appointmentId } = await params;
 
     const { data: appointment, error } = await supabase

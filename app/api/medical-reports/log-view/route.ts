@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from "@/lib/supabase";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,6 +15,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the view action
+    // Insert into database (medical_report_logs)
+    const { error: accessError } = await supabase.from("access_logs").insert({
+      user_id: userId,
+      user_role: userRole,
+      action: "view_report",
+      resource_type: "medical_report",
+      resource_id: reportId,
+      timestamp: new Date().toISOString()
+    });
+
+    if (accessError) console.error("Failed to insert into access_logs:", accessError);
+
     const { error } = await supabase.from("medical_report_logs").insert([
       {
         report_id: reportId,

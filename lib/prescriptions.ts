@@ -3,7 +3,9 @@ import {
   Prescription,
   PrescriptionWithDetails,
   PrescriptionLog,
+  UserRole,
 } from "./database.types";
+import { logAction } from "./logging";
 
 // Create a new prescription
 export async function createPrescription(
@@ -86,9 +88,22 @@ export async function getAppointmentPrescriptionCount(
 
 // Get patient prescriptions
 export async function getPatientPrescriptions(
-  patientId: string
+  patientId: string,
+  userRole: UserRole | string = "patient", // Default to patient
+  userId: string = patientId // Default to patientId
 ): Promise<PrescriptionWithDetails[]> {
   try {
+    // Log the view action
+    if (userId && userRole) {
+      logAction({
+        userId: userId,
+        userRole: userRole as UserRole,
+        action: "view_prescriptions_list",
+        resourceType: "prescriptions",
+        resourceId: patientId,
+      }).catch((err) => console.error("Failed to log prescription view:", err));
+    }
+
     const { data, error } = await supabase
       .from("prescriptions")
       .select(
