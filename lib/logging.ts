@@ -12,11 +12,42 @@ interface LogActionParams {
   userAgent?: string;
 }
 
+import { supabase } from "./supabase";
+
 /**
  * Centralized audit logger
- * Client → /api/audit → DB + Blockchain
+ * Client → /api/audit → DB
+ * Server → Direct Supabase call
  */
 export async function logAction(params: LogActionParams): Promise<void> {
+  // If we are on the server, we cannot use relative URLs in fetch
+  // Instead of fetching /api/audit, we can just call the db directly if we have supabase access
+  if (typeof window === "undefined") {
+    try {
+      const { error } = await supabase.from("access_logs").insert({
+        user_id: params.userId,
+        user_role: params.userRole,
+        action: params.action,
+        resource_type: params.resourceType,
+        resource_id: params.resourceId,
+        details: params.details,
+        status: params.status,
+        ip_address: params.ipAddress,
+        user_agent: params.userAgent,
+        timestamp: new Date().toISOString(),
+      });
+
+      if (error) {
+        console.error("Server-side audit log failed:", error);
+      }
+      return;
+    } catch (err) {
+      console.error("Server-side audit logging crashed:", err);
+      return;
+    }
+  }
+
+  // Browser-side logging (keep existing fetch for simplicity/consistency)
   try {
     const res = await fetch("/api/audit", {
       method: "POST",
@@ -45,15 +76,21 @@ export async function logAction(params: LogActionParams): Promise<void> {
 
 /**
  * Fetch all audit logs (admin only)
- * Goes through secure API
  */
 export async function getAllLogs(limit = 50) {
-  const res = await fetch(`/api/audit/logs?limit=${limit}`);
+  if (typeof window === "undefined") {
+    const { data, error } = await supabase
+      .from("access_logs")
+      .select("*")
+      .order("timestamp", { ascending: false })
+      .limit(limit);
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch audit logs");
+    if (error) throw error;
+    return data;
   }
 
+  const res = await fetch(`/api/audit/logs?limit=${limit}`);
+  if (!res.ok) throw new Error("Failed to fetch audit logs");
   const data = await res.json();
   return data.logs;
 }
@@ -62,12 +99,20 @@ export async function getAllLogs(limit = 50) {
  * Fetch access logs for a specific patient
  */
 export async function getPatientAccessLogs(patientId: string) {
-  const res = await fetch(`/api/audit/logs?patientId=${patientId}&limit=100`);
+  if (typeof window === "undefined") {
+    const { data, error } = await supabase
+      .from("access_logs")
+      .select("*")
+      .eq("user_id", patientId)
+      .order("timestamp", { ascending: false })
+      .limit(100);
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch patient access logs");
+    if (error) throw error;
+    return data;
   }
 
+  const res = await fetch(`/api/audit/logs?patientId=${patientId}&limit=100`);
+  if (!res.ok) throw new Error("Failed to fetch patient access logs");
   const data = await res.json();
   return data.logs;
 }

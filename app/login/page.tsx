@@ -40,6 +40,10 @@ export default function LoginPage() {
         setMFAToken(result.mfaToken);
         setRequiresMFA(true);
         setOtpAttempts(0);
+      } else if (result.requiresPasswordChange && result.user && result.role) {
+        // Password expired - forced change
+        saveSession(result.user, result.role);
+        router.push("/dashboard/profile/change-password?forced=true");
       } else if (result.success && result.user && result.role) {
         // No MFA required - login successful
         saveSession(result.user, result.role);

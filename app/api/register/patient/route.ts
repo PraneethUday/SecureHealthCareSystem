@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { logAction } from "@/lib/logging";
-import { hashPassword, generateOTP, generateOTPExpiry, hashOTP } from "@/lib/security";
+import { hashPassword, generateOTP, generateOTPExpiry, hashOTP, validatePasswordComplexity } from "@/lib/security";
 import { sendOTPEmail, sendRegistrationConfirmationEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
@@ -47,9 +47,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate password strength
-    if (password.length < 8) {
+    const complexityResult = validatePasswordComplexity(password);
+    if (!complexityResult.valid) {
       return NextResponse.json(
-        { error: "Password must be at least 8 characters long" },
+        { error: complexityResult.message },
         { status: 400 }
       );
     }
