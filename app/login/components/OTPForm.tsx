@@ -106,11 +106,10 @@ export default function OTPForm({
         <button
           type="submit"
           disabled={isLoading || otp.length !== 6 || attemptsRemaining <= 0}
-          className={`w-full py-3 rounded-lg font-semibold transition-all duration-200 ${
-            otp.length === 6 && attemptsRemaining > 0 && !isLoading
+          className={`w-full py-3 rounded-lg font-semibold transition-all duration-200 ${otp.length === 6 && attemptsRemaining > 0 && !isLoading
               ? `${themeClasses.button} hover:shadow-lg transform hover:scale-105`
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          }`}
+            }`}
         >
           {isLoading ? (
             <div className="flex items-center justify-center">
@@ -125,7 +124,7 @@ export default function OTPForm({
 
       {/* Help Text */}
       <div className="text-center text-xs text-gray-600 space-y-2">
-        <p>Didn't receive the code?</p>
+        <p>Didn&apos;t receive the code?</p>
         <button
           type="button"
           disabled={isLoading}
