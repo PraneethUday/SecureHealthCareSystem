@@ -7,10 +7,11 @@ import { getThemeClasses } from "./constants";
 import Header from "./components/Header";
 import RoleSelector from "./components/RoleSelector";
 import LoginForm from "./components/LoginForm";
+import OTPForm from "./components/OTPForm";
 import Footer from "./components/Footer";
 import InfoBanner from "./components/InfoBanner";
-import { login, saveSession } from "@/lib/auth";
-import { logAction } from "@/lib/logging";
+import { saveSession } from "@/lib/auth";
+import { login, verifyMFAOTP } from "@/app/actions/auth-actions";
 
 export default function LoginPage() {
   const [selectedRole, setSelectedRole] = useState<UserRole>("patient");
@@ -18,6 +19,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [requiresMFA, setRequiresMFA] = useState(false);
+  const [mfaToken, setMFAToken] = useState("");
+  const [otpAttempts, setOtpAttempts] = useState(0);
   const router = useRouter();
 
 
@@ -31,11 +35,14 @@ export default function LoginPage() {
     try {
       const result = await login(identifier, password, selectedRole);
 
-      if (result.success && result.user && result.role) {
+      if (result.requiresMFA && result.mfaToken) {
+        // MFA required - show OTP form
+        setMFAToken(result.mfaToken);
+        setRequiresMFA(true);
+        setOtpAttempts(0);
+      } else if (result.success && result.user && result.role) {
+        // No MFA required - login successful
         saveSession(result.user, result.role);
-
-        // Login success logging handled in lib/auth.ts
-
         router.push(`/dashboard/${result.role}`);
       }
 
@@ -49,10 +56,53 @@ export default function LoginPage() {
     }
   };
 
+  const handleOTPSubmit = async (e: React.FormEvent, otp: string) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    try {
+      // Use Server Action instead of API route
+      const result = await verifyMFAOTP(mfaToken, otp, selectedRole);
+
+      if (result.success && result.user && result.role) {
+        // OTP verified successfully
+        saveSession(result.user, result.role);
+        router.push(`/dashboard/${result.role}`);
+      } else {
+        const newAttempts = otpAttempts + 1;
+        setOtpAttempts(newAttempts);
+
+        if (newAttempts >= 5) {
+          setError("Maximum OTP attempts exceeded. Please try logging in again.");
+          setRequiresMFA(false);
+          setMFAToken("");
+        } else {
+          setError(result.message || `Invalid OTP. ${5 - newAttempts} attempts remaining.`);
+        }
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleRoleChange = (role: UserRole) => {
     setSelectedRole(role);
-    setIdentifier(""); // Clear identifier when switching roles
-    setError(""); // Clear error
+    setIdentifier("");
+    setPassword("");
+    setError("");
+    setRequiresMFA(false);
+    setMFAToken("");
+    setOtpAttempts(0);
+  };
+
+  const handleBackToLogin = () => {
+    setRequiresMFA(false);
+    setMFAToken("");
+    setOtpAttempts(0);
+    setError("");
   };
 
   return (
@@ -86,7 +136,7 @@ export default function LoginPage() {
       {/* Left Side - Information Banner (Only for Patients) */}
       <div
         className={`relative z-10 transition-all duration-700 ease-in-out ${selectedRole === "patient"
-          ? "hidden md:block md:w-1/2 opacity-100 p-8 flex items-center justify-center" // Added flex centering
+          ? "hidden md:block md:w-1/2 opacity-100 p-8 flex items-center justify-center"
           : "w-0 p-0 opacity-0 overflow-hidden"
           }`}
       >
@@ -97,36 +147,52 @@ export default function LoginPage() {
 
       {/* Right Side - Login Form */}
       <div
-        className={`relative z-10 flex items-center justify-center min-h-screen w-full py-8 transition-all duration-700 ease-in-out ${selectedRole === "patient" ? "md:w-1/2" : ""
+        className={`relative z-10 flex items-center justify-center min-h-screen w-full py-8 transition-all duration-700 ease-in-out ${selectedRole === "patient" ? "flex-1 md:w-1/2" : ""
           }`}
       >
         <div
           className={`w-full mx-auto ${selectedRole === "patient"
-            ? `max-w-md p-8 ${themeClasses.card} rounded-3xl border border-white/50 dark:border-white/10 backdrop-blur-xl` // Updated classes
+            ? `max-w-md p-8 ${themeClasses.card} rounded-3xl border border-white/50 dark:border-white/10 backdrop-blur-xl`
             : "max-w-xl p-8 backdrop-blur-xl bg-white/60 dark:bg-gray-900/60 border border-white/50 dark:border-white/10 rounded-3xl"
             } transition-all duration-500 ease-in-out shadow-2xl dark:shadow-black/40`}
         >
           <Header themeClasses={themeClasses} selectedRole={selectedRole} />
 
-          <RoleSelector
-            selectedRole={selectedRole}
-            onRoleChange={handleRoleChange}
-            themeClasses={themeClasses}
-          />
+          {!requiresMFA && (
+            <RoleSelector
+              selectedRole={selectedRole}
+              onRoleChange={handleRoleChange}
+              themeClasses={themeClasses}
+            />
+          )}
 
-          <LoginForm
-            identifier={identifier}
-            password={password}
-            selectedRole={selectedRole}
-            onIdentifierChange={setIdentifier}
-            onPasswordChange={setPassword}
-            themeClasses={themeClasses}
-            onSubmit={handleSubmit}
-            isLoading={isLoading}
-            error={error}
-          />
+          {requiresMFA ? (
+            <OTPForm
+              onSubmit={handleOTPSubmit}
+              isLoading={isLoading}
+              error={error}
+              email={identifier}
+              themeClasses={themeClasses}
+              onBackClick={handleBackToLogin}
+              attemptsRemaining={5 - otpAttempts}
+            />
+          ) : (
+            <LoginForm
+              identifier={identifier}
+              password={password}
+              selectedRole={selectedRole}
+              onIdentifierChange={setIdentifier}
+              onPasswordChange={setPassword}
+              themeClasses={themeClasses}
+              onSubmit={handleSubmit}
+              isLoading={isLoading}
+              error={error}
+            />
+          )}
 
-          <Footer selectedRole={selectedRole} themeClasses={themeClasses} />
+          {!requiresMFA && (
+            <Footer selectedRole={selectedRole} themeClasses={themeClasses} />
+          )}
         </div>
       </div>
     </div>
