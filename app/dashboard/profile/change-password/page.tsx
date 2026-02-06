@@ -27,7 +27,13 @@ export default function ChangePasswordPage() {
         <div className="min-h-screen bg-[conic-gradient(at_top,_var(--tw-gradient-stops))] from-blue-50 via-indigo-50 to-slate-50 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
                 <ChangePasswordForm
-                    identifier={session.role === 'patient' ? session.user.email : (session.user.doctor_id || session.user.nurse_id || session.user.staff_id || session.user.id)}
+                    identifier={
+                        session.role === 'patient' ? session.user.patient_id :
+                            session.role === 'doctor' ? session.user.doctor_id :
+                                session.role === 'nurse' ? session.user.nurse_id :
+                                    session.role === 'staff' ? session.user.staff_id :
+                                        session.user.id
+                    }
                     role={session.role}
                     isForced={isForced}
                     onSuccess={() => {
