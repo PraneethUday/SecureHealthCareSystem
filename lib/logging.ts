@@ -6,6 +6,8 @@ interface LogActionParams {
   action: string;
   resourceType?: string;
   resourceId?: string;
+  details?: string;
+  status?: string;
   ipAddress?: string;
   userAgent?: string;
 }
@@ -25,6 +27,8 @@ export async function logAction(params: LogActionParams): Promise<void> {
         action: params.action,
         resource_type: params.resourceType,
         resource_id: params.resourceId,
+        details: params.details,
+        status: params.status,
         ip_address: params.ipAddress,
         user_agent: params.userAgent,
       }),

@@ -13,6 +13,8 @@ export async function POST(req: Request) {
       action,
       resource_type,
       resource_id,
+      details,
+      status,
       ip_address,
       user_agent,
     } = body;
@@ -26,6 +28,8 @@ export async function POST(req: Request) {
       action,
       resource_type,
       resource_id,
+      details,
+      status,
       ip_address,
       user_agent,
       timestamp,

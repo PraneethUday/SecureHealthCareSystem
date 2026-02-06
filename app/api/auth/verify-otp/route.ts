@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyMFAOTP } from "@/lib/auth";
+import { verifyMFAOTP } from "@/app/actions/auth-actions";
 import { UserRole } from "@/lib/database.types";
 
 export async function POST(request: NextRequest) {
