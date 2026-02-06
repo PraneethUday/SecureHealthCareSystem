@@ -79,3 +79,61 @@ export function verifyOTP(otp: string, hashedOTP: string): boolean {
   const hashedInput = hashOTP(otp);
   return hashedInput === hashedOTP;
 }
+
+/**
+ * Validates password complexity
+ * Rules: Min 12 chars, 1 Uppercase, 1 Lowercase, 1 Number, 1 Special character
+ */
+export function validatePasswordComplexity(password: string): {
+  valid: boolean;
+  message?: string;
+} {
+  const minLength = 12;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+  if (password.length < minLength) {
+    return {
+      valid: false,
+      message: `Password must be at least ${minLength} characters long`,
+    };
+  }
+  if (!hasUppercase) {
+    return {
+      valid: false,
+      message: "Password must contain at least one uppercase letter",
+    };
+  }
+  if (!hasLowercase) {
+    return {
+      valid: false,
+      message: "Password must contain at least one lowercase letter",
+    };
+  }
+  if (!hasNumber) {
+    return { valid: false, message: "Password must contain at least one number" };
+  }
+  if (!hasSpecial) {
+    return {
+      valid: false,
+      message: "Password must contain at least one special character",
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Checks if a password has expired (older than 90 days)
+ */
+export function isPasswordExpired(changedAt: string | null): boolean {
+  if (!changedAt) return true; // Force change if never recorded
+
+  const lastChanged = new Date(changedAt);
+  const now = new Date();
+  const diffInDays = (now.getTime() - lastChanged.getTime()) / (1000 * 3600 * 24);
+
+  return diffInDays > 90;
+}
