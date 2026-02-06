@@ -1,0 +1,40 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import ChangePasswordForm from "@/components/ChangePasswordForm";
+import { UserRole } from "@/app/login/types";
+
+export default function ChangePasswordPage() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const [session, setSession] = useState<{ user: any; role: UserRole } | null>(null);
+    const isForced = searchParams.get("forced") === "true";
+
+    useEffect(() => {
+        const currentSession = getSession();
+        if (!currentSession) {
+            router.push("/login");
+            return;
+        }
+        setSession(currentSession);
+    }, [router]);
+
+    if (!session) return null;
+
+    return (
+        <div className="min-h-screen bg-[conic-gradient(at_top,_var(--tw-gradient-stops))] from-blue-50 via-indigo-50 to-slate-50 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950 flex items-center justify-center p-4">
+            <div className="w-full max-w-md">
+                <ChangePasswordForm
+                    identifier={session.role === 'patient' ? session.user.email : (session.user.doctor_id || session.user.nurse_id || session.user.staff_id || session.user.id)}
+                    role={session.role}
+                    isForced={isForced}
+                    onSuccess={() => {
+                        router.push(`/dashboard/${session.role}`);
+                    }}
+                />
+            </div>
+        </div>
+    );
+}

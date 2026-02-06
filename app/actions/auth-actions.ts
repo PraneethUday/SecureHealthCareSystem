@@ -3,7 +3,7 @@
 import { supabaseAdmin as supabase } from "@/lib/supabase-admin";
 import { UserRole } from "@/lib/database.types";
 import { logAction } from "@/lib/logging";
-import { verifyPassword, generateOTP, generateOTPExpiry, hashOTP } from "@/lib/security";
+import { verifyPassword, generateOTP, generateOTPExpiry, hashOTP, isPasswordExpired, validatePasswordComplexity, hashPassword } from "@/lib/security";
 import { sendOTPEmail } from "@/lib/email";
 
 interface LoginResult {
@@ -13,6 +13,7 @@ interface LoginResult {
   role?: UserRole;
   requiresMFA?: boolean;
   mfaToken?: string; // Temporary token for OTP verification
+  requiresPasswordChange?: boolean;
 }
 
 interface OTPVerifyResult {
@@ -164,6 +165,29 @@ export async function login(
       return { success: false, message: "Invalid credentials" };
     }
 
+    // Password is valid - check for expiry
+    const isExpired = isPasswordExpired(data.password_changed_at);
+    if (isExpired) {
+      await logAction({
+        userId: identifier,
+        userRole: role,
+        action: "password_expired_login",
+        details: "User login redirected to password change due to expiry",
+        status: "success",
+      });
+
+      // Remove sensitive data
+      const { password_hash, password: _dbPassword, ...userSafeData } = data;
+
+      return {
+        success: true,
+        message: "Your password has expired. Please update it.",
+        requiresPasswordChange: true,
+        user: userSafeData,
+        role,
+      };
+    }
+
     // Password is valid - reset login attempts
     await supabase
       .from(table)
@@ -240,7 +264,7 @@ export async function login(
       });
 
       // Remove sensitive data
-      const { password_hash, password, ...userSafeData } = data;
+      const { password_hash, password: _dbOldPassword, ...userSafeData } = data;
 
       return {
         success: true,
@@ -295,6 +319,149 @@ export async function login(
       status: "failure",
     });
     return { success: false, message: "An error occurred during login" };
+  }
+}
+
+/**
+ * Update user password with complexity and rotation checks
+ */
+export async function updatePassword(
+  identifier: string,
+  oldPassword: string,
+  newPassword: string,
+  role: UserRole
+): Promise<LoginResult> {
+  try {
+    // 1. Determine table and fields
+    let table: string;
+    let idField: string;
+    let userIdField: string;
+
+    switch (role) {
+      case "admin":
+        table = "admins";
+        idField = "id";
+        userIdField = "id";
+        break;
+      case "patient":
+        table = "patients";
+        idField = "patient_id";
+        userIdField = "patient_id";
+        break;
+      case "doctor":
+        table = "doctors";
+        idField = "doctor_id";
+        userIdField = "doctor_id";
+        break;
+      case "nurse":
+        table = "nurses";
+        idField = "nurse_id";
+        userIdField = "nurse_id";
+        break;
+      case "staff":
+        table = "staff";
+        idField = "staff_id";
+        userIdField = "staff_id";
+        break;
+      default:
+        return { success: false, message: "Invalid role" };
+    }
+
+    // 2. Get user data (including current hash)
+    const { data: user, error: userError } = await supabase
+      .from(table)
+      .select("*")
+      .eq(idField, identifier)
+      .single();
+
+    if (userError || !user) {
+      return { success: false, message: "User not found" };
+    }
+
+    // 3. Verify old password
+    const oldPasswordValid = await verifyPassword(oldPassword, user.password_hash || user.password);
+    if (!oldPasswordValid) {
+      await logAction({
+        userId: identifier,
+        userRole: role,
+        action: "password_change_failed",
+        details: "Invalid old password provided",
+        status: "failure",
+      });
+      return { success: false, message: "Incorrect current password" };
+    }
+
+    // 4. Validate new password complexity
+    const complexityResult = validatePasswordComplexity(newPassword);
+    if (!complexityResult.valid) {
+      return { success: false, message: complexityResult.message || "Invalid password format" };
+    }
+
+    // 5. Check password history (prevent reuse of last 3 passwords)
+    const { data: history } = await supabase
+      .from("password_history")
+      .select("password_hash")
+      .eq("user_id", user[userIdField])
+      .eq("user_role", role)
+      .order("changed_at", { ascending: false })
+      .limit(3);
+
+    if (history) {
+      for (const record of history) {
+        const matches = await verifyPassword(newPassword, record.password_hash);
+        if (matches) {
+          return {
+            success: false,
+            message: "Cannot reuse one of your last 3 passwords",
+          };
+        }
+      }
+    }
+
+    // 6. Hash new password
+    const newPasswordHash = await hashPassword(newPassword);
+
+    // 7. Update user table
+    const { error: updateError } = await supabase
+      .from(table)
+      .update({
+        password_hash: newPasswordHash,
+        password: null, // Clear plaintext if any
+        password_changed_at: new Date().toISOString(),
+      })
+      .eq(idField, identifier);
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    // 8. Record in history
+    await supabase.from("password_history").insert({
+      user_id: user[userIdField],
+      user_role: role,
+      password_hash: newPasswordHash,
+    });
+
+    // 9. Log success
+    await logAction({
+      userId: identifier,
+      userRole: role,
+      action: "password_change_success",
+      details: "Password updated successfully",
+      status: "success",
+    });
+
+    const { password_hash, password: _dbPassword, ...userSafeData } = user;
+
+    return {
+      success: true,
+      message: "Password updated successfully",
+      user: userSafeData,
+      role,
+    };
+  } catch (error) {
+    console.error("Password update error:", error);
+    return { success: false, message: "Failed to update password. Please try again." };
   }
 }
 
