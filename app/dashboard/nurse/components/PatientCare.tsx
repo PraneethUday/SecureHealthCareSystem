@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Users, Calendar, Clock, MapPin, User, Phone, Mail, Stethoscope } from "lucide-react";
+import { Users, Calendar, Clock, MapPin, User, Phone, Mail, Stethoscope, Heart } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import PatientProfileModal from "@/components/PatientProfileModal";
 
 interface AssignedPatient {
   appointment_id: string;
@@ -20,6 +21,8 @@ interface AssignedPatient {
   doctor_specialization: string;
   hospital_name: string;
   updated_at: string;
+  share_health_profile?: boolean;
+  patient_uuid: string;
   isNew?: boolean;
 }
 
@@ -31,6 +34,7 @@ export function PatientCare({ nurseId }: PatientCareProps) {
   const [patients, setPatients] = useState<AssignedPatient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "today" | "upcoming">("today");
+  const [showProfileModal, setShowProfileModal] = useState<string | null>(null);
 
 
 
@@ -82,7 +86,8 @@ export function PatientCare({ nurseId }: PatientCareProps) {
           hospitals!inner (
             name
           ),
-          updated_at
+          updated_at,
+          share_health_profile
         `
         )
         .eq("nurse_id", nurseData.id)
@@ -122,6 +127,8 @@ export function PatientCare({ nurseId }: PatientCareProps) {
             doctor_specialization: apt.doctors?.specialization || "",
             hospital_name: apt.hospitals?.name || "",
             updated_at: apt.updated_at,
+            share_health_profile: apt.share_health_profile,
+            patient_uuid: apt.patients?.id || "",
             isNew,
           };
         });
@@ -305,6 +312,29 @@ export function PatientCare({ nurseId }: PatientCareProps) {
                 </p>
               </div>
 
+              {/* Shared Health Profile Banner */}
+              {patient.share_health_profile && (
+                <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-rose-100 p-2 rounded-lg">
+                        <Heart className="w-5 h-5 text-rose-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-rose-900">Health Profile Shared</p>
+                        <p className="text-xs text-rose-700">Patient shared their medical history.</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowProfileModal(patient.patient_id)}
+                      className="px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition-colors shadow-sm whitespace-nowrap"
+                    >
+                      View Profile
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Contact Info */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -342,6 +372,14 @@ export function PatientCare({ nurseId }: PatientCareProps) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Patient Profile Modal */}
+      {showProfileModal && (
+        <PatientProfileModal
+          patientId={patients.find(p => p.patient_id === showProfileModal)?.patient_uuid || ""}
+          onClose={() => setShowProfileModal(null)}
+        />
       )}
     </div>
   );

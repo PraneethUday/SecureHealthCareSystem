@@ -23,7 +23,7 @@ import { getAppointmentPrescriptionCount } from "@/lib/prescriptions";
 import { hasAppointmentMedicalRecord } from "@/lib/medicalRecords";
 import { useState, useEffect } from "react";
 import { NurseAssignment } from "./NurseAssignment";
-import PatientProfileModal from "./PatientProfileModal";
+import PatientProfileModal from "@/components/PatientProfileModal";
 
 interface DoctorAppointmentCardProps {
   appointment: AppointmentWithDetails;
