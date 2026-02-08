@@ -50,7 +50,7 @@ export default function PatientProfileModal({
                         </div>
                         <div>
                             <h2 className="text-xl font-bold">Shared Health Profile</h2>
-                            <p className="text-rose-100 text-sm">Patient's self-reported data</p>
+                            <p className="text-rose-100 text-sm">Patient&apos;s self-reported data</p>
                         </div>
                     </div>
                     <button
