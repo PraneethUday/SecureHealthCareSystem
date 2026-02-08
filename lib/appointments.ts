@@ -83,6 +83,7 @@ export async function createAppointment(appointmentData: {
   reason?: string;
   notes?: string;
   isTelemedicine?: boolean;
+  shareHealthProfile?: boolean;
 }): Promise<{ success: boolean; appointment?: Appointment; error?: string }> {
   try {
     console.log("Creating appointment with data:", appointmentData);
@@ -98,6 +99,7 @@ export async function createAppointment(appointmentData: {
         reason: appointmentData.reason,
         notes: appointmentData.notes,
         is_telemedicine: appointmentData.isTelemedicine || false,
+        share_health_profile: appointmentData.shareHealthProfile || false,
         status: "scheduled",
       })
       .select()
@@ -230,6 +232,10 @@ export async function getDoctorAppointments(
           name,
           address
         ),
+        doctors (
+          id,
+          specialization
+        ),
         nurses (
           id,
           nurse_id,
@@ -264,6 +270,7 @@ export async function getDoctorAppointments(
       patient_email: apt.patients?.email || "N/A",
       hospital_name: apt.hospitals?.name || "N/A",
       hospital_address: apt.hospitals?.address || "N/A",
+      specialization: apt.doctors?.specialization,
       nurse_name: apt.nurses
         ? `${apt.nurses.first_name} ${apt.nurses.last_name}`
         : undefined,
@@ -295,9 +302,8 @@ export async function updateAppointmentStatus(
       console.error("Error fetching appointment:", fetchError);
       return {
         success: false,
-        error: `Failed to fetch appointment: ${
-          fetchError.message || JSON.stringify(fetchError)
-        }`,
+        error: `Failed to fetch appointment: ${fetchError.message || JSON.stringify(fetchError)
+          }`,
       };
     }
 

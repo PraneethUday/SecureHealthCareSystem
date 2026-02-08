@@ -25,7 +25,9 @@ import AppointmentCard from "./components/AppointmentCard";
 import NewAppointmentForm from "./components/NewAppointmentForm";
 import PrescriptionsList from "./components/PrescriptionsList";
 import MedicalRecordsList from "./components/MedicalRecordsList";
+import HealthProfileForm from "./components/HealthProfileForm";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { supabase } from "@/lib/supabase";
 
 export default function PatientDashboard() {
   const router = useRouter();
@@ -38,6 +40,7 @@ export default function PatientDashboard() {
   const [activeTab, setActiveTab] = useState<
     "appointments" | "prescriptions" | "records"
   >("appointments");
+  const [showHealthProfileModal, setShowHealthProfileModal] = useState(false);
   const [appointmentSubTab, setAppointmentSubTab] = useState<
     "upcoming" | "past"
   >("upcoming");
@@ -59,6 +62,7 @@ export default function PatientDashboard() {
 
     setUser(session.user);
     loadAppointments(session.user.id);
+    checkProfileStatus(session.user.id);
 
     if (!hasLogged.current) {
       logAction({
@@ -70,6 +74,22 @@ export default function PatientDashboard() {
       hasLogged.current = true;
     }
   }, [router]);
+
+  const checkProfileStatus = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("patients")
+        .select("is_profile_completed")
+        .eq("id", userId)
+        .single();
+
+      if (!error && data && !data.is_profile_completed) {
+        setShowHealthProfileModal(true);
+      }
+    } catch (err) {
+      console.error("Error checking profile status:", err);
+    }
+  };
 
 
   const loadAppointments = async (patientId: string) => {
@@ -431,6 +451,20 @@ export default function PatientDashboard() {
             loadAppointments(user.id);
           }}
         />
+      )}
+
+      {/* Health Profile Modal */}
+      {showHealthProfileModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-3xl shadow-2xl p-6 md:p-10 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
+            <HealthProfileForm
+              patientId={user.id}
+              isInitial={true}
+              onSuccess={() => setShowHealthProfileModal(false)}
+              onClose={() => setShowHealthProfileModal(false)}
+            />
+          </div>
+        </div>
       )}
 
       <style jsx global>{`

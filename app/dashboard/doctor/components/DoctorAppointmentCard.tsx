@@ -12,6 +12,7 @@ import {
   XCircle,
   Video,
   Pill,
+  Heart,
 } from "lucide-react";
 import { AppointmentWithDetails } from "@/lib/database.types";
 import {
@@ -22,6 +23,7 @@ import { getAppointmentPrescriptionCount } from "@/lib/prescriptions";
 import { hasAppointmentMedicalRecord } from "@/lib/medicalRecords";
 import { useState, useEffect } from "react";
 import { NurseAssignment } from "./NurseAssignment";
+import PatientProfileModal from "./PatientProfileModal";
 
 interface DoctorAppointmentCardProps {
   appointment: AppointmentWithDetails;
@@ -45,6 +47,7 @@ export default function DoctorAppointmentCard({
   const [showMarkNoShow, setShowMarkNoShow] = useState(false);
   const [prescriptionCount, setPrescriptionCount] = useState<number>(0);
   const [hasMedicalRecord, setHasMedicalRecord] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -203,6 +206,29 @@ export default function DoctorAppointmentCard({
         </div>
       )}
 
+      {/* Shared Health Profile Banner */}
+      {appointment.share_health_profile && (
+        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-rose-100 p-2 rounded-lg">
+                <Heart className="w-5 h-5 text-rose-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-rose-900">Health Profile Shared</p>
+                <p className="text-xs text-rose-700">Patient shared their medical history.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowProfileModal(true)}
+              className="px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition-colors shadow-sm whitespace-nowrap"
+            >
+              View Profile
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
       {(isScheduled || isCompleted) && (
         <div className="pt-4 border-t border-gray-200 space-y-2">
@@ -228,11 +254,10 @@ export default function DoctorAppointmentCard({
                     </button>
                     <button
                       onClick={onPrescribe}
-                      className={`flex items-center justify-center gap-2 px-3 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold shadow-sm ${
-                        prescriptionCount > 0
-                          ? "text-white bg-green-600 hover:bg-green-700"
-                          : "text-white bg-purple-600 hover:bg-purple-700"
-                      }`}
+                      className={`flex items-center justify-center gap-2 px-3 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold shadow-sm ${prescriptionCount > 0
+                        ? "text-white bg-green-600 hover:bg-green-700"
+                        : "text-white bg-purple-600 hover:bg-purple-700"
+                        }`}
                     >
                       {prescriptionCount > 0 ? (
                         <>
@@ -253,11 +278,10 @@ export default function DoctorAppointmentCard({
               {!appointment.is_telemedicine && isToday && onPrescribe && (
                 <button
                   onClick={onPrescribe}
-                  className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm ${
-                    prescriptionCount > 0
-                      ? "text-white bg-green-600 hover:bg-green-700"
-                      : "text-white bg-purple-600 hover:bg-purple-700"
-                  }`}
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm ${prescriptionCount > 0
+                    ? "text-white bg-green-600 hover:bg-green-700"
+                    : "text-white bg-purple-600 hover:bg-purple-700"
+                    }`}
                 >
                   {prescriptionCount > 0 ? (
                     <>
@@ -272,6 +296,33 @@ export default function DoctorAppointmentCard({
                   )}
                 </button>
               )}
+
+              {/* Prominent Assign Nurse Button if not assigned */}
+              {!appointment.nurse_id && (
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-orange-100 p-2 rounded-lg">
+                        <User className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-orange-900">Nurse Needed</p>
+                        <p className="text-xs text-orange-700">No nurse has been assigned yet.</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        // Find the existing NurseAssignment button and click it
+                        const id = `nurse-assign-${appointment.id}`;
+                        document.getElementById(id)?.click();
+                      }}
+                      className="px-4 py-2 bg-orange-600 text-white text-xs font-bold rounded-lg hover:bg-orange-700 transition-colors shadow-sm whitespace-nowrap"
+                    >
+                      Assign Nurse
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
 
@@ -282,11 +333,10 @@ export default function DoctorAppointmentCard({
                 medicalRecordButtonDisabled ? undefined : onCreateMedicalRecord
               }
               disabled={medicalRecordButtonDisabled}
-              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm border-2 ${
-                medicalRecordButtonDisabled
-                  ? "text-green-600 bg-green-50 border-green-400 cursor-not-allowed opacity-70"
-                  : "text-blue-600 bg-blue-50 border-blue-400 hover:bg-blue-100"
-              }`}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm border-2 ${medicalRecordButtonDisabled
+                ? "text-green-600 bg-green-50 border-green-400 cursor-not-allowed opacity-70"
+                : "text-blue-600 bg-blue-50 border-blue-400 hover:bg-blue-100"
+                }`}
             >
               {hasMedicalRecord ? (
                 <>
@@ -362,6 +412,14 @@ export default function DoctorAppointmentCard({
               </div>
             ))}
         </div>
+      )}
+
+      {/* Patient Profile Modal */}
+      {showProfileModal && (
+        <PatientProfileModal
+          patientId={appointment.patient_id}
+          onClose={() => setShowProfileModal(false)}
+        />
       )}
     </div>
   );
