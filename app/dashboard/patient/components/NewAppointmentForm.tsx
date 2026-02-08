@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, Clock, MapPin, User, X, Loader2, Video } from "lucide-react";
+import { Calendar, Clock, MapPin, User, X, Loader2, Video, Heart } from "lucide-react";
 import {
   getHospitals,
   getDoctors,
@@ -38,6 +38,7 @@ export default function NewAppointmentForm({
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
   const [isTelemedicine, setIsTelemedicine] = useState(false);
+  const [shareHealthProfile, setShareHealthProfile] = useState(false);
 
   // Load hospitals on mount
   useEffect(() => {
@@ -92,6 +93,7 @@ export default function NewAppointmentForm({
       reason,
       notes,
       isTelemedicine,
+      shareHealthProfile,
     });
 
     setLoading(false);
@@ -387,6 +389,32 @@ export default function NewAppointmentForm({
                 />
               </div>
 
+              {/* Share Health Profile Toggle */}
+              <div className="mb-6 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="share-profile"
+                    checked={shareHealthProfile}
+                    onChange={(e) => setShareHealthProfile(e.target.checked)}
+                    className="mt-1 w-5 h-5 text-rose-600 rounded focus:ring-rose-500"
+                  />
+                  <div className="flex-1">
+                    <label
+                      htmlFor="share-profile"
+                      className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2 cursor-pointer"
+                    >
+                      <Heart className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                      Share Health Profile
+                    </label>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Give the doctor access to your symptoms, allergies, and
+                      health history to help them prepare for your visit.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Summary */}
               <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
                 <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3">
@@ -432,6 +460,12 @@ export default function NewAppointmentForm({
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">Time:</span>
                     <span className="font-medium">{selectedTime}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Share Profile:</span>
+                    <span className={`font-medium ${shareHealthProfile ? "text-rose-600" : "text-gray-400"}`}>
+                      {shareHealthProfile ? "Yes" : "No"}
+                    </span>
                   </div>
                 </div>
               </div>

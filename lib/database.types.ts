@@ -23,6 +23,8 @@ export interface Patient {
   allergies?: string;
   medical_history?: string;
   current_medications?: string;
+  health_profile?: any;
+  is_profile_completed?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -131,6 +133,7 @@ export interface Appointment {
   video_call_link?: string;
   video_call_started_at?: string;
   video_call_ended_at?: string;
+  share_health_profile?: boolean;
   nurse_id?: string; // UUID reference to nurses table
   created_at?: string;
   updated_at?: string;

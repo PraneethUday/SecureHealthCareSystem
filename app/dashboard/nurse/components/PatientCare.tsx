@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Users, Calendar, Clock, MapPin, User, Phone, Mail } from "lucide-react";
+import { Users, Calendar, Clock, MapPin, User, Phone, Mail, Stethoscope } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface AssignedPatient {
@@ -19,6 +19,8 @@ interface AssignedPatient {
   doctor_name: string;
   doctor_specialization: string;
   hospital_name: string;
+  updated_at: string;
+  isNew?: boolean;
 }
 
 interface PatientCareProps {
@@ -79,7 +81,8 @@ export function PatientCare({ nurseId }: PatientCareProps) {
           ),
           hospitals!inner (
             name
-          )
+          ),
+          updated_at
         `
         )
         .eq("nurse_id", nurseData.id)
@@ -98,22 +101,30 @@ export function PatientCare({ nurseId }: PatientCareProps) {
         console.error("Error fetching assigned patients:", error);
         setPatients([]);
       } else {
-        const formattedPatients = (data || []).map((apt: any) => ({
-          appointment_id: apt.id,
-          appointment_date: apt.appointment_date,
-          appointment_time: apt.appointment_time,
-          status: apt.status,
-          reason: apt.reason || "General consultation",
-          patient_id: apt.patients?.patient_id || "",
-          patient_name: `${apt.patients?.first_name} ${apt.patients?.last_name}`,
-          patient_email: apt.patients?.email || "",
-          patient_phone: apt.patients?.phone || "",
-          patient_dob: apt.patients?.date_of_birth || "",
-          doctor_id: apt.doctors?.doctor_id || "",
-          doctor_name: `Dr. ${apt.doctors?.first_name} ${apt.doctors?.last_name}`,
-          doctor_specialization: apt.doctors?.specialization || "",
-          hospital_name: apt.hospitals?.name || "",
-        }));
+        const formattedPatients = (data || []).map((apt: any) => {
+          const updatedAt = new Date(apt.updated_at);
+          const now = new Date();
+          const isNew = (now.getTime() - updatedAt.getTime()) < (24 * 60 * 60 * 1000); // 24 hours
+
+          return {
+            appointment_id: apt.id,
+            appointment_date: apt.appointment_date,
+            appointment_time: apt.appointment_time,
+            status: apt.status,
+            reason: apt.reason || "General consultation",
+            patient_id: apt.patients?.patient_id || "",
+            patient_name: `${apt.patients?.first_name} ${apt.patients?.last_name}`,
+            patient_email: apt.patients?.email || "",
+            patient_phone: apt.patients?.phone || "",
+            patient_dob: apt.patients?.date_of_birth || "",
+            doctor_id: apt.doctors?.doctor_id || "",
+            doctor_name: `Dr. ${apt.doctors?.first_name} ${apt.doctors?.last_name}`,
+            doctor_specialization: apt.doctors?.specialization || "",
+            hospital_name: apt.hospitals?.name || "",
+            updated_at: apt.updated_at,
+            isNew,
+          };
+        });
         setPatients(formattedPatients);
       }
     } catch (error) {
@@ -248,9 +259,16 @@ export function PatientCare({ nurseId }: PatientCareProps) {
                     </p>
                   </div>
                 </div>
-                <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                  {patient.status}
-                </span>
+                <div className="flex flex-col items-end gap-2">
+                  <span className={`px-3 py-1 text-xs font-bold rounded-full border ${patient.status === 'scheduled' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                    {patient.status.toUpperCase()}
+                  </span>
+                  {patient.isNew && (
+                    <span className="px-3 py-1 bg-orange-500 text-white text-[10px] font-black rounded-full animate-pulse uppercase tracking-tighter">
+                      New Assignment
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Appointment Details */}
@@ -263,9 +281,15 @@ export function PatientCare({ nurseId }: PatientCareProps) {
                   <Clock className="w-4 h-4 text-green-500" />
                   <span>{formatTime(patient.appointment_time)}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <User className="w-4 h-4 text-green-500" />
-                  <span>{patient.doctor_name} ({patient.doctor_specialization})</span>
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 flex items-center gap-3">
+                  <div className="bg-white p-2 rounded-lg shadow-sm">
+                    <Stethoscope className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-indigo-500 font-bold uppercase tracking-wider">Assigned By</p>
+                    <p className="text-sm font-bold text-gray-800">{patient.doctor_name}</p>
+                    <p className="text-[10px] text-gray-500 font-medium">{patient.doctor_specialization}</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <MapPin className="w-4 h-4 text-green-500" />

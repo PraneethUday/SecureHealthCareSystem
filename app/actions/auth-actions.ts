@@ -379,7 +379,14 @@ export async function updatePassword(
     }
 
     // 3. Verify old password
-    const oldPasswordValid = await verifyPassword(oldPassword, user.password_hash || user.password);
+    let oldPasswordValid = false;
+    if (user.password_hash) {
+      oldPasswordValid = await verifyPassword(oldPassword, user.password_hash);
+    } else if (user.password) {
+      // Fallback for old plaintext passwords
+      oldPasswordValid = user.password === oldPassword;
+    }
+
     if (!oldPasswordValid) {
       await logAction({
         userId: identifier,
