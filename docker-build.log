@@ -1,0 +1,127 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.92kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:20-alpine
+#2 DONE 1.3s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 600B done
+#3 DONE 0.0s
+
+#4 [deps 1/5] FROM docker.io/library/node:20-alpine@sha256:09e2b3d9726018aecf269bd35325f46bf75046a643a66d28360ec71132750ec8
+#4 resolve docker.io/library/node:20-alpine@sha256:09e2b3d9726018aecf269bd35325f46bf75046a643a66d28360ec71132750ec8 0.0s done
+#4 DONE 0.0s
+
+#5 [runner 2/6] WORKDIR /app
+#5 CACHED
+
+#6 [runner 3/6] RUN addgroup --system --gid 1001 nodejs &&     adduser --system --uid 1001 nextjs
+#6 CACHED
+
+#7 [internal] load build context
+#7 transferring context: 9.98kB 0.0s done
+#7 DONE 0.0s
+
+#8 [deps 5/5] RUN npm ci
+#8 CACHED
+
+#9 [deps 2/5] RUN apk add --no-cache libc6-compat
+#9 CACHED
+
+#10 [deps 3/5] WORKDIR /app
+#10 CACHED
+
+#11 [deps 4/5] COPY package.json package-lock.json* ./
+#11 CACHED
+
+#12 [builder 4/6] COPY --from=deps /app/node_modules ./node_modules
+#12 CACHED
+
+#13 [builder 5/6] COPY . .
+#13 DONE 0.0s
+
+#14 [builder 6/6] RUN npm run build
+#14 0.252 
+#14 0.252 > secure-healthcare@0.1.0 build
+#14 0.252 > next build
+#14 0.252 
+#14 0.653    ▲ Next.js 15.5.9
+#14 0.653 
+#14 0.670    Creating an optimized production build ...
+#14 8.450  ✓ Compiled successfully in 6.7s
+#14 8.453    Linting and checking validity of types ...
+#14 11.66    Collecting page data ...
+#14 13.00    Generating static pages (0/25) ...
+#14 13.19    Generating static pages (6/25) 
+#14 13.28    Generating static pages (12/25) 
+#14 13.30    Generating static pages (18/25) 
+#14 13.37  ✓ Generating static pages (25/25)
+#14 13.77    Finalizing page optimization ...
+#14 13.77    Collecting build traces ...
+#14 20.96 
+#14 20.97 Route (app)                                       Size  First Load JS
+#14 20.97 ┌ ○ /                                            163 B         102 kB
+#14 20.97 ├ ○ /_not-found                                   1 kB         103 kB
+#14 20.97 ├ ƒ /api/appointments/[appointmentId]/details    163 B         102 kB
+#14 20.97 ├ ƒ /api/audit                                   163 B         102 kB
+#14 20.97 ├ ƒ /api/audit/logs                              163 B         102 kB
+#14 20.97 ├ ƒ /api/auth/verify-otp                         163 B         102 kB
+#14 20.97 ├ ƒ /api/chatbot                                 163 B         102 kB
+#14 20.97 ├ ƒ /api/health                                  163 B         102 kB
+#14 20.97 ├ ƒ /api/medical-reports                         163 B         102 kB
+#14 20.97 ├ ƒ /api/medical-reports/download                163 B         102 kB
+#14 20.97 ├ ƒ /api/medical-reports/log-view                163 B         102 kB
+#14 20.97 ├ ƒ /api/prescriptions/search                    163 B         102 kB
+#14 20.97 ├ ƒ /api/register/patient                        163 B         102 kB
+#14 20.97 ├ ƒ /api/video-calls/initiate                    163 B         102 kB
+#14 20.97 ├ ○ /dashboard/admin                           9.45 kB         164 kB
+#14 20.97 ├ ƒ /dashboard/call/[callId]                   3.21 kB         160 kB
+#14 20.97 ├ ○ /dashboard/call/start                      5.58 kB         163 kB
+#14 20.97 ├ ○ /dashboard/doctor                          18.1 kB         177 kB
+#14 20.97 ├ ○ /dashboard/nurse                           11.8 kB         166 kB
+#14 20.97 ├ ○ /dashboard/patient                          143 kB         302 kB
+#14 20.97 ├ ○ /dashboard/patient/access-logs             3.37 kB         158 kB
+#14 20.97 ├ ○ /dashboard/profile/change-password         4.08 kB         106 kB
+#14 20.97 ├ ○ /dashboard/staff                           7.71 kB         164 kB
+#14 20.97 ├ ○ /login                                     9.92 kB         116 kB
+#14 20.97 ├ ○ /register                                  2.36 kB         108 kB
+#14 20.97 └ ○ /register/patient                          2.57 kB         108 kB
+#14 20.97 + First Load JS shared by all                   102 kB
+#14 20.97   ├ chunks/1255-8befde0980f5cba9.js            45.6 kB
+#14 20.97   ├ chunks/4bd1b696-100b9d70ed4e49c1.js        54.2 kB
+#14 20.97   └ other shared chunks (total)                2.07 kB
+#14 20.97 
+#14 20.97 
+#14 20.97 ○  (Static)   prerendered as static content
+#14 20.97 ƒ  (Dynamic)  server-rendered on demand
+#14 20.97 
+#14 20.98 npm notice
+#14 20.98 npm notice New major version of npm available! 10.8.2 -> 11.9.0
+#14 20.98 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.9.0
+#14 20.98 npm notice To update run: npm install -g npm@11.9.0
+#14 20.98 npm notice
+#14 DONE 21.1s
+
+#15 [runner 4/6] COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+#15 DONE 0.2s
+
+#16 [runner 5/6] COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+#16 DONE 0.0s
+
+#17 [runner 6/6] COPY --from=builder --chown=nextjs:nodejs /app/public* ./public/ 2>/dev/null || true
+#17 ERROR: failed to calculate checksum of ref lwpvxc51f0taj0wma8vcj2k8h::sreo0yfsu8p6dhby0uqg69ej9: "/2>/dev/null": not found
+------
+ > [runner 6/6] COPY --from=builder --chown=nextjs:nodejs /app/public* ./public/ 2>/dev/null || true:
+------
+Dockerfile:54
+--------------------
+  52 |     
+  53 |     # Copy public folder if it exists
+  54 | >>> COPY --from=builder --chown=nextjs:nodejs /app/public* ./public/ 2>/dev/null || true
+  55 |     
+  56 |     # Switch to non-root user
+--------------------
+ERROR: failed to build: failed to solve: failed to compute cache key: failed to calculate checksum of ref lwpvxc51f0taj0wma8vcj2k8h::sreo0yfsu8p6dhby0uqg69ej9: "/2>/dev/null": not found
