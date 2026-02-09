@@ -23,6 +23,7 @@ chmod +x docker-build.sh
 ```
 
 The script will:
+
 - ✅ Validate your `.env` file
 - 📦 Build the Docker image
 - 🚀 Start the container
@@ -76,6 +77,7 @@ curl http://localhost:3000/api/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "healthy",
@@ -174,6 +176,7 @@ docker logs secure-healthcare
 ```
 
 Common issues:
+
 - Missing environment variables in `.env`
 - Invalid Supabase credentials
 - Port conflicts
@@ -206,6 +209,7 @@ For production deployments:
 ## ✅ Verified Configuration
 
 This setup includes:
+
 - ✅ Next.js 15.1.6 with standalone output
 - ✅ Health check endpoint at `/api/health`
 - ✅ Optimized multi-stage build
