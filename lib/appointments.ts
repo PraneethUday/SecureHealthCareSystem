@@ -45,7 +45,7 @@ export async function getDoctors(hospitalId?: string, specialization?: string) {
 // Get available time slots for a doctor on a specific date
 export async function getAvailableTimeSlots(
   doctorId: string,
-  date: string
+  date: string,
 ): Promise<string[]> {
   // Fetch existing appointments for this doctor on this date
   const { data: appointments, error } = await supabase
@@ -150,7 +150,7 @@ export async function createAppointment(appointmentData: {
 
 // Get patient appointments
 export async function getPatientAppointments(
-  patientId: string
+  patientId: string,
 ): Promise<AppointmentWithDetails[]> {
   try {
     console.log("🔍 Fetching appointments for patient:", patientId);
@@ -171,7 +171,7 @@ export async function getPatientAppointments(
           name,
           address
         )
-      `
+      `,
       )
       .eq("patient_id", patientId)
       .order("appointment_date", { ascending: false })
@@ -208,7 +208,7 @@ export async function getPatientAppointments(
 
 // Get doctor appointments
 export async function getDoctorAppointments(
-  doctorId: string
+  doctorId: string,
 ): Promise<AppointmentWithDetails[]> {
   try {
     console.log("🔍 Fetching appointments for doctor:", doctorId);
@@ -236,7 +236,7 @@ export async function getDoctorAppointments(
           first_name,
           last_name
         )
-      `
+      `,
       )
       .eq("doctor_id", doctorId)
       .order("appointment_date", { ascending: true })
@@ -280,7 +280,7 @@ export async function updateAppointmentStatus(
   appointmentId: string,
   status: AppointmentStatus,
   userId?: string,
-  cancellationReason?: string
+  cancellationReason?: string,
 ): Promise<{ success: boolean; error?: string; data?: any }> {
   try {
     console.log("Updating appointment:", { appointmentId, status, userId });
@@ -387,20 +387,20 @@ export async function updateAppointmentStatus(
 export async function cancelAppointment(
   appointmentId: string,
   userId?: string,
-  reason?: string
+  reason?: string,
 ): Promise<{ success: boolean; error?: string }> {
   return updateAppointmentStatus(
     appointmentId,
     "cancelled",
     userId,
-    reason || "Cancelled by patient"
+    reason || "Cancelled by patient",
   );
 }
 
 // Complete appointment
 export async function completeAppointment(
   appointmentId: string,
-  userId?: string
+  userId?: string,
 ): Promise<{ success: boolean; error?: string }> {
   return updateAppointmentStatus(appointmentId, "completed", userId);
 }
@@ -423,7 +423,7 @@ export async function getAppointmentLogs(filters?: {
         appointment_time,
         status
       )
-    `
+    `,
     )
     .order("timestamp", { ascending: false });
 
