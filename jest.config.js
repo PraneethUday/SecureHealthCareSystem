@@ -9,9 +9,14 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   // Use 'jsdom' so we can test React components (frontend)
   testEnvironment: 'jest-environment-jsdom',
-  
-  // If you want to set up specific things before tests run
-  // setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+
+  // Set up specific things before tests run
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+
+  // Handle path alias
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1',
+  },
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config
