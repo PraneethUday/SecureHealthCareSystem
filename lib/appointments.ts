@@ -83,6 +83,7 @@ export async function createAppointment(appointmentData: {
   reason?: string;
   notes?: string;
   isTelemedicine?: boolean;
+  shareHealthProfile?: boolean;
 }): Promise<{ success: boolean; appointment?: Appointment; error?: string }> {
   try {
     console.log("Creating appointment with data:", appointmentData);
