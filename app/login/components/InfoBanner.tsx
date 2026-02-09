@@ -78,7 +78,7 @@ export default function InfoBanner({
         isPatient
           ? "bg-gradient-to-br from-red-600 via-rose-600 to-pink-600"
           : "bg-gradient-to-br from-gray-800 via-gray-900 to-black"
-      } text-white p-8 flex-col justify-between transition-all duration-300`}
+      } text-white p-8 flex-col justify-between transition-all duration-300 rounded-3xl`}
     >
       {/* ================= TOP SECTION ================= */}
       <div>
@@ -118,9 +118,9 @@ export default function InfoBanner({
           {features.map((feature, index) => (
             <div
               key={index}
-              className="flex items-start gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 hover:bg-white/15 transition-all duration-200"
+              className="flex items-start gap-3 bg-white/10 backdrop-blur-sm rounded-3xl p-3 hover:bg-white/15 transition-all duration-200"
             >
-              <div className="flex-shrink-0 bg-white/20 rounded-lg p-1.5">
+              <div className="flex-shrink-0 bg-white/20 rounded-2xl p-1.5">
                 {feature.icon}
               </div>
               <div>

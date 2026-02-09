@@ -41,6 +41,7 @@ export default function RoleSelector({
         onClick={() => onRoleChange(role)}
         className={`${themeClasses.roleButton(role)} ${isPatient ? "p-2" : "p-3"
           } rounded-lg font-medium text-sm transition-all duration-200 flex flex-col items-center gap-1`}
+        suppressHydrationWarning
       >
         <Icon className={`${isPatient ? "w-4 h-4" : "w-5 h-5"}`} />
         <span className="text-xs">{roleConfig.label}</span>

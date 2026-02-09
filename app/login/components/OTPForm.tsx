@@ -42,6 +42,7 @@ export default function OTPForm({
       <button
         onClick={onBackClick}
         className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+        suppressHydrationWarning
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back to Login
@@ -87,6 +88,7 @@ export default function OTPForm({
               disabled={isLoading}
               autoComplete="off"
               autoFocus
+              suppressHydrationWarning
             />
           </div>
           <p className="text-xs text-gray-500 mt-2">
@@ -110,6 +112,7 @@ export default function OTPForm({
               ? `${themeClasses.button} hover:shadow-lg transform hover:scale-105`
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}
+          suppressHydrationWarning
         >
           {isLoading ? (
             <div className="flex items-center justify-center">
@@ -130,6 +133,7 @@ export default function OTPForm({
           disabled={isLoading}
           onClick={onBackClick}
           className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+          suppressHydrationWarning
         >
           Try a different email
         </button>

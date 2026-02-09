@@ -63,6 +63,7 @@ export default function LoginForm({
               } text-sm border ${themeClasses.input
               } rounded-lg focus:outline-none focus:ring-2 transition-all duration-200`}
             required
+            suppressHydrationWarning
           />
         </div>
       </div>
@@ -92,6 +93,7 @@ export default function LoginForm({
               } text-sm border ${themeClasses.input
               } rounded-lg focus:outline-none focus:ring-2 transition-all duration-200`}
             required
+            suppressHydrationWarning
           />
         </div>
       </div>
@@ -110,6 +112,7 @@ export default function LoginForm({
         disabled={isLoading}
         className={`w-full ${themeClasses.button} ${isPatient ? "py-2.5" : "py-3"
           } rounded-lg font-semibold text-sm transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
+        suppressHydrationWarning
       >
         {isLoading ? "Signing In..." : "Sign In"}
       </button>
