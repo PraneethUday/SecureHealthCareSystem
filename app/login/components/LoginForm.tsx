@@ -41,16 +41,18 @@ export default function LoginForm({
       <div>
         <label
           htmlFor="identifier"
-          className={`block ${isPatient ? "text-xs" : "text-sm"
-            } font-medium text-gray-700 dark:text-gray-300 ${isPatient ? "mb-1" : "mb-2"}`}
+          className={`block ${
+            isPatient ? "text-xs" : "text-sm"
+          } font-medium text-gray-700 dark:text-gray-300 ${isPatient ? "mb-1" : "mb-2"}`}
         >
           {inputLabel}
         </label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <InputIcon
-              className={`${isPatient ? "w-4 h-4" : "w-5 h-5"} ${themeClasses.icon
-                } transition-colors duration-300`}
+              className={`${isPatient ? "w-4 h-4" : "w-5 h-5"} ${
+                themeClasses.icon
+              } transition-colors duration-300`}
             />
           </div>
           <input
@@ -59,9 +61,11 @@ export default function LoginForm({
             value={identifier}
             onChange={(e) => onIdentifierChange(e.target.value)}
             placeholder={inputPlaceholder}
-            className={`w-full ${isPatient ? "pl-9 pr-3 py-2" : "pl-10 pr-4 py-3"
-              } text-sm border ${themeClasses.input
-              } rounded-lg focus:outline-none focus:ring-2 transition-all duration-200`}
+            className={`w-full ${
+              isPatient ? "pl-9 pr-3 py-2" : "pl-10 pr-4 py-3"
+            } text-sm border ${
+              themeClasses.input
+            } rounded-lg focus:outline-none focus:ring-2 transition-all duration-200`}
             required
             suppressHydrationWarning
           />
@@ -71,16 +75,18 @@ export default function LoginForm({
       <div>
         <label
           htmlFor="password"
-          className={`block ${isPatient ? "text-xs" : "text-sm"
-            } font-medium text-gray-700 dark:text-gray-300 ${isPatient ? "mb-1" : "mb-2"}`}
+          className={`block ${
+            isPatient ? "text-xs" : "text-sm"
+          } font-medium text-gray-700 dark:text-gray-300 ${isPatient ? "mb-1" : "mb-2"}`}
         >
           Password
         </label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Lock
-              className={`${isPatient ? "w-4 h-4" : "w-5 h-5"} ${themeClasses.icon
-                } transition-colors duration-300`}
+              className={`${isPatient ? "w-4 h-4" : "w-5 h-5"} ${
+                themeClasses.icon
+              } transition-colors duration-300`}
             />
           </div>
           <input
@@ -89,9 +95,11 @@ export default function LoginForm({
             value={password}
             onChange={(e) => onPasswordChange(e.target.value)}
             placeholder="••••••••"
-            className={`w-full ${isPatient ? "pl-9 pr-3 py-2" : "pl-10 pr-4 py-3"
-              } text-sm border ${themeClasses.input
-              } rounded-lg focus:outline-none focus:ring-2 transition-all duration-200`}
+            className={`w-full ${
+              isPatient ? "pl-9 pr-3 py-2" : "pl-10 pr-4 py-3"
+            } text-sm border ${
+              themeClasses.input
+            } rounded-lg focus:outline-none focus:ring-2 transition-all duration-200`}
             required
             suppressHydrationWarning
           />
@@ -110,8 +118,9 @@ export default function LoginForm({
       <button
         type="submit"
         disabled={isLoading}
-        className={`w-full ${themeClasses.button} ${isPatient ? "py-2.5" : "py-3"
-          } rounded-lg font-semibold text-sm transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
+        className={`w-full ${themeClasses.button} ${
+          isPatient ? "py-2.5" : "py-3"
+        } rounded-lg font-semibold text-sm transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
         suppressHydrationWarning
       >
         {isLoading ? "Signing In..." : "Sign In"}

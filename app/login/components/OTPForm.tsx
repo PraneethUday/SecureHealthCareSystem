@@ -50,7 +50,9 @@ export default function OTPForm({
 
       {/* Title */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Verify Your Identity</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+          Verify Your Identity
+        </h2>
         <p className="text-gray-600 text-sm">
           We sent a verification code to <br />
           <span className="font-semibold">{email}</span>
@@ -60,10 +62,13 @@ export default function OTPForm({
       {/* Error Message */}
       {error && (
         <div className={`p-4 rounded-lg border-l-4 ${themeClasses.errorBg}`}>
-          <p className={`text-sm font-medium ${themeClasses.errorText}`}>{error}</p>
+          <p className={`text-sm font-medium ${themeClasses.errorText}`}>
+            {error}
+          </p>
           {attemptsRemaining > 0 && (
             <p className="text-xs text-gray-600 mt-1">
-              {attemptsRemaining} attempt{attemptsRemaining !== 1 ? "s" : ""} remaining
+              {attemptsRemaining} attempt{attemptsRemaining !== 1 ? "s" : ""}{" "}
+              remaining
             </p>
           )}
         </div>
@@ -99,19 +104,25 @@ export default function OTPForm({
         {/* Security Info */}
         <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
           <p className="text-xs text-blue-800">
-            🔒 <span className="font-semibold">Your code is valid for 10 minutes</span>
+            🔒{" "}
+            <span className="font-semibold">
+              Your code is valid for 10 minutes
+            </span>
           </p>
-          <p className="text-xs text-blue-700 mt-1">Never share this code with anyone</p>
+          <p className="text-xs text-blue-700 mt-1">
+            Never share this code with anyone
+          </p>
         </div>
 
         {/* Submit Button */}
         <button
           type="submit"
           disabled={isLoading || otp.length !== 6 || attemptsRemaining <= 0}
-          className={`w-full py-3 rounded-lg font-semibold transition-all duration-200 ${otp.length === 6 && attemptsRemaining > 0 && !isLoading
+          className={`w-full py-3 rounded-lg font-semibold transition-all duration-200 ${
+            otp.length === 6 && attemptsRemaining > 0 && !isLoading
               ? `${themeClasses.button} hover:shadow-lg transform hover:scale-105`
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
+          }`}
           suppressHydrationWarning
         >
           {isLoading ? (

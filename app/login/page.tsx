@@ -151,14 +151,15 @@ export default function LoginPage() {
 
       {/* Right Side - Login Form */}
       <div
-        className={`relative z-10 flex items-center justify-center min-h-screen w-full py-8 transition-all duration-700 ease-in-out ${selectedRole === "patient" ? "flex-1 md:w-1/2" : ""
-          }`}
+        className={`relative z-10 flex items-center justify-center w-full min-h-screen px-4 transition-all duration-700 ease-in-out ${
+          selectedRole === "patient" ? "flex-1 md:w-1/2" : ""
+        }`}
       >
         <div
-          className={`w-full mx-auto ${selectedRole === "patient"
+          className={`w-full ${selectedRole === "patient"
             ? `max-w-md p-8 ${themeClasses.card} rounded-3xl border border-white/50 dark:border-white/10 backdrop-blur-xl`
             : "max-w-xl p-8 backdrop-blur-xl bg-white/60 dark:bg-gray-900/60 border border-white/50 dark:border-white/10 rounded-3xl"
-            } transition-all duration-500 ease-in-out shadow-2xl dark:shadow-black/40`}
+            } transition-all duration-500 ease-in-out shadow-2xl dark:shadow-black/40 max-h-[90vh] overflow-y-auto`}
         >
           <Header themeClasses={themeClasses} selectedRole={selectedRole} />
 
