@@ -88,27 +88,53 @@ export async function createAppointment(appointmentData: {
   try {
     console.log("Creating appointment with data:", appointmentData);
 
+    const insertData = {
+      patient_id: appointmentData.patientId,
+      doctor_id: appointmentData.doctorId,
+      hospital_id: appointmentData.hospitalId,
+      appointment_date: appointmentData.appointmentDate,
+      appointment_time: appointmentData.appointmentTime,
+      reason: appointmentData.reason,
+      notes: appointmentData.notes,
+      is_telemedicine: appointmentData.isTelemedicine || false,
+      share_health_profile: appointmentData.shareHealthProfile || false,
+      status: "scheduled",
+    };
+
+    console.log("[Appointments] Insert data:", insertData);
+    console.log("[Appointments] Calling Supabase insert...");
+
     const { data, error } = await supabase
       .from("appointments")
-      .insert({
-        patient_id: appointmentData.patientId,
-        doctor_id: appointmentData.doctorId,
-        hospital_id: appointmentData.hospitalId,
-        appointment_date: appointmentData.appointmentDate,
-        appointment_time: appointmentData.appointmentTime,
-        reason: appointmentData.reason,
-        notes: appointmentData.notes,
-        is_telemedicine: appointmentData.isTelemedicine || false,
-        share_health_profile: appointmentData.shareHealthProfile || false,
-        status: "scheduled",
-      })
+      .insert(insertData)
       .select()
       .single();
 
+    console.log("[Appointments] Supabase response:", { data, error });
+    console.log("[Appointments] Error type:", typeof error);
+    console.log("[Appointments] Error is null?", error === null);
+    console.log("[Appointments] Error stringified:", JSON.stringify(error, null, 2));
+
     if (error) {
       console.error("Error creating appointment:", error);
+      console.error("Error details:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      });
+      console.error("Full error object:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+
+      // Check for duplicate time slot error
+      if (error.code === '23505' && error.message?.includes('unique_doctor_time')) {
+        return {
+          success: false,
+          error: "This time slot is already booked for this doctor. Please choose a different time.",
+        };
+      }
+
       const errorMessage =
-        error.message || error.details || JSON.stringify(error);
+        error.message || error.details || error.hint || JSON.stringify(error);
       return {
         success: false,
         error: `Failed to create appointment: ${errorMessage}`,
@@ -116,6 +142,7 @@ export async function createAppointment(appointmentData: {
     }
 
     if (!data) {
+      console.error("[Appointments] No data returned from insert!");
       return { success: false, error: "No data returned from insert" };
     }
 
@@ -163,22 +190,42 @@ export async function createAppointment(appointmentData: {
           zoomMeetingData = zoomMeeting;
 
           // Update appointment with Zoom details
-          const { error: updateError } = await supabase
-            .from('appointments')
-            .update({
-              zoom_meeting_id: zoomMeeting.id,
-              zoom_host_url: zoomMeeting.start_url,
-              zoom_join_url: zoomMeeting.join_url,
-              zoom_password: zoomMeeting.password,
-              zoom_created_at: new Date().toISOString(),
-              video_call_link: zoomMeeting.join_url, // Backward compatibility
-            })
-            .eq('id', data.id);
+          // Try to update all Zoom fields, but fall back to just video_call_link if columns don't exist
+          try {
+            const { error: updateError } = await supabase
+              .from('appointments')
+              .update({
+                zoom_meeting_id: zoomMeeting.id,
+                zoom_host_url: zoomMeeting.start_url,
+                zoom_join_url: zoomMeeting.join_url,
+                zoom_password: zoomMeeting.password,
+                zoom_created_at: new Date().toISOString(),
+                video_call_link: zoomMeeting.join_url, // Backward compatibility
+              })
+              .eq('id', data.id);
 
-          if (updateError) {
-            console.error('[Appointments] Error updating appointment with Zoom details:', updateError);
-          } else {
-            console.log('[Appointments] ✅ Zoom meeting created and linked to appointment');
+            if (updateError) {
+              console.error('[Appointments] Error updating appointment with Zoom details:', updateError);
+              console.warn('[Appointments] Trying fallback update with just video_call_link...');
+
+              // Fallback: Just update video_call_link if Zoom columns don't exist
+              const { error: fallbackError } = await supabase
+                .from('appointments')
+                .update({
+                  video_call_link: zoomMeeting.join_url,
+                })
+                .eq('id', data.id);
+
+              if (fallbackError) {
+                console.error('[Appointments] Fallback update also failed:', fallbackError);
+              } else {
+                console.log('[Appointments] ✅ Zoom meeting created (using fallback video_call_link)');
+              }
+            } else {
+              console.log('[Appointments] ✅ Zoom meeting created and linked to appointment');
+            }
+          } catch (updateException) {
+            console.error('[Appointments] Exception during Zoom update:', updateException);
           }
         } else {
           console.warn('[Appointments] Zoom not configured, skipping meeting creation');
