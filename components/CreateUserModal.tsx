@@ -1,7 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { X, User, Mail, Phone, Building2, Briefcase, Award, Calendar, Shield } from "lucide-react";
+import {
+  X,
+  User,
+  Mail,
+  Phone,
+  Building2,
+  Briefcase,
+  Award,
+  Calendar,
+  Shield,
+} from "lucide-react";
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -53,7 +63,7 @@ export default function CreateUserModal({
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -256,7 +266,8 @@ export default function CreateUserModal({
               minLength={8}
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Min 8 characters, must include uppercase, lowercase, number, and special character
+              Min 8 characters, must include uppercase, lowercase, number, and
+              special character
             </p>
           </div>
 

@@ -101,7 +101,7 @@ export default function ViewUsersModal({
           user.fullName.toLowerCase().includes(query) ||
           user.email.toLowerCase().includes(query) ||
           user.userId.toLowerCase().includes(query) ||
-          user.phone?.includes(query)
+          user.phone?.includes(query),
       );
     }
 
@@ -111,7 +111,7 @@ export default function ViewUsersModal({
   const handleDelete = async (userId: string, role: string) => {
     if (
       !confirm(
-        `Are you sure you want to delete this ${role}? This action cannot be undone.`
+        `Are you sure you want to delete this ${role}? This action cannot be undone.`,
       )
     ) {
       return;
@@ -122,7 +122,7 @@ export default function ViewUsersModal({
         `/api/admin/users?adminId=${adminId}&userId=${userId}&role=${role}`,
         {
           method: "DELETE",
-        }
+        },
       );
 
       const data = await response.json();
@@ -276,10 +276,11 @@ export default function ViewUsersModal({
                         </h3>
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${getRoleBadgeColor(
-                            user.role
+                            user.role,
                           )}`}
                         >
-                          {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                          {user.role.charAt(0).toUpperCase() +
+                            user.role.slice(1)}
                         </span>
                       </div>
                     </div>
@@ -295,7 +296,9 @@ export default function ViewUsersModal({
                   {/* User Details */}
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                      <span className="font-mono font-medium">{user.userId}</span>
+                      <span className="font-mono font-medium">
+                        {user.userId}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <Mail className="w-4 h-4" />
@@ -332,7 +335,9 @@ export default function ViewUsersModal({
                         {user.yearsOfExperience !== undefined && (
                           <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                             <Calendar className="w-4 h-4" />
-                            <span>{user.yearsOfExperience} years experience</span>
+                            <span>
+                              {user.yearsOfExperience} years experience
+                            </span>
                           </div>
                         )}
                       </>
@@ -349,7 +354,9 @@ export default function ViewUsersModal({
                         {user.shift && (
                           <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                             <Calendar className="w-4 h-4" />
-                            <span className="capitalize">{user.shift} shift</span>
+                            <span className="capitalize">
+                              {user.shift} shift
+                            </span>
                           </div>
                         )}
                       </>

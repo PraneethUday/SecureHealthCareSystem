@@ -20,24 +20,37 @@ export async function GET(request: NextRequest) {
       });
       return NextResponse.json(
         { error: "Unauthorized. Admin access required." },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     // Fetch counts for all user types
-    const [patientsResult, doctorsResult, nursesResult, staffResult] = await Promise.all([
-      supabaseAdmin.from("patients").select("id", { count: "exact", head: true }),
-      supabaseAdmin.from("doctors").select("id", { count: "exact", head: true }),
-      supabaseAdmin.from("nurses").select("id", { count: "exact", head: true }),
-      supabaseAdmin.from("staff").select("id", { count: "exact", head: true }),
-    ]);
+    const [patientsResult, doctorsResult, nursesResult, staffResult] =
+      await Promise.all([
+        supabaseAdmin
+          .from("patients")
+          .select("id", { count: "exact", head: true }),
+        supabaseAdmin
+          .from("doctors")
+          .select("id", { count: "exact", head: true }),
+        supabaseAdmin
+          .from("nurses")
+          .select("id", { count: "exact", head: true }),
+        supabaseAdmin
+          .from("staff")
+          .select("id", { count: "exact", head: true }),
+      ]);
 
     const statistics = {
       totalPatients: patientsResult.count || 0,
       totalDoctors: doctorsResult.count || 0,
       totalNurses: nursesResult.count || 0,
       totalStaff: staffResult.count || 0,
-      totalUsers: (patientsResult.count || 0) + (doctorsResult.count || 0) + (nursesResult.count || 0) + (staffResult.count || 0),
+      totalUsers:
+        (patientsResult.count || 0) +
+        (doctorsResult.count || 0) +
+        (nursesResult.count || 0) +
+        (staffResult.count || 0),
     };
 
     // Log the admin action
@@ -55,7 +68,7 @@ export async function GET(request: NextRequest) {
     console.error("Fetch statistics error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

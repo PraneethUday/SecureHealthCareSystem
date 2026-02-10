@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       });
       return NextResponse.json(
         { error: "Unauthorized. Admin access required." },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -31,7 +31,12 @@ export async function GET(request: NextRequest) {
     const rolesToFetch = role ? [role] : ["doctor", "nurse", "staff"];
 
     for (const userRole of rolesToFetch) {
-      const table = userRole === "doctor" ? "doctors" : userRole === "nurse" ? "nurses" : "staff";
+      const table =
+        userRole === "doctor"
+          ? "doctors"
+          : userRole === "nurse"
+            ? "nurses"
+            : "staff";
       const idField = `${userRole}_id`;
 
       const { data, error } = await supabaseAdmin
@@ -86,13 +91,13 @@ export async function GET(request: NextRequest) {
         total: allUsers.length,
         roles: rolesToFetch,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("Fetch users error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -111,25 +116,23 @@ export async function DELETE(request: NextRequest) {
     if (!adminId || adminId !== "admin") {
       return NextResponse.json(
         { error: "Unauthorized. Admin access required." },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     if (!userId || !role) {
       return NextResponse.json(
         { error: "User ID and role are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!["doctor", "nurse", "staff"].includes(role)) {
-      return NextResponse.json(
-        { error: "Invalid role" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
-    const table = role === "doctor" ? "doctors" : role === "nurse" ? "nurses" : "staff";
+    const table =
+      role === "doctor" ? "doctors" : role === "nurse" ? "nurses" : "staff";
     const idField = `${role}_id`;
 
     // Delete the user
@@ -151,7 +154,7 @@ export async function DELETE(request: NextRequest) {
       });
       return NextResponse.json(
         { error: `Failed to delete ${role}` },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -168,13 +171,13 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json(
       { message: `${role} deleted successfully` },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("Delete user error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json(
         { error: "Unauthorized. Admin access required." },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     if (!["doctor", "nurse", "staff"].includes(role)) {
       return NextResponse.json(
         { error: "Invalid role. Must be doctor, nurse, or staff." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     if (!firstName || !lastName || !email || !password || !phone) {
       return NextResponse.json(
         { error: "All required fields must be filled" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     if (!complexityResult.valid) {
       return NextResponse.json(
         { error: complexityResult.message },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { error: "Please enter a valid email address" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -82,27 +82,30 @@ export async function POST(request: NextRequest) {
     if (role === "doctor") {
       if (!specialization || !licenseNumber) {
         return NextResponse.json(
-          { error: "Specialization and license number are required for doctors" },
-          { status: 400 }
+          {
+            error: "Specialization and license number are required for doctors",
+          },
+          { status: 400 },
         );
       }
     } else if (role === "nurse") {
       if (!licenseNumber) {
         return NextResponse.json(
           { error: "License number is required for nurses" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     } else if (role === "staff") {
       if (!staffRole) {
         return NextResponse.json(
           { error: "Staff role is required for staff members" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
 
-    const table = role === "doctor" ? "doctors" : role === "nurse" ? "nurses" : "staff";
+    const table =
+      role === "doctor" ? "doctors" : role === "nurse" ? "nurses" : "staff";
     const idPrefix = role === "doctor" ? "D" : role === "nurse" ? "N" : "S";
     const idField = `${role}_id`;
 
@@ -123,7 +126,7 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json(
         { error: "Email already registered" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -135,7 +138,7 @@ export async function POST(request: NextRequest) {
       console.error("Password hashing error:", hashError);
       return NextResponse.json(
         { error: "Error processing registration. Please try again." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -149,7 +152,9 @@ export async function POST(request: NextRequest) {
 
     let newUserId = `${idPrefix}001`;
     if (lastUser && lastUser[idField as keyof typeof lastUser]) {
-      const lastNumber = parseInt((lastUser[idField as keyof typeof lastUser] as string).substring(1));
+      const lastNumber = parseInt(
+        (lastUser[idField as keyof typeof lastUser] as string).substring(1),
+      );
       newUserId = `${idPrefix}${String(lastNumber + 1).padStart(3, "0")}`;
     }
 
@@ -197,7 +202,7 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json(
         { error: `Failed to create ${role} account` },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -224,13 +229,13 @@ export async function POST(request: NextRequest) {
           role,
         },
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error: any) {
     console.error("User creation error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
