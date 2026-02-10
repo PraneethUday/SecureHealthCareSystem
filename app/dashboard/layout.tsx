@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import ChatWidget from "./components/chatbot/ChatWidget";
 
 export default function DashboardLayout({
   children,
@@ -28,10 +27,5 @@ export default function DashboardLayout({
     logAudit();
   }, []);
 
-  return (
-    <>
-      {children}
-      <ChatWidget />
-    </>
-  );
+  return <>{children}</>;
 }
