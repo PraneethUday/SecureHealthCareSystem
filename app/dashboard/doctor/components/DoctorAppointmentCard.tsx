@@ -13,6 +13,7 @@ import {
   Video,
   Pill,
   Heart,
+  Activity,
 } from "lucide-react";
 import { AppointmentWithDetails } from "@/lib/database.types";
 import {
@@ -24,6 +25,7 @@ import { hasAppointmentMedicalRecord } from "@/lib/medicalRecords";
 import { useState, useEffect } from "react";
 import { NurseAssignment } from "./NurseAssignment";
 import PatientProfileModal from "@/components/PatientProfileModal";
+import VitalsViewer from "./VitalsViewer";
 
 interface DoctorAppointmentCardProps {
   appointment: AppointmentWithDetails;
@@ -48,6 +50,7 @@ export default function DoctorAppointmentCard({
   const [prescriptionCount, setPrescriptionCount] = useState<number>(0);
   const [hasMedicalRecord, setHasMedicalRecord] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showVitalsModal, setShowVitalsModal] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -206,19 +209,25 @@ export default function DoctorAppointmentCard({
         </div>
       )}
 
-      {/* Shared Health Profile Banner */}
-      {appointment.share_health_profile && (
-        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-rose-100 p-2 rounded-lg">
-                <Heart className="w-5 h-5 text-rose-600" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-rose-900">Health Profile Shared</p>
-                <p className="text-xs text-rose-700">Patient shared their medical history.</p>
-              </div>
+      {/* Patient Health Information - Always Available */}
+      <div className="bg-gradient-to-r from-purple-50 to-rose-50 dark:from-purple-900/20 dark:to-rose-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="bg-gradient-to-br from-purple-100 to-rose-100 dark:from-purple-900/30 dark:to-rose-900/30 p-2 rounded-lg flex-shrink-0">
+              <Heart className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-purple-900 dark:text-purple-200 truncate">Patient Health Information</p>
+              <p className="text-xs text-purple-700 dark:text-purple-400">View vitals, profile & medical history</p>
+            </div>
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            <button
+              onClick={() => setShowVitalsModal(true)}
+              className="px-4 py-2 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-sm whitespace-nowrap"
+            >
+              View Vitals
+            </button>
             <button
               onClick={() => setShowProfileModal(true)}
               className="px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition-colors shadow-sm whitespace-nowrap"
@@ -227,7 +236,7 @@ export default function DoctorAppointmentCard({
             </button>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Actions */}
       {(isScheduled || isCompleted) && (
@@ -420,6 +429,27 @@ export default function DoctorAppointmentCard({
           patientId={appointment.patient_id}
           onClose={() => setShowProfileModal(false)}
         />
+      )}
+
+      {/* Vitals Modal */}
+      {showVitalsModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-4xl rounded-3xl shadow-2xl p-6 md:p-10 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Patient Vitals</h2>
+              <button
+                onClick={() => setShowVitalsModal(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <XCircle className="w-6 h-6 text-gray-500" />
+              </button>
+            </div>
+            <VitalsViewer
+              patientId={appointment.patient_id}
+              patientName={appointment.patient_name}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
