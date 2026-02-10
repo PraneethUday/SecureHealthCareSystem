@@ -13,7 +13,9 @@ import {
   Video,
   Pill,
   Heart,
+  MessageSquare,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { AppointmentWithDetails } from "@/lib/database.types";
 import {
   completeAppointment,
@@ -42,6 +44,7 @@ export default function DoctorAppointmentCard({
   onPrescribe,
   onCreateMedicalRecord,
 }: DoctorAppointmentCardProps) {
+  const router = useRouter();
   const [updating, setUpdating] = useState(false);
   const [showMarkComplete, setShowMarkComplete] = useState(false);
   const [showMarkNoShow, setShowMarkNoShow] = useState(false);
@@ -113,6 +116,7 @@ export default function DoctorAppointmentCard({
   const showMedicalRecordButton =
     Boolean(onCreateMedicalRecord) && (isToday || isCompleted);
   const medicalRecordButtonDisabled = hasMedicalRecord;
+  const canChat = isScheduled || isCompleted;
 
   return (
     <div className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-blue-300 transition-all">
@@ -236,6 +240,21 @@ export default function DoctorAppointmentCard({
             <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3">
               Appointment marked as completed. Finalize the visit notes below.
             </div>
+          )}
+
+          {/* Chat with Patient Button */}
+          {canChat && (
+            <button
+              onClick={() =>
+                router.push(
+                  `/dashboard/doctor/appointments/${appointment.id}/chat`
+                )
+              }
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 mb-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition-all active:scale-95"
+            >
+              <MessageSquare className="w-4 h-4" />
+              Chat with Patient
+            </button>
           )}
 
           {isScheduled && (
