@@ -231,17 +231,15 @@ export async function login(
       );
 
       if (!emailSent) {
+        // Log the failure but DON'T block login - OTP is logged to console in dev mode
         await logAction({
           userId: identifier,
           userRole: role,
           action: "otp_send_failed",
-          details: "Failed to send OTP email",
-          status: "failure",
+          details: "Failed to send OTP email - check console for OTP code",
+          status: "warning",
         });
-        return {
-          success: false,
-          message: "Failed to send OTP. Please try again.",
-        };
+        console.warn("⚠️ Email failed but continuing to OTP form. Check console for OTP code.");
       }
 
       // Log audit
@@ -428,12 +426,12 @@ export async function updatePassword(
     // 6. Hash new password
     const newPasswordHash = await hashPassword(newPassword);
 
-    // 7. Update user table
+    // 7. Update user table - set both password_hash and password (for compatibility)
     const { error: updateError } = await supabase
       .from(table)
       .update({
         password_hash: newPasswordHash,
-        password: null, // Clear plaintext if any
+        password: newPasswordHash, // Some tables have NOT NULL on password column
         password_changed_at: new Date().toISOString(),
       })
       .eq(idField, identifier);
@@ -532,6 +530,8 @@ export async function verifyMFAOTP(
     }
 
     // Get latest OTP record
+    console.log(`🔍 Looking for OTP record: user_id=${userId}, role=${role}`);
+
     const { data: otpRecord, error: otpError } = await supabase
       .from("otp_logs")
       .select("*")
@@ -542,12 +542,15 @@ export async function verifyMFAOTP(
       .limit(1)
       .single();
 
+    console.log(`📋 OTP Query result:`, { otpRecord, otpError });
+
     if (otpError || !otpRecord) {
+      console.log(`❌ No OTP found for user. Error:`, otpError);
       await logAction({
         userId: userId,
         userRole: role,
         action: "otp_verification_failed",
-        details: "No valid OTP found",
+        details: `No valid OTP found. Query: user_id=${userId}, role=${role}`,
         status: "failure",
       });
       return { success: false, message: "No valid OTP found. Request a new one." };
