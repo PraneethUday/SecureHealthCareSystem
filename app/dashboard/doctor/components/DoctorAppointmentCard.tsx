@@ -13,6 +13,7 @@ import {
   Video,
   Pill,
   Heart,
+  Activity,
 } from "lucide-react";
 import { AppointmentWithDetails } from "@/lib/database.types";
 import {
@@ -221,23 +222,36 @@ export default function DoctorAppointmentCard({
                 <p className="text-xs text-rose-700">Patient shared their medical history.</p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowVitalsModal(true)}
-                className="px-4 py-2 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-sm whitespace-nowrap"
-              >
-                View Vitals
-              </button>
-              <button
-                onClick={() => setShowProfileModal(true)}
-                className="px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition-colors shadow-sm whitespace-nowrap"
-              >
-                View Profile
-              </button>
-            </div>
+            <button
+              onClick={() => setShowProfileModal(true)}
+              className="px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition-colors shadow-sm whitespace-nowrap"
+            >
+              View Profile
+            </button>
           </div>
         </div>
       )}
+
+      {/* Patient Vitals Access - Always Available */}
+      <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4 mb-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg">
+              <Activity className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-purple-900 dark:text-purple-200">Patient Health Vitals</p>
+              <p className="text-xs text-purple-700 dark:text-purple-400">View vital signs and health metrics</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowVitalsModal(true)}
+            className="px-4 py-2 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-sm whitespace-nowrap"
+          >
+            View Vitals
+          </button>
+        </div>
+      </div>
 
       {/* Actions */}
       {(isScheduled || isCompleted) && (
