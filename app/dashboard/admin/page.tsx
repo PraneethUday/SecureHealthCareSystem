@@ -20,6 +20,8 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import CreateUserModal from "@/components/CreateUserModal";
+import ViewUsersModal from "@/components/ViewUsersModal";
 
 export default function AdminDashboard() {
   const hasLogged = useRef(false);
@@ -32,6 +34,14 @@ export default function AdminDashboard() {
   const [activeLogTab, setActiveLogTab] = useState<"system" | "appointments">(
     "system"
   );
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [showViewUsersModal, setShowViewUsersModal] = useState(false);
+  const [statistics, setStatistics] = useState({
+    totalPatients: 0,
+    totalDoctors: 0,
+    totalNurses: 0,
+    totalStaff: 0,
+  });
 
   useEffect(() => {
     const session = getSession();
@@ -54,6 +64,7 @@ export default function AdminDashboard() {
 
     fetchLogs();
     fetchAppointmentLogs();
+    fetchStatistics();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchLogs = async () => {
@@ -75,6 +86,23 @@ export default function AdminDashboard() {
       console.error("Failed to fetch appointment logs:", error);
     } finally {
       setLoadingAppointmentLogs(false);
+    }
+  };
+
+  const fetchStatistics = async () => {
+    try {
+      const response = await fetch(`/api/admin/statistics?adminId=${user?.id || "admin"}`);
+      if (response.ok) {
+        const data = await response.json();
+        setStatistics({
+          totalPatients: data.totalPatients,
+          totalDoctors: data.totalDoctors,
+          totalNurses: data.totalNurses,
+          totalStaff: data.totalStaff,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch statistics:", error);
     }
   };
 
@@ -220,10 +248,10 @@ export default function AdminDashboard() {
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
-            { label: "Total Patients", count: "-", color: "bg-blue-500", icon: Users },
-            { label: "Total Doctors", count: "-", color: "bg-green-500", icon: Activity },
-            { label: "Total Nurses", count: "-", color: "bg-purple-500", icon: Users },
-            { label: "Total Staff", count: "-", color: "bg-orange-500", icon: Users }
+            { label: "Total Patients", count: statistics.totalPatients, color: "bg-blue-500", icon: Users },
+            { label: "Total Doctors", count: statistics.totalDoctors, color: "bg-green-500", icon: Activity },
+            { label: "Total Nurses", count: statistics.totalNurses, color: "bg-purple-500", icon: Users },
+            { label: "Total Staff", count: statistics.totalStaff, color: "bg-orange-500", icon: Users }
           ].map((stat, idx) => (
             <div key={idx} className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center gap-4">
               <div className={`p-3 rounded-xl shadow-lg ${stat.color} text-white`}>
@@ -239,13 +267,24 @@ export default function AdminDashboard() {
 
         {/* Admin Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <button className="group bg-white/70 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/40 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300 text-left">
-            <div className="bg-blue-100 dark:bg-blue-900/40 p-3 rounded-xl w-fit mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors text-blue-600 dark:text-blue-400">
-              <Users className="w-6 h-6" />
-            </div>
-            <h3 className="font-bold text-gray-800 dark:text-gray-100">User Management</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Add, remove, or edit system users</p>
-          </button>
+          <div className="space-y-4">
+            <button
+              onClick={() => setShowCreateUserModal(true)}
+              className="w-full group bg-white/70 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/40 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300 text-left"
+            >
+              <div className="bg-blue-100 dark:bg-blue-900/40 p-3 rounded-xl w-fit mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors text-blue-600 dark:text-blue-400">
+                <Users className="w-6 h-6" />
+              </div>
+              <h3 className="font-bold text-gray-800 dark:text-gray-100">User Management</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Add, remove, or edit system users</p>
+            </button>
+            <button
+              onClick={() => setShowViewUsersModal(true)}
+              className="w-full text-sm px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+            >
+              View All Users
+            </button>
+          </div>
 
           <button className="group bg-white/70 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/40 hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-1 transition-all duration-300 text-left">
             <div className="bg-purple-100 dark:bg-purple-900/40 p-3 rounded-xl w-fit mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors text-purple-600 dark:text-purple-400">
@@ -463,6 +502,23 @@ export default function AdminDashboard() {
             ))}
         </div>
       </main>
+
+      {/* Modals */}
+      <CreateUserModal
+        isOpen={showCreateUserModal}
+        onClose={() => setShowCreateUserModal(false)}
+        onUserCreated={() => {
+          setShowCreateUserModal(false);
+          fetchStatistics(); // Refresh statistics after creating a user
+        }}
+        adminId={user?.id || "admin"}
+      />
+
+      <ViewUsersModal
+        isOpen={showViewUsersModal}
+        onClose={() => setShowViewUsersModal(false)}
+        adminId={user?.id || "admin"}
+      />
     </div>
   );
 }
