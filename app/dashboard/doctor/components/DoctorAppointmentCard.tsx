@@ -24,6 +24,7 @@ import { hasAppointmentMedicalRecord } from "@/lib/medicalRecords";
 import { useState, useEffect } from "react";
 import { NurseAssignment } from "./NurseAssignment";
 import PatientProfileModal from "@/components/PatientProfileModal";
+import VitalsViewer from "./VitalsViewer";
 
 interface DoctorAppointmentCardProps {
   appointment: AppointmentWithDetails;
@@ -48,6 +49,7 @@ export default function DoctorAppointmentCard({
   const [prescriptionCount, setPrescriptionCount] = useState<number>(0);
   const [hasMedicalRecord, setHasMedicalRecord] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showVitalsModal, setShowVitalsModal] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -219,12 +221,20 @@ export default function DoctorAppointmentCard({
                 <p className="text-xs text-rose-700">Patient shared their medical history.</p>
               </div>
             </div>
-            <button
-              onClick={() => setShowProfileModal(true)}
-              className="px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition-colors shadow-sm whitespace-nowrap"
-            >
-              View Profile
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowVitalsModal(true)}
+                className="px-4 py-2 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-sm whitespace-nowrap"
+              >
+                View Vitals
+              </button>
+              <button
+                onClick={() => setShowProfileModal(true)}
+                className="px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition-colors shadow-sm whitespace-nowrap"
+              >
+                View Profile
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -420,6 +430,27 @@ export default function DoctorAppointmentCard({
           patientId={appointment.patient_id}
           onClose={() => setShowProfileModal(false)}
         />
+      )}
+
+      {/* Vitals Modal */}
+      {showVitalsModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-4xl rounded-3xl shadow-2xl p-6 md:p-10 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Patient Vitals</h2>
+              <button
+                onClick={() => setShowVitalsModal(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <XCircle className="w-6 h-6 text-gray-500" />
+              </button>
+            </div>
+            <VitalsViewer
+              patientId={appointment.patient_id}
+              patientName={appointment.patient_name}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
