@@ -180,11 +180,15 @@ export function useWebRTC(options: UseWebRTCOptions) {
           });
           setState((prev) => ({ ...prev, localStream, error: null }));
           isInitializingMediaRef.current = false;
+          console.log("[Hook] Returning true from initializeLocalMedia");
+          console.log("[Hook] Final peer connection check:", peerConnectionRef.current ? "EXISTS" : "NULL");
           return true;
         }
 
         console.warn("[Hook] ⚠️  No local stream obtained");
         isInitializingMediaRef.current = false;
+        console.log("[Hook] Returning false from initializeLocalMedia (no stream)");
+        console.log("[Hook] Final peer connection check:", peerConnectionRef.current ? "EXISTS" : "NULL");
         return false;
       } catch (mediaError) {
         // Media failed, but peer connection still exists!
@@ -219,6 +223,8 @@ export function useWebRTC(options: UseWebRTCOptions) {
         }
 
         isInitializingMediaRef.current = false;
+        console.log("[Hook] Returning false from initializeLocalMedia (media error)");
+        console.log("[Hook] Final peer connection check:", peerConnectionRef.current ? "EXISTS" : "NULL");
         // Return false but peer connection still exists
         return false;
       }
@@ -228,6 +234,8 @@ export function useWebRTC(options: UseWebRTCOptions) {
         error instanceof Error ? error.message : "Failed to initialize";
       console.error("[Hook] ❌ Error in initializeLocalMedia:", error);
       setState((prev) => ({ ...prev, error: message }));
+      console.log("[Hook] Returning false from initializeLocalMedia (outer catch)");
+      console.log("[Hook] Final peer connection check:", peerConnectionRef.current ? "EXISTS" : "NULL");
       return false;
     }
   }, [state.localStream]);
@@ -698,6 +706,9 @@ export function useWebRTC(options: UseWebRTCOptions) {
    * Cleanup
    */
   const cleanup = useCallback(() => {
+    console.log("[Hook] 🧹 Cleanup called");
+    console.log("[Hook] Cleanup stack trace:", new Error().stack);
+
     if (callDurationIntervalRef.current) {
       clearInterval(callDurationIntervalRef.current);
     }
@@ -707,8 +718,11 @@ export function useWebRTC(options: UseWebRTCOptions) {
     }
 
     if (peerConnectionRef.current) {
+      console.log("[Hook] Closing and nullifying peer connection");
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
+    } else {
+      console.log("[Hook] Peer connection already null, nothing to clean up");
     }
 
     remoteDescriptionSettingRef.current = false;

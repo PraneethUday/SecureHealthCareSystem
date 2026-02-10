@@ -121,6 +121,75 @@ export async function createAppointment(appointmentData: {
 
     console.log("Appointment created successfully:", data);
 
+    // Create Zoom meeting for telemedicine appointments
+    let zoomMeetingData = null;
+    if (appointmentData.isTelemedicine) {
+      try {
+        console.log("[Appointments] Creating Zoom meeting for telemedicine appointment...");
+
+        // Import Zoom library dynamically to avoid server-side issues
+        const { createZoomMeeting, isZoomConfigured } = await import('@/lib/zoom');
+
+        if (isZoomConfigured()) {
+          // Get patient and doctor names for meeting topic
+          const { data: patientData } = await supabase
+            .from('patients')
+            .select('first_name, last_name')
+            .eq('id', appointmentData.patientId)
+            .single();
+
+          const { data: doctorData } = await supabase
+            .from('doctors')
+            .select('first_name, last_name')
+            .eq('doctor_id', appointmentData.doctorId)
+            .single();
+
+          const patientName = patientData
+            ? `${patientData.first_name} ${patientData.last_name}`
+            : 'Patient';
+          const doctorName = doctorData
+            ? `${doctorData.first_name} ${doctorData.last_name}`
+            : 'Doctor';
+
+          // Create Zoom meeting
+          const zoomMeeting = await createZoomMeeting({
+            topic: `Telemedicine Appointment`,
+            duration: data.duration_minutes || 30,
+            patientName,
+            doctorName,
+            appointmentId: data.id,
+          });
+
+          zoomMeetingData = zoomMeeting;
+
+          // Update appointment with Zoom details
+          const { error: updateError } = await supabase
+            .from('appointments')
+            .update({
+              zoom_meeting_id: zoomMeeting.id,
+              zoom_host_url: zoomMeeting.start_url,
+              zoom_join_url: zoomMeeting.join_url,
+              zoom_password: zoomMeeting.password,
+              zoom_created_at: new Date().toISOString(),
+              video_call_link: zoomMeeting.join_url, // Backward compatibility
+            })
+            .eq('id', data.id);
+
+          if (updateError) {
+            console.error('[Appointments] Error updating appointment with Zoom details:', updateError);
+          } else {
+            console.log('[Appointments] ✅ Zoom meeting created and linked to appointment');
+          }
+        } else {
+          console.warn('[Appointments] Zoom not configured, skipping meeting creation');
+        }
+      } catch (zoomError) {
+        console.error('[Appointments] Error creating Zoom meeting:', zoomError);
+        // Don't fail the appointment creation if Zoom fails
+        // The appointment is still valid, just without a Zoom link
+      }
+    }
+
     // Log the appointment creation
     const actionType: "created" = "created";
     const logResult = await supabase.from("appointment_logs").insert({
@@ -134,6 +203,7 @@ export async function createAppointment(appointmentData: {
         doctor_id: appointmentData.doctorId,
         date: appointmentData.appointmentDate,
         time: appointmentData.appointmentTime,
+        zoom_meeting_created: !!zoomMeetingData,
       },
     });
 
