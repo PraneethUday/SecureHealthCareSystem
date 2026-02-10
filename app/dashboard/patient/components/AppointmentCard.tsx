@@ -9,6 +9,7 @@ import {
   X,
   CheckCircle,
   Pill,
+  MessageSquare,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AppointmentWithDetails } from "@/lib/database.types";
@@ -105,6 +106,7 @@ export default function AppointmentCard({
     ) < new Date();
   const canCancel = appointment.status === "scheduled" && !isPast;
   const canStartCall = appointment.status === "scheduled" && !isPast;
+  const canChat = ["scheduled", "completed"].includes(appointment.status);
 
   return (
     <div className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-red-300 dark:hover:border-red-800 transition-all shadow-sm dark:shadow-black/20">
@@ -236,6 +238,20 @@ export default function AppointmentCard({
                 Start Video Call
               </>
             )}
+          </button>
+        )}
+
+        {canChat && (
+          <button
+            onClick={() =>
+              router.push(
+                `/dashboard/patient/appointments/${appointment.id}/chat`
+              )
+            }
+            className="w-full px-4 py-3 mb-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
+          >
+            <MessageSquare className="w-4 h-4" />
+            Chat with Doctor
           </button>
         )}
 
