@@ -6,7 +6,7 @@ import { config } from "dotenv";
 import { resolve } from "path";
 
 // Load environment variables
-config({ path: resolve(__dirname, "../.env") });
+config({ path: resolve(__dirname, "../.env.local") });
 
 import { supabaseAdmin } from "../lib/supabase-admin";
 
