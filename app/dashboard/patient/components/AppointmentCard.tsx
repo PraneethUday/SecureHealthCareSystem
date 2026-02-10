@@ -78,24 +78,15 @@ export default function AppointmentCard({
     }
   };
 
-  const handleStartVideoCall = async () => {
-    try {
-      setIsInitiatingCall(true);
-      if (!user) {
-        alert("You must be logged in to start a call");
-        return;
-      }
-
-      // Navigate to call page with appointment details
-      // CallPage will handle call initiation and camera permissions
-      router.push(
-        `/dashboard/call/start?appointmentId=${appointment.id}&doctorId=${appointment.doctor_id}`
-      );
-    } catch (error) {
-      console.error("Error starting call:", error);
-      alert("Failed to start video call");
-    } finally {
-      setIsInitiatingCall(false);
+  const handleStartVideoCall = () => {
+    // Open Zoom meeting in new tab
+    if (appointment.zoom_join_url) {
+      window.open(appointment.zoom_join_url, '_blank', 'noopener,noreferrer');
+    } else if (appointment.video_call_link) {
+      // Fallback to old video_call_link field
+      window.open(appointment.video_call_link, '_blank', 'noopener,noreferrer');
+    } else {
+      alert('Video call link is being generated. Please refresh the page in a moment, or contact your doctor if the issue persists.');
     }
   };
 
@@ -104,7 +95,11 @@ export default function AppointmentCard({
       appointment.appointment_date + "T" + appointment.appointment_time
     ) < new Date();
   const canCancel = appointment.status === "scheduled" && !isPast;
-  const canStartCall = appointment.status === "scheduled" && !isPast;
+  // Show video call button for ALL telemedicine appointments
+  const canStartCall =
+    appointment.is_telemedicine &&
+    appointment.status === "scheduled" &&
+    !isPast;
 
   return (
     <div className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-red-300 dark:hover:border-red-800 transition-all shadow-sm dark:shadow-black/20">
@@ -127,6 +122,11 @@ export default function AppointmentCard({
               {appointment.status.charAt(0).toUpperCase() +
                 appointment.status.slice(1).replace("_", " ")}
             </span>
+            {appointment.is_telemedicine && (
+              <span className="px-3 py-1 rounded-full text-xs font-medium border bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800">
+                📹 Telemedicine
+              </span>
+            )}
             {prescriptionCount > 0 && (
               <span className="px-3 py-1 rounded-full text-xs font-medium border bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800 flex items-center gap-1.5">
                 <CheckCircle className="w-3.5 h-3.5" />
@@ -206,36 +206,16 @@ export default function AppointmentCard({
         {canStartCall && (
           <button
             onClick={handleStartVideoCall}
-            disabled={isInitiatingCall}
-            className="w-full px-4 py-3 mb-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold rounded-lg shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
+            className="w-full px-4 py-3 mb-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
           >
-            {isInitiatingCall ? (
-              <>
-                <svg
-                  className="w-4 h-4 animate-spin"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Initiating Call...
-              </>
-            ) : (
-              <>
-                <svg
-                  className="w-4 h-4"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M15.5 1h-8C6.12 1 5 2.12 5 3.5v17C5 21.88 6.12 23 7.5 23h8c1.38 0 2.5-1.12 2.5-2.5v-17C18 2.12 16.88 1 15.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z" />
-                </svg>
-                Start Video Call
-              </>
-            )}
+            <svg
+              className="w-5 h-5"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M15.5 1h-8C6.12 1 5 2.12 5 3.5v17C5 21.88 6.12 23 7.5 23h8c1.38 0 2.5-1.12 2.5-2.5v-17C18 2.12 16.88 1 15.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z" />
+            </svg>
+            🎥 Join Video Call (Zoom)
           </button>
         )}
 

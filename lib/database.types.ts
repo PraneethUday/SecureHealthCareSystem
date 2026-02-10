@@ -135,6 +135,12 @@ export interface Appointment {
   video_call_ended_at?: string;
   share_health_profile?: boolean;
   nurse_id?: string; // UUID reference to nurses table
+  // Zoom integration fields
+  zoom_meeting_id?: string;
+  zoom_host_url?: string; // For doctor to start meeting
+  zoom_join_url?: string; // For patient to join meeting
+  zoom_password?: string;
+  zoom_created_at?: string;
   created_at?: string;
   updated_at?: string;
 }
