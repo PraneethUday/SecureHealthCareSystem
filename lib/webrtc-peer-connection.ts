@@ -50,13 +50,29 @@ export class PeerConnection {
   private onError: ((error: Error) => void) | null = null;
 
   constructor(config?: WebRTCConfig) {
+    // Check if WebRTC is supported
+    if (typeof RTCPeerConnection === 'undefined') {
+      console.error('[WebRTC] RTCPeerConnection is not available in this browser');
+      throw new Error('WebRTC is not supported in this browser');
+    }
+
     this.config = config || getWebRTCConfig();
 
-    this.pc = new RTCPeerConnection({
-      iceServers: this.config.iceServers,
-    });
+    try {
+      console.log('[WebRTC] Creating RTCPeerConnection with config:', {
+        iceServersCount: this.config.iceServers.length,
+      });
 
-    this.setupEventHandlers();
+      this.pc = new RTCPeerConnection({
+        iceServers: this.config.iceServers,
+      });
+
+      console.log('[WebRTC] RTCPeerConnection created successfully');
+      this.setupEventHandlers();
+    } catch (error) {
+      console.error('[WebRTC] Failed to create RTCPeerConnection:', error);
+      throw new Error(`Failed to create peer connection: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   /**
@@ -217,7 +233,7 @@ export class PeerConnection {
   setLocalStream(stream: MediaStream): void {
     console.log("[WebRTC] Setting existing local stream");
     this.localStream = stream;
-    
+
     // Add all tracks to the peer connection
     const senders = this.pc.getSenders();
     stream.getTracks().forEach((track) => {

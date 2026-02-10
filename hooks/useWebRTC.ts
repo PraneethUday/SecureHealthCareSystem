@@ -85,12 +85,35 @@ export function useWebRTC(options: UseWebRTCOptions) {
         "[Hook] 🎥 Initializing local media (camera & microphone)..."
       );
 
-      // Create or recreate peer connection if needed
+      // ALWAYS create peer connection first, before attempting media
+      // This ensures we have a peer connection even if media fails
       if (!peerConnectionRef.current) {
         console.log("[Hook] Creating new PeerConnection...");
-        peerConnectionRef.current = new PeerConnection();
+        console.log("[Hook] Checking WebRTC support...");
+        console.log("[Hook] RTCPeerConnection available:", typeof RTCPeerConnection !== 'undefined');
+        console.log("[Hook] getUserMedia available:", typeof navigator?.mediaDevices?.getUserMedia !== 'undefined');
+
+        try {
+          peerConnectionRef.current = new PeerConnection();
+          console.log("[Hook] ✅ PeerConnection created successfully");
+          console.log("[Hook] PeerConnection ref is now:", peerConnectionRef.current ? "SET" : "NULL");
+        } catch (pcError) {
+          console.error("[Hook] ❌ Failed to create PeerConnection:", pcError);
+          console.error("[Hook] Error details:", {
+            name: pcError instanceof Error ? pcError.name : 'Unknown',
+            message: pcError instanceof Error ? pcError.message : String(pcError),
+            stack: pcError instanceof Error ? pcError.stack : undefined,
+          });
+          isInitializingMediaRef.current = false;
+          setState((prev) => ({
+            ...prev,
+            error: `Failed to initialize WebRTC: ${pcError instanceof Error ? pcError.message : 'Unknown error'}. Please refresh and try again.`,
+          }));
+          return false;
+        }
       } else {
         console.log("[Hook] Reusing existing PeerConnection");
+        console.log("[Hook] Existing PeerConnection state:", peerConnectionRef.current.getConnectionState());
       }
 
       // Setup event handlers (safe to call multiple times)
@@ -137,63 +160,74 @@ export function useWebRTC(options: UseWebRTCOptions) {
         return true;
       }
 
+      // Now try to get media - but peer connection already exists
       console.log("[Hook] 📸 Requesting camera and microphone access...");
       console.log(
         "[Hook] ⚠️  Your browser should show a permission prompt now!"
       );
 
-      const localStream = await peerConnectionRef.current.getLocalStream(
-        true,
-        true
-      );
+      try {
+        const localStream = await peerConnectionRef.current.getLocalStream(
+          true,
+          true
+        );
 
-      if (localStream) {
-        console.log("[Hook] ✅ Camera and microphone access granted!");
-        console.log("[Hook] 📊 Stream tracks:", {
-          video: localStream.getVideoTracks().length,
-          audio: localStream.getAudioTracks().length,
-        });
-        setState((prev) => ({ ...prev, localStream, error: null }));
+        if (localStream) {
+          console.log("[Hook] ✅ Camera and microphone access granted!");
+          console.log("[Hook] 📊 Stream tracks:", {
+            video: localStream.getVideoTracks().length,
+            audio: localStream.getAudioTracks().length,
+          });
+          setState((prev) => ({ ...prev, localStream, error: null }));
+          isInitializingMediaRef.current = false;
+          return true;
+        }
+
+        console.warn("[Hook] ⚠️  No local stream obtained");
         isInitializingMediaRef.current = false;
-        return true;
-      }
+        return false;
+      } catch (mediaError) {
+        // Media failed, but peer connection still exists!
+        console.error("[Hook] ❌ Media error:", mediaError);
+        const message =
+          mediaError instanceof Error ? mediaError.message : "Failed to get local media";
 
-      console.warn("[Hook] ⚠️  No local stream obtained");
-      isInitializingMediaRef.current = false;
-      return false;
+        // More helpful error messages
+        if (message.includes("Permission denied") || message.includes("NotAllowedError")) {
+          console.error("[Hook] 🚫 Camera/microphone permission was denied");
+          setState((prev) => ({
+            ...prev,
+            error:
+              "Camera/microphone permission denied. Please allow access and try again.",
+          }));
+        } else if (
+          message.includes("not found") ||
+          message.includes("Could not start") ||
+          message.includes("NotFoundError")
+        ) {
+          console.error("[Hook] 📷 No camera or microphone found");
+          setState((prev) => ({
+            ...prev,
+            error:
+              "No camera or microphone found. Please connect a device and try again.",
+          }));
+        } else {
+          console.error(
+            "[Hook] 💡 Tip: Check if you denied camera/microphone permissions"
+          );
+          setState((prev) => ({ ...prev, error: message }));
+        }
+
+        isInitializingMediaRef.current = false;
+        // Return false but peer connection still exists
+        return false;
+      }
     } catch (error) {
       isInitializingMediaRef.current = false;
       const message =
-        error instanceof Error ? error.message : "Failed to get local media";
-      console.error("[Hook] ❌ Error initializing media:", error);
-
-      // DON'T clean up peer connection on media errors - it can still be used
-      // The peer connection is valid even if we can't get media (for testing, etc.)
-
-      // More helpful error messages
-      if (message.includes("Permission denied")) {
-        console.error("[Hook] 🚫 Camera/microphone permission was denied");
-        setState((prev) => ({
-          ...prev,
-          error:
-            "Camera/microphone permission denied. Please allow access and try again.",
-        }));
-      } else if (
-        message.includes("not found") ||
-        message.includes("Could not start")
-      ) {
-        console.error("[Hook] 📷 No camera or microphone found");
-        setState((prev) => ({
-          ...prev,
-          error:
-            "No camera or microphone found. Please connect a device and try again.",
-        }));
-      } else {
-        console.error(
-          "[Hook] 💡 Tip: Check if you denied camera/microphone permissions"
-        );
-        setState((prev) => ({ ...prev, error: message }));
-      }
+        error instanceof Error ? error.message : "Failed to initialize";
+      console.error("[Hook] ❌ Error in initializeLocalMedia:", error);
+      setState((prev) => ({ ...prev, error: message }));
       return false;
     }
   }, [state.localStream]);
@@ -213,7 +247,7 @@ export function useWebRTC(options: UseWebRTCOptions) {
 
         // Initialize local media first (creates peer connection even if media fails)
         const mediaReady = await initializeLocalMedia();
-        
+
         // Even if media initialization failed, check if peer connection exists
         if (!peerConnectionRef.current) {
           console.error("[Hook] ❌ Peer connection was not created during initialization");
@@ -224,7 +258,7 @@ export function useWebRTC(options: UseWebRTCOptions) {
           }));
           return;
         }
-        
+
         if (!mediaReady) {
           console.warn("[Hook] ⚠️ Media not ready, but peer connection exists. Continuing...");
           // Continue - we can still establish connection without local media
@@ -338,21 +372,34 @@ export function useWebRTC(options: UseWebRTCOptions) {
         );
         setState((prev) => ({ ...prev, isAccepting: true, error: null }));
 
+        console.log("[Hook] About to initialize local media...");
+        console.log("[Hook] Peer connection BEFORE initializeLocalMedia:", peerConnectionRef.current ? "EXISTS" : "NULL");
+
         // Initialize local media (creates peer connection even if media fails)
         const mediaReady = await initializeLocalMedia();
-        
+
+        console.log("[Hook] Media initialization result:", mediaReady);
+        console.log("[Hook] Peer connection AFTER initializeLocalMedia:", peerConnectionRef.current ? "EXISTS" : "NULL");
+
         // Even if media initialization failed, check if peer connection exists
         // It might have been created but media permission was denied
         if (!peerConnectionRef.current) {
           console.error("[Hook] ❌ Peer connection was not created during initialization");
+          console.error("[Hook] Debugging info:");
+          console.error("[Hook] - mediaReady:", mediaReady);
+          console.error("[Hook] - isInitializingMediaRef:", isInitializingMediaRef.current);
+          console.error("[Hook] - WebRTC supported:", typeof RTCPeerConnection !== 'undefined');
+
           setState((prev) => ({
             ...prev,
             isAccepting: false,
-            error: "Failed to setup WebRTC connection",
+            error: "Failed to setup WebRTC connection. Please refresh the page and try again.",
           }));
           return;
         }
-        
+
+        console.log("[Hook] ✅ Peer connection exists, continuing with call acceptance...");
+
         if (!mediaReady) {
           console.warn("[Hook] ⚠️ Media not ready, but peer connection exists. Continuing...");
           // Don't return - we can still try to establish connection without local media
