@@ -210,30 +210,34 @@ export default function DoctorAppointmentCard({
       )}
 
       {/* Patient Health Information - Always Available */}
-      <div className="bg-gradient-to-r from-purple-50 to-rose-50 dark:from-purple-900/20 dark:to-rose-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4 mb-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="bg-gradient-to-br from-purple-100 to-rose-100 dark:from-purple-900/30 dark:to-rose-900/30 p-2 rounded-lg flex-shrink-0">
-              <Heart className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-purple-900 dark:text-purple-200 truncate">Patient Health Information</p>
-              <p className="text-xs text-purple-700 dark:text-purple-400">View vitals, profile & medical history</p>
-            </div>
+      <div className="bg-gradient-to-r from-purple-50 to-rose-50 dark:from-purple-900/20 dark:to-rose-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-5 mb-4">
+        <div className="flex items-start gap-4">
+          <div className="bg-gradient-to-br from-purple-100 to-rose-100 dark:from-purple-900/30 dark:to-rose-900/30 p-3 rounded-xl flex-shrink-0">
+            <Heart className="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
-          <div className="flex gap-2 flex-shrink-0">
-            <button
-              onClick={() => setShowVitalsModal(true)}
-              className="px-4 py-2 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-sm whitespace-nowrap"
-            >
-              View Vitals
-            </button>
-            <button
-              onClick={() => setShowProfileModal(true)}
-              className="px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition-colors shadow-sm whitespace-nowrap"
-            >
-              View Profile
-            </button>
+          <div className="flex-1">
+            <h3 className="text-base font-bold text-purple-900 dark:text-purple-200 mb-1">
+              Patient Health Information
+            </h3>
+            <p className="text-sm text-purple-700 dark:text-purple-400 mb-4">
+              Access patient vitals, medical profile, and complete health history
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setShowVitalsModal(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-all shadow-sm hover:shadow-md active:scale-95"
+              >
+                <Activity className="w-4 h-4" />
+                View Vitals
+              </button>
+              <button
+                onClick={() => setShowProfileModal(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white text-sm font-semibold rounded-lg hover:bg-rose-700 transition-all shadow-sm hover:shadow-md active:scale-95"
+              >
+                <User className="w-4 h-4" />
+                View Profile
+              </button>
+            </div>
           </div>
         </div>
       </div>
