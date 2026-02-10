@@ -1,7 +1,56 @@
 /**
+ * @jest-environment node
+ * 
  * API Route Tests for app/api/chatbot/route.ts
  * Tests chatbot API endpoint
  */
+
+// Mock Web APIs required by Next.js in Jest environment
+import { TextEncoder, TextDecoder } from 'util';
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder as any;
+
+// Mock Request, Response, and Headers for Next.js
+class MockHeaders extends Map {
+    append(name: string, value: string) {
+        this.set(name, value);
+    }
+    delete(name: string) {
+        return super.delete(name);
+    }
+    get(name: string) {
+        return super.get(name) || null;
+    }
+    has(name: string) {
+        return super.has(name);
+    }
+    set(name: string, value: string) {
+        return super.set(name, value);
+    }
+}
+
+global.Headers = MockHeaders as any;
+global.Request = class MockRequest {
+    constructor(public url: string, public init?: any) { }
+} as any;
+global.Response = class MockResponse {
+    constructor(public body?: any, public init?: any) { }
+} as any;
+
+// Mock NextResponse before importing the route
+jest.mock('next/server', () => {
+    const actual = jest.requireActual('next/server');
+    return {
+        ...actual,
+        NextResponse: {
+            json: (data: any, init?: any) => ({
+                json: async () => data,
+                status: init?.status || 200,
+                ok: (init?.status || 200) >= 200 && (init?.status || 200) < 300,
+            }),
+        },
+    };
+});
 
 import { NextRequest } from "next/server";
 
