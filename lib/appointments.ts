@@ -99,6 +99,7 @@ export async function createAppointment(appointmentData: {
         reason: appointmentData.reason,
         notes: appointmentData.notes,
         is_telemedicine: appointmentData.isTelemedicine || false,
+        share_health_profile: appointmentData.shareHealthProfile || false,
         status: "scheduled",
       })
       .select()
@@ -296,9 +297,8 @@ export async function updateAppointmentStatus(
       console.error("Error fetching appointment:", fetchError);
       return {
         success: false,
-        error: `Failed to fetch appointment: ${
-          fetchError.message || JSON.stringify(fetchError)
-        }`,
+        error: `Failed to fetch appointment: ${fetchError.message || JSON.stringify(fetchError)
+          }`,
       };
     }
 

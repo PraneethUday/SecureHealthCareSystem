@@ -209,19 +209,25 @@ export default function DoctorAppointmentCard({
         </div>
       )}
 
-      {/* Shared Health Profile Banner */}
-      {appointment.share_health_profile && (
-        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-rose-100 p-2 rounded-lg">
-                <Heart className="w-5 h-5 text-rose-600" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-rose-900">Health Profile Shared</p>
-                <p className="text-xs text-rose-700">Patient shared their medical history.</p>
-              </div>
+      {/* Patient Health Information - Always Available */}
+      <div className="bg-gradient-to-r from-purple-50 to-rose-50 dark:from-purple-900/20 dark:to-rose-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4 mb-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-gradient-to-br from-purple-100 to-rose-100 dark:from-purple-900/30 dark:to-rose-900/30 p-2 rounded-lg">
+              <Heart className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             </div>
+            <div>
+              <p className="text-sm font-bold text-purple-900 dark:text-purple-200">Patient Health Information</p>
+              <p className="text-xs text-purple-700 dark:text-purple-400">View vitals, profile & medical history</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowVitalsModal(true)}
+              className="px-4 py-2 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-sm whitespace-nowrap"
+            >
+              View Vitals
+            </button>
             <button
               onClick={() => setShowProfileModal(true)}
               className="px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition-colors shadow-sm whitespace-nowrap"
@@ -229,27 +235,6 @@ export default function DoctorAppointmentCard({
               View Profile
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Patient Vitals Access - Always Available */}
-      <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4 mb-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg">
-              <Activity className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-purple-900 dark:text-purple-200">Patient Health Vitals</p>
-              <p className="text-xs text-purple-700 dark:text-purple-400">View vital signs and health metrics</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowVitalsModal(true)}
-            className="px-4 py-2 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-sm whitespace-nowrap"
-          >
-            View Vitals
-          </button>
         </div>
       </div>
 
