@@ -444,6 +444,7 @@ export default function DoctorAppointmentCard({
               <button
                 onClick={() => setShowVitalsModal(false)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                aria-label="Close vitals modal"
               >
                 <XCircle className="w-6 h-6 text-gray-500" />
               </button>

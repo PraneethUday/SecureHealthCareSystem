@@ -12,6 +12,7 @@ import Footer from "./components/Footer";
 import InfoBanner from "./components/InfoBanner";
 import { saveSession } from "@/lib/auth";
 import { login, verifyMFAOTP } from "@/app/actions/auth-actions";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function LoginPage() {
   const [selectedRole, setSelectedRole] = useState<UserRole>("patient");
@@ -113,6 +114,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex overflow-hidden relative bg-[conic-gradient(at_top,_var(--tw-gradient-stops))] from-blue-50 via-indigo-50 to-slate-50 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950 selection:bg-rose-500 selection:text-white transition-colors duration-500">
+      {/* Theme Toggle Button */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+
       {/* Global Animated Background */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-60 dark:opacity-30">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-300 dark:bg-blue-900/40 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob"></div>
