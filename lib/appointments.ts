@@ -154,53 +154,55 @@ export async function createAppointment(appointmentData: {
       try {
         console.log("[Appointments] Creating Zoom meeting for telemedicine appointment...");
 
-        // Import Zoom library dynamically to avoid server-side issues
-        const { createZoomMeeting, isZoomConfigured } = await import('@/lib/zoom');
+        // Get patient and doctor names for meeting topic
+        const { data: patientData } = await supabase
+          .from('patients')
+          .select('first_name, last_name')
+          .eq('id', appointmentData.patientId)
+          .single();
 
-        if (isZoomConfigured()) {
-          // Get patient and doctor names for meeting topic
-          const { data: patientData } = await supabase
-            .from('patients')
-            .select('first_name, last_name')
-            .eq('id', appointmentData.patientId)
-            .single();
+        const { data: doctorData } = await supabase
+          .from('doctors')
+          .select('first_name, last_name')
+          .eq('doctor_id', appointmentData.doctorId)
+          .single();
 
-          const { data: doctorData } = await supabase
-            .from('doctors')
-            .select('first_name, last_name')
-            .eq('doctor_id', appointmentData.doctorId)
-            .single();
+        const patientName = patientData
+          ? `${patientData.first_name} ${patientData.last_name}`
+          : 'Patient';
+        const doctorName = doctorData
+          ? `${doctorData.first_name} ${doctorData.last_name}`
+          : 'Doctor';
 
-          const patientName = patientData
-            ? `${patientData.first_name} ${patientData.last_name}`
-            : 'Patient';
-          const doctorName = doctorData
-            ? `${doctorData.first_name} ${doctorData.last_name}`
-            : 'Doctor';
-
-          // Create Zoom meeting
-          const zoomMeeting = await createZoomMeeting({
-            topic: `Telemedicine Appointment`,
-            duration: data.duration_minutes || 30,
+        // Call API route to create Zoom meeting (server-side where env vars are available)
+        const response = await fetch('/api/zoom/create-meeting', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            appointmentId: data.id,
             patientName,
             doctorName,
-            appointmentId: data.id,
-          });
+            duration: data.duration_minutes || 30,
+          }),
+        });
 
-          zoomMeetingData = zoomMeeting;
+        if (response.ok) {
+          const { meeting } = await response.json();
+          zoomMeetingData = meeting;
 
           // Update appointment with Zoom details
-          // Try to update all Zoom fields, but fall back to just video_call_link if columns don't exist
           try {
             const { error: updateError } = await supabase
               .from('appointments')
               .update({
-                zoom_meeting_id: zoomMeeting.id,
-                zoom_host_url: zoomMeeting.start_url,
-                zoom_join_url: zoomMeeting.join_url,
-                zoom_password: zoomMeeting.password,
+                zoom_meeting_id: meeting.id,
+                zoom_host_url: meeting.start_url,
+                zoom_join_url: meeting.join_url,
+                zoom_password: meeting.password,
                 zoom_created_at: new Date().toISOString(),
-                video_call_link: zoomMeeting.join_url, // Backward compatibility
+                video_call_link: meeting.join_url, // Backward compatibility
               })
               .eq('id', data.id);
 
@@ -212,7 +214,7 @@ export async function createAppointment(appointmentData: {
               const { error: fallbackError } = await supabase
                 .from('appointments')
                 .update({
-                  video_call_link: zoomMeeting.join_url,
+                  video_call_link: meeting.join_url,
                 })
                 .eq('id', data.id);
 
@@ -228,7 +230,7 @@ export async function createAppointment(appointmentData: {
             console.error('[Appointments] Exception during Zoom update:', updateException);
           }
         } else {
-          console.warn('[Appointments] Zoom not configured, skipping meeting creation');
+          console.warn('[Appointments] Zoom API call failed, skipping meeting creation');
         }
       } catch (zoomError) {
         console.error('[Appointments] Error creating Zoom meeting:', zoomError);
