@@ -260,7 +260,7 @@ export async function createAppointment(appointmentData: {
       console.error("Error logging appointment creation:", logResult.error);
     }
 
-    // Send email notifications
+    // Send email notifications via API route (to avoid bundling nodemailer in client)
     try {
       console.log('[Appointments] Sending email notifications...');
 
@@ -284,46 +284,71 @@ export async function createAppointment(appointmentData: {
         .single();
 
       if (patientData && doctorData && hospitalData) {
-        const { sendAppointmentConfirmationEmail, sendDoctorAppointmentNotification } = await import('@/lib/email');
-
         const patientName = `${patientData.first_name} ${patientData.last_name}`;
         const doctorName = `${doctorData.first_name} ${doctorData.last_name}`;
 
-        // Send confirmation email to patient
-        const patientEmailSent = await sendAppointmentConfirmationEmail({
-          patientEmail: patientData.email,
-          patientName,
-          doctorName,
-          appointmentDate: appointmentData.appointmentDate,
-          appointmentTime: appointmentData.appointmentTime,
-          department: doctorData.specialization || 'General',
-          hospitalName: hospitalData.name,
-          isTelemedicine: appointmentData.isTelemedicine || false,
-          zoomJoinUrl: zoomMeetingData?.join_url,
-          appointmentId: data.id,
-        });
+        // Determine base URL for API calls
+        const baseUrl = typeof window !== 'undefined' 
+          ? window.location.origin 
+          : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-        if (patientEmailSent) {
-          console.log('[Appointments] ✅ Patient confirmation email sent');
+        // Send confirmation email to patient via API
+        try {
+          const patientEmailResponse = await fetch(`${baseUrl}/api/notifications/appointment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'patient-confirmation',
+              data: {
+                patientEmail: patientData.email,
+                patientName,
+                doctorName,
+                appointmentDate: appointmentData.appointmentDate,
+                appointmentTime: appointmentData.appointmentTime,
+                department: doctorData.specialization || 'General',
+                hospitalName: hospitalData.name,
+                isTelemedicine: appointmentData.isTelemedicine || false,
+                zoomJoinUrl: zoomMeetingData?.join_url,
+                appointmentId: data.id,
+              }
+            }),
+          });
+          
+          if (patientEmailResponse.ok) {
+            console.log('[Appointments] ✅ Patient confirmation email sent');
+          }
+        } catch (emailErr) {
+          console.error('[Appointments] Patient email error:', emailErr);
         }
 
-        // Send notification email to doctor
-        const doctorEmailSent = await sendDoctorAppointmentNotification({
-          doctorEmail: doctorData.email,
-          doctorName,
-          patientName,
-          appointmentDate: appointmentData.appointmentDate,
-          appointmentTime: appointmentData.appointmentTime,
-          department: doctorData.specialization || 'General',
-          hospitalName: hospitalData.name,
-          isTelemedicine: appointmentData.isTelemedicine || false,
-          zoomHostUrl: zoomMeetingData?.start_url,
-          appointmentId: data.id,
-          reason: appointmentData.reason,
-        });
+        // Send notification email to doctor via API
+        try {
+          const doctorEmailResponse = await fetch(`${baseUrl}/api/notifications/appointment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'doctor-notification',
+              data: {
+                doctorEmail: doctorData.email,
+                doctorName,
+                patientName,
+                appointmentDate: appointmentData.appointmentDate,
+                appointmentTime: appointmentData.appointmentTime,
+                department: doctorData.specialization || 'General',
+                hospitalName: hospitalData.name,
+                isTelemedicine: appointmentData.isTelemedicine || false,
+                zoomHostUrl: zoomMeetingData?.start_url,
+                appointmentId: data.id,
+                reason: appointmentData.reason,
+              }
+            }),
+          });
 
-        if (doctorEmailSent) {
-          console.log('[Appointments] ✅ Doctor notification email sent');
+          if (doctorEmailResponse.ok) {
+            console.log('[Appointments] ✅ Doctor notification email sent');
+          }
+        } catch (emailErr) {
+          console.error('[Appointments] Doctor email error:', emailErr);
         }
       }
     } catch (emailError) {

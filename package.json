@@ -29,7 +29,8 @@
     "ogl": "^1.0.11",
     "openai": "^6.16.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
