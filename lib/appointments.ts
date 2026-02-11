@@ -260,6 +260,77 @@ export async function createAppointment(appointmentData: {
       console.error("Error logging appointment creation:", logResult.error);
     }
 
+    // Send email notifications
+    try {
+      console.log('[Appointments] Sending email notifications...');
+
+      // Get patient, doctor, and hospital details for email
+      const { data: patientData } = await supabase
+        .from('patients')
+        .select('first_name, last_name, email')
+        .eq('id', appointmentData.patientId)
+        .single();
+
+      const { data: doctorData } = await supabase
+        .from('doctors')
+        .select('first_name, last_name, email, specialization')
+        .eq('doctor_id', appointmentData.doctorId)
+        .single();
+
+      const { data: hospitalData } = await supabase
+        .from('hospitals')
+        .select('name')
+        .eq('id', appointmentData.hospitalId)
+        .single();
+
+      if (patientData && doctorData && hospitalData) {
+        const { sendAppointmentConfirmationEmail, sendDoctorAppointmentNotification } = await import('@/lib/email');
+
+        const patientName = `${patientData.first_name} ${patientData.last_name}`;
+        const doctorName = `${doctorData.first_name} ${doctorData.last_name}`;
+
+        // Send confirmation email to patient
+        const patientEmailSent = await sendAppointmentConfirmationEmail({
+          patientEmail: patientData.email,
+          patientName,
+          doctorName,
+          appointmentDate: appointmentData.appointmentDate,
+          appointmentTime: appointmentData.appointmentTime,
+          department: doctorData.specialization || 'General',
+          hospitalName: hospitalData.name,
+          isTelemedicine: appointmentData.isTelemedicine || false,
+          zoomJoinUrl: zoomMeetingData?.join_url,
+          appointmentId: data.id,
+        });
+
+        if (patientEmailSent) {
+          console.log('[Appointments] ✅ Patient confirmation email sent');
+        }
+
+        // Send notification email to doctor
+        const doctorEmailSent = await sendDoctorAppointmentNotification({
+          doctorEmail: doctorData.email,
+          doctorName,
+          patientName,
+          appointmentDate: appointmentData.appointmentDate,
+          appointmentTime: appointmentData.appointmentTime,
+          department: doctorData.specialization || 'General',
+          hospitalName: hospitalData.name,
+          isTelemedicine: appointmentData.isTelemedicine || false,
+          zoomHostUrl: zoomMeetingData?.start_url,
+          appointmentId: data.id,
+          reason: appointmentData.reason,
+        });
+
+        if (doctorEmailSent) {
+          console.log('[Appointments] ✅ Doctor notification email sent');
+        }
+      }
+    } catch (emailError) {
+      console.error('[Appointments] Error sending email notifications:', emailError);
+      // Don't fail the appointment creation if email fails
+    }
+
     return { success: true, appointment: data };
   } catch (error: any) {
     console.error("Caught error in createAppointment:", error);
