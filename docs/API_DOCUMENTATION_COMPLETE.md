@@ -1,6 +1,7 @@
 # Secure Healthcare System - Complete Backend API Documentation
 
 ## Table of Contents
+
 1. [Authentication & Authorization](#authentication--authorization)
 2. [Health Check](#health-check)
 3. [User Registration](#user-registration)
@@ -17,6 +18,7 @@
 ---
 
 ## Base URL
+
 ```
 http://localhost:3000/api
 ```
@@ -24,9 +26,11 @@ http://localhost:3000/api
 ## Authentication & Authorization
 
 ### POST `/api/auth/verify-otp`
+
 Verify Multi-Factor Authentication (MFA) OTP code during login.
 
 **Request Body:**
+
 ```json
 {
   "mfaToken": "string",
@@ -36,6 +40,7 @@ Verify Multi-Factor Authentication (MFA) OTP code during login.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -51,6 +56,7 @@ Verify Multi-Factor Authentication (MFA) OTP code during login.
 ```
 
 **Error Responses:**
+
 - `400 Bad Request`: Missing required fields
 - `401 Unauthorized`: Invalid OTP or token
 - `500 Internal Server Error`: Server error
@@ -60,9 +66,11 @@ Verify Multi-Factor Authentication (MFA) OTP code during login.
 ## Health Check
 
 ### GET `/api/health`
+
 Check the health status of the API.
 
 **Response (200 OK):**
+
 ```json
 {
   "status": "healthy",
@@ -76,9 +84,11 @@ Check the health status of the API.
 ## User Registration
 
 ### POST `/api/register/patient`
+
 Register a new patient account.
 
 **Request Body:**
+
 ```json
 {
   "firstName": "string",
@@ -96,6 +106,7 @@ Register a new patient account.
 ```
 
 **Password Requirements:**
+
 - Minimum 8 characters
 - At least one uppercase letter
 - At least one lowercase letter
@@ -103,6 +114,7 @@ Register a new patient account.
 - At least one special character
 
 **Response (201 Created):**
+
 ```json
 {
   "success": true,
@@ -113,6 +125,7 @@ Register a new patient account.
 ```
 
 **Error Responses:**
+
 - `400 Bad Request`: Missing fields or invalid password
 - `409 Conflict`: Email already registered
 - `500 Internal Server Error`: Server error
@@ -124,12 +137,15 @@ Register a new patient account.
 All admin endpoints require `adminId=admin` query parameter for authorization.
 
 ### GET `/api/admin/statistics`
+
 Get system-wide statistics (admin only).
 
 **Query Parameters:**
+
 - `adminId` (required): Must be "admin"
 
 **Response (200 OK):**
+
 ```json
 {
   "totalPatients": 150,
@@ -141,19 +157,23 @@ Get system-wide statistics (admin only).
 ```
 
 **Error Responses:**
+
 - `403 Forbidden`: Unauthorized access
 - `500 Internal Server Error`: Server error
 
 ---
 
 ### GET `/api/admin/users`
+
 Get all users in the system (admin only).
 
 **Query Parameters:**
+
 - `adminId` (required): Must be "admin"
 - `role` (optional): Filter by role ("doctor", "nurse", "staff")
 
 **Response (200 OK):**
+
 ```json
 {
   "users": [
@@ -181,20 +201,24 @@ Get all users in the system (admin only).
 ```
 
 **Error Responses:**
+
 - `403 Forbidden`: Unauthorized access
 - `500 Internal Server Error`: Server error
 
 ---
 
 ### DELETE `/api/admin/users`
+
 Delete a user from the system (admin only).
 
 **Query Parameters:**
+
 - `adminId` (required): Must be "admin"
 - `userId` (required): User's ID (e.g., "D001", "N001")
 - `role` (required): User's role ("doctor", "nurse", "staff")
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -203,6 +227,7 @@ Delete a user from the system (admin only).
 ```
 
 **Error Responses:**
+
 - `400 Bad Request`: Missing required parameters or invalid role
 - `403 Forbidden`: Unauthorized access
 - `404 Not Found`: User not found
@@ -211,9 +236,11 @@ Delete a user from the system (admin only).
 ---
 
 ### POST `/api/admin/users/create`
+
 Create a new user (doctor, nurse, or staff) - admin only.
 
 **Request Body:**
+
 ```json
 {
   "adminId": "admin",
@@ -224,22 +251,23 @@ Create a new user (doctor, nurse, or staff) - admin only.
   "password": "string",
   "phone": "string",
   "department": "string",
-  
+
   // Doctor-specific fields (if role = "doctor")
   "specialization": "string",
   "licenseNumber": "string",
   "yearsOfExperience": 10,
-  
+
   // Nurse-specific fields (if role = "nurse")
   "licenseNumber": "string",
   "shift": "morning" | "evening" | "night",
-  
+
   // Staff-specific fields (if role = "staff")
   "staffRole": "string"
 }
 ```
 
 **Response (201 Created):**
+
 ```json
 {
   "success": true,
@@ -255,6 +283,7 @@ Create a new user (doctor, nurse, or staff) - admin only.
 ```
 
 **Error Responses:**
+
 - `400 Bad Request`: Missing fields or invalid data
 - `403 Forbidden`: Unauthorized access
 - `409 Conflict`: Email already exists
@@ -265,9 +294,11 @@ Create a new user (doctor, nurse, or staff) - admin only.
 ## Audit & Logging
 
 ### POST `/api/audit`
+
 Log an audit action.
 
 **Request Body:**
+
 ```json
 {
   "user_id": "string",
@@ -283,6 +314,7 @@ Log an audit action.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "ok": true
@@ -290,18 +322,22 @@ Log an audit action.
 ```
 
 **Error Responses:**
+
 - `500 Internal Server Error`: Database insert failed
 
 ---
 
 ### GET `/api/audit/logs`
+
 Retrieve audit logs with optional filtering.
 
 **Query Parameters:**
+
 - `limit` (optional): Number of logs to retrieve (default: 50)
 - `patientId` (optional): Filter logs by patient ID
 
 **Response (200 OK):**
+
 ```json
 {
   "logs": [
@@ -324,6 +360,7 @@ Retrieve audit logs with optional filtering.
 ```
 
 **Error Responses:**
+
 - `500 Internal Server Error`: Query error
 
 ---
@@ -331,9 +368,11 @@ Retrieve audit logs with optional filtering.
 ## Medical Reports
 
 ### POST `/api/medical-reports`
+
 Upload a medical report.
 
 **Request (multipart/form-data):**
+
 - `patientId` (required): Patient ID (e.g., "P001")
 - `reportType` (required): Type of report (e.g., "Lab Test", "X-Ray", "MRI")
 - `reportName` (required): Name of the report
@@ -345,6 +384,7 @@ Upload a medical report.
 - `file` (required): Report file (max 50MB)
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -364,6 +404,7 @@ Upload a medical report.
 ```
 
 **Error Responses:**
+
 - `400 Bad Request`: Missing fields or file too large
 - `404 Not Found`: Patient not found
 - `500 Internal Server Error`: Upload or database error
@@ -371,13 +412,16 @@ Upload a medical report.
 ---
 
 ### GET `/api/medical-reports`
+
 Retrieve medical reports with optional filtering.
 
 **Query Parameters:**
+
 - `patientId` (optional): Filter by patient ID
 - `reportType` (optional): Filter by report type
 
 **Response (200 OK):**
+
 ```json
 {
   "reports": [
@@ -402,18 +446,22 @@ Retrieve medical reports with optional filtering.
 ```
 
 **Error Responses:**
+
 - `500 Internal Server Error`: Query error
 
 ---
 
 ### GET `/api/medical-reports/download`
+
 Generate a signed URL to download a medical report.
 
 **Query Parameters:**
+
 - `reportId` (optional): Report ID
 - `fileName` (optional): File name (required if reportId not provided)
 
 **Response (200 OK):**
+
 ```json
 {
   "downloadUrl": "https://signed-url...",
@@ -422,6 +470,7 @@ Generate a signed URL to download a medical report.
 ```
 
 **Error Responses:**
+
 - `400 Bad Request`: Missing reportId or fileName
 - `404 Not Found`: Report not found
 - `500 Internal Server Error`: URL generation error
@@ -429,9 +478,11 @@ Generate a signed URL to download a medical report.
 ---
 
 ### POST `/api/medical-reports/log-view`
+
 Log when a user views a medical report.
 
 **Request Body:**
+
 ```json
 {
   "reportId": "uuid",
@@ -441,6 +492,7 @@ Log when a user views a medical report.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true
@@ -448,6 +500,7 @@ Log when a user views a medical report.
 ```
 
 **Error Responses:**
+
 - `400 Bad Request`: Missing required fields
 - `500 Internal Server Error`: Logging error
 
@@ -456,14 +509,17 @@ Log when a user views a medical report.
 ## Prescriptions
 
 ### GET `/api/prescriptions/search`
+
 Search prescriptions with multiple filters.
 
 **Query Parameters:**
+
 - `patientId` (optional): Filter by patient ID
 - `patientName` (optional): Search by patient name
 - `status` (optional): Filter by status ("active", "completed", "cancelled", "all")
 
 **Response (200 OK):**
+
 ```json
 {
   "prescriptions": [
@@ -492,6 +548,7 @@ Search prescriptions with multiple filters.
 ```
 
 **Error Responses:**
+
 - `500 Internal Server Error`: Query error
 
 ---
@@ -499,12 +556,15 @@ Search prescriptions with multiple filters.
 ## Appointments
 
 ### GET `/api/appointments/[appointmentId]/details`
+
 Get detailed information about a specific appointment.
 
 **Path Parameters:**
+
 - `appointmentId` (required): Appointment UUID
 
 **Response (200 OK):**
+
 ```json
 {
   "appointment_date": "2026-02-15",
@@ -516,6 +576,7 @@ Get detailed information about a specific appointment.
 ```
 
 **Error Responses:**
+
 - `404 Not Found`: Appointment not found
 - `500 Internal Server Error`: Query error
 
@@ -524,9 +585,11 @@ Get detailed information about a specific appointment.
 ## Video Calls
 
 ### POST `/api/video-calls/initiate`
+
 Initiate a video call for an appointment (patient only).
 
 **Request Body:**
+
 ```json
 {
   "appointmentId": "uuid",
@@ -537,6 +600,7 @@ Initiate a video call for an appointment (patient only).
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -551,6 +615,7 @@ Initiate a video call for an appointment (patient only).
 ```
 
 **Error Responses:**
+
 - `400 Bad Request`: Invalid doctor ID or appointment status
 - `401 Unauthorized`: User not authenticated
 - `403 Forbidden`: Only patients can initiate calls or unauthorized appointment access
@@ -562,9 +627,11 @@ Initiate a video call for an appointment (patient only).
 ## Chatbot
 
 ### POST `/api/chatbot`
+
 Send a message to the AI healthcare assistant.
 
 **Request Body:**
+
 ```json
 {
   "message": "string",
@@ -576,6 +643,7 @@ Send a message to the AI healthcare assistant.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "reply": "I'm here to help with general health information and system navigation. How can I assist you today?"
@@ -583,17 +651,20 @@ Send a message to the AI healthcare assistant.
 ```
 
 **Chatbot Capabilities:**
+
 - General health education
 - System usage guidance
 - Navigation help
 - Symptom guidance (advises users to see a doctor for diagnosis)
 
 **Chatbot Limitations:**
+
 - Does NOT diagnose diseases
 - Does NOT prescribe medication
 - Does NOT provide treatment plans
 
 **Error Responses:**
+
 - `400 Bad Request`: No message provided
 - `500 Internal Server Error`: AI service unavailable
 - `504 Gateway Timeout`: AI took too long to respond
@@ -605,16 +676,19 @@ Send a message to the AI healthcare assistant.
 Server actions are Next.js server-side functions called directly from the client.
 
 ### `login(identifier, password, role)`
+
 Authenticate a user and handle MFA if enabled.
 
 **Parameters:**
+
 ```typescript
-identifier: string  // Email or User ID
-password: string
-role: "patient" | "doctor" | "nurse" | "staff" | "admin"
+identifier: string; // Email or User ID
+password: string;
+role: "patient" | "doctor" | "nurse" | "staff" | "admin";
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: boolean;
@@ -633,6 +707,7 @@ role: "patient" | "doctor" | "nurse" | "staff" | "admin"
 ```
 
 **Features:**
+
 - Account lockout protection (5 attempts, 30-minute lockout)
 - Password expiry check (90 days)
 - MFA support with OTP via email
@@ -642,16 +717,19 @@ role: "patient" | "doctor" | "nurse" | "staff" | "admin"
 ---
 
 ### `verifyMFAOTP(mfaToken, otp, role)`
+
 Verify the OTP code for multi-factor authentication.
 
 **Parameters:**
+
 ```typescript
-mfaToken: string  // Temporary token from login
-otp: string       // 6-digit OTP code
-role: UserRole
+mfaToken: string; // Temporary token from login
+otp: string; // 6-digit OTP code
+role: UserRole;
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: boolean;
@@ -667,29 +745,31 @@ role: UserRole
 
 ### HTTP Status Codes
 
-| Code | Meaning | Description |
-|------|---------|-------------|
-| 200 | OK | Request successful |
-| 201 | Created | Resource created successfully |
-| 400 | Bad Request | Invalid request data or missing fields |
-| 401 | Unauthorized | Authentication failed or token invalid |
-| 403 | Forbidden | User lacks permission for this action |
-| 404 | Not Found | Resource not found |
-| 409 | Conflict | Resource already exists (e.g., email) |
-| 500 | Internal Server Error | Server-side error |
-| 504 | Gateway Timeout | Request timed out |
+| Code | Meaning               | Description                            |
+| ---- | --------------------- | -------------------------------------- |
+| 200  | OK                    | Request successful                     |
+| 201  | Created               | Resource created successfully          |
+| 400  | Bad Request           | Invalid request data or missing fields |
+| 401  | Unauthorized          | Authentication failed or token invalid |
+| 403  | Forbidden             | User lacks permission for this action  |
+| 404  | Not Found             | Resource not found                     |
+| 409  | Conflict              | Resource already exists (e.g., email)  |
+| 500  | Internal Server Error | Server-side error                      |
+| 504  | Gateway Timeout       | Request timed out                      |
 
 ---
 
 ## Security Features
 
 ### Authentication
+
 - Bcrypt password hashing
 - Session-based authentication
 - Role-based access control (RBAC)
 - Multi-factor authentication (MFA) via email OTP
 
 ### Password Requirements
+
 - Minimum 8 characters
 - At least 1 uppercase letter
 - At least 1 lowercase letter
@@ -698,13 +778,16 @@ role: UserRole
 - Expires after 90 days
 
 ### Account Protection
+
 - Account lockout after 5 failed login attempts
 - 30-minute lockout duration
 - Manual admin lockout capability
 - Real-time lockout status checking
 
 ### Audit Logging
+
 All significant actions are logged including:
+
 - Authentication attempts (success/failure)
 - Resource access (view, create, update, delete)
 - Administrative actions
@@ -717,6 +800,7 @@ All significant actions are logged including:
 ## Rate Limiting
 
 Currently, there are no explicit rate limits implemented. Consider implementing rate limiting for:
+
 - Login attempts (already handled by account lockout)
 - OTP requests
 - API endpoints (general)
@@ -726,15 +810,16 @@ Currently, there are no explicit rate limits implemented. Consider implementing 
 
 ## File Upload Limits
 
-| Endpoint | Max File Size | Allowed Types |
-|----------|---------------|---------------|
-| `/api/medical-reports` | 50 MB | PDF, Images, Documents |
+| Endpoint               | Max File Size | Allowed Types          |
+| ---------------------- | ------------- | ---------------------- |
+| `/api/medical-reports` | 50 MB         | PDF, Images, Documents |
 
 ---
 
 ## Database Schema
 
 ### User Tables
+
 - `patients` - Patient information and credentials
 - `doctors` - Doctor information and credentials
 - `nurses` - Nurse information and credentials
@@ -742,6 +827,7 @@ Currently, there are no explicit rate limits implemented. Consider implementing 
 - `admins` - Administrator credentials
 
 ### Medical Data Tables
+
 - `appointments` - Appointment scheduling
 - `medical_records` - Patient medical history
 - `medical_reports` - Uploaded medical documents
@@ -749,6 +835,7 @@ Currently, there are no explicit rate limits implemented. Consider implementing 
 - `vitals` - Patient vital signs
 
 ### System Tables
+
 - `access_logs` - Audit trail of all system actions
 - `medical_report_logs` - Specific logs for report access
 - `account_locks` - Account lockout tracking
@@ -788,22 +875,26 @@ OLLAMA_API_URL=http://127.0.0.1:11434
 ### Using cURL
 
 **Health Check:**
+
 ```bash
 curl http://localhost:3000/api/health
 ```
 
 **Login (via Server Action):**
+
 ```bash
 # Server actions can't be tested directly with cURL
 # Use the login page at http://localhost:3000/login
 ```
 
 **Get Statistics (Admin):**
+
 ```bash
 curl "http://localhost:3000/api/admin/statistics?adminId=admin"
 ```
 
 **Upload Medical Report:**
+
 ```bash
 curl -X POST \
   -F "patientId=P001" \
@@ -820,6 +911,7 @@ curl -X POST \
 ## API Changelog
 
 ### Version 1.0.0 (Current)
+
 - Initial API implementation
 - Authentication with MFA support
 - Patient registration
@@ -835,6 +927,7 @@ curl -X POST \
 ## Support & Contact
 
 For API support or questions:
+
 - Review the documentation thoroughly
 - Check error messages and logs
 - Verify authentication and authorization
@@ -846,6 +939,7 @@ For API support or questions:
 ## Future Enhancements
 
 Planned features for future API versions:
+
 - [ ] Rate limiting implementation
 - [ ] API versioning (v1, v2, etc.)
 - [ ] GraphQL endpoint

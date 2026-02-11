@@ -4,13 +4,13 @@
  */
 
 // Polyfill for Next.js API routes in Jest
-if (typeof globalThis.Request === 'undefined') {
+if (typeof globalThis.Request === "undefined") {
   globalThis.Request = class Request {} as any;
 }
-if (typeof globalThis.Response === 'undefined') {
+if (typeof globalThis.Response === "undefined") {
   globalThis.Response = class Response {} as any;
 }
-if (typeof globalThis.Headers === 'undefined') {
+if (typeof globalThis.Headers === "undefined") {
   globalThis.Headers = class Headers {} as any;
 }
 
