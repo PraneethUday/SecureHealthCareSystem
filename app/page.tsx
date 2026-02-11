@@ -1,14 +1,24 @@
-'use client';
+"use client";
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { ArrowRight, Shield, Users, Activity, Calendar, MessageSquare, Video } from "lucide-react";
+import {
+  ArrowRight,
+  Shield,
+  Users,
+  Activity,
+  Calendar,
+  MessageSquare,
+  Video,
+} from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 // Dynamic import for Threads component (client-side only)
-const Threads = dynamic(() => import("@/components/Threads"), { 
+const Threads = dynamic(() => import("@/components/Threads"), {
   ssr: false,
-  loading: () => <div className="absolute inset-0 bg-gradient-to-br from-red-900 to-black" />
+  loading: () => (
+    <div className="absolute inset-0 bg-gradient-to-br from-red-900 to-black" />
+  ),
 });
 
 export default function Home() {
@@ -25,10 +35,16 @@ export default function Home() {
               </span>
             </div>
             <div className="flex items-center space-x-4">
-              <a href="#about" className="text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 transition">
+              <a
+                href="#about"
+                className="text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 transition"
+              >
                 About
               </a>
-              <a href="#features" className="text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 transition">
+              <a
+                href="#features"
+                className="text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 transition"
+              >
                 Features
               </a>
               <ThemeToggle />
@@ -55,18 +71,17 @@ export default function Home() {
             enableMouseInteraction
           />
         </div>
-        
+
         {/* Hero Content */}
         <div className="relative z-10 max-w-7xl mx-auto text-center px-4 sm:px-6 lg:px-8 py-20">
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 drop-shadow-lg">
             Secure Healthcare Management
-            <span className="block text-red-300 mt-2">
-              Made Simple
-            </span>
+            <span className="block text-red-300 mt-2">Made Simple</span>
           </h1>
           <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto drop-shadow">
-            A comprehensive healthcare platform designed for doctors, nurses, and patients.
-            Manage appointments, medical records, prescriptions, and telemedicine securely in one place.
+            A comprehensive healthcare platform designed for doctors, nurses,
+            and patients. Manage appointments, medical records, prescriptions,
+            and telemedicine securely in one place.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -104,7 +119,7 @@ export default function Home() {
               Everything you need to manage healthcare efficiently
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FeatureCard
               icon={<Calendar className="h-10 w-10 text-red-600" />}
@@ -141,7 +156,10 @@ export default function Home() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-20 bg-gradient-to-b from-red-50 to-white dark:from-gray-900 dark:to-gray-800">
+      <section
+        id="about"
+        className="py-20 bg-gradient-to-b from-red-50 to-white dark:from-gray-900 dark:to-gray-800"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
@@ -149,12 +167,14 @@ export default function Home() {
                 About SecureHealthCare System
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-                SecureHealthCare System is a modern, comprehensive healthcare management platform
-                designed to streamline medical operations and improve patient care delivery.
+                SecureHealthCare System is a modern, comprehensive healthcare
+                management platform designed to streamline medical operations
+                and improve patient care delivery.
               </p>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-                Built with cutting-edge technology and security best practices, our system provides
-                healthcare professionals with the tools they need to focus on what matters most - patient care.
+                Built with cutting-edge technology and security best practices,
+                our system provides healthcare professionals with the tools they
+                need to focus on what matters most - patient care.
               </p>
               <div className="space-y-4">
                 <AboutFeature
@@ -203,7 +223,8 @@ export default function Home() {
             Ready to Transform Healthcare Management?
           </h2>
           <p className="text-xl text-red-100 mb-8">
-            Join healthcare professionals using SecureHealthCare to deliver better patient care.
+            Join healthcare professionals using SecureHealthCare to deliver
+            better patient care.
           </p>
           <Link
             href="/login"
@@ -222,29 +243,48 @@ export default function Home() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Shield className="h-6 w-6 text-red-500" />
-                <span className="text-lg font-bold text-white">SecureHealthCare</span>
+                <span className="text-lg font-bold text-white">
+                  SecureHealthCare
+                </span>
               </div>
               <p className="text-gray-400">
-                Empowering healthcare providers with secure, efficient, and comprehensive management tools.
+                Empowering healthcare providers with secure, efficient, and
+                comprehensive management tools.
               </p>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2">
-                <li><a href="#features" className="hover:text-red-400 transition">Features</a></li>
-                <li><a href="#about" className="hover:text-red-400 transition">About</a></li>
-                <li><Link href="/login" className="hover:text-red-400 transition">Login</Link></li>
+                <li>
+                  <a href="#features" className="hover:text-red-400 transition">
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a href="#about" className="hover:text-red-400 transition">
+                    About
+                  </a>
+                </li>
+                <li>
+                  <Link href="/login" className="hover:text-red-400 transition">
+                    Login
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Contact</h4>
               <p className="text-gray-400">
-                For support and inquiries, please contact your system administrator.
+                For support and inquiries, please contact your system
+                administrator.
               </p>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; {new Date().getFullYear()} SecureHealthCare System. All rights reserved.</p>
+            <p>
+              &copy; {new Date().getFullYear()} SecureHealthCare System. All
+              rights reserved.
+            </p>
           </div>
         </div>
       </footer>
@@ -252,26 +292,52 @@ export default function Home() {
   );
 }
 
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+function FeatureCard({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl hover:shadow-red-500/10 transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-900">
       <div className="mb-4">{icon}</div>
-      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{title}</h3>
+      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+        {title}
+      </h3>
       <p className="text-gray-600 dark:text-gray-300">{description}</p>
     </div>
   );
 }
 
-function AboutFeature({ title, description }: { title: string; description: string }) {
+function AboutFeature({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
     <div className="flex items-start space-x-3">
       <div className="flex-shrink-0 h-6 w-6 rounded-full bg-red-600 flex items-center justify-center mt-1">
-        <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+        <svg
+          className="h-4 w-4 text-white"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fillRule="evenodd"
+            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+            clipRule="evenodd"
+          />
         </svg>
       </div>
       <div>
-        <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h4>
+        <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+          {title}
+        </h4>
         <p className="text-gray-600 dark:text-gray-300">{description}</p>
       </div>
     </div>
@@ -281,8 +347,16 @@ function AboutFeature({ title, description }: { title: string; description: stri
 function Capability({ text }: { text: string }) {
   return (
     <li className="flex items-center space-x-3">
-      <svg className="h-5 w-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+      <svg
+        className="h-5 w-5 text-red-500 flex-shrink-0"
+        fill="currentColor"
+        viewBox="0 0 20 20"
+      >
+        <path
+          fillRule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+          clipRule="evenodd"
+        />
       </svg>
       <span className="text-gray-700 dark:text-gray-300">{text}</span>
     </li>
