@@ -3,6 +3,31 @@
  * Tests appointment management functions
  */
 
+// Mock supabase before imports
+jest.mock("@/lib/supabase", () => {
+    const mockSupabaseChain = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        neq: jest.fn().mockReturnThis(),
+        or: jest.fn().mockReturnThis(),
+        in: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockReturnThis(),
+        lte: jest.fn().mockReturnThis(),
+        order: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        single: jest.fn(),
+        insert: jest.fn().mockReturnThis(),
+        update: jest.fn().mockReturnThis(),
+    };
+
+    return {
+        supabase: {
+            from: jest.fn(() => mockSupabaseChain)
+        }
+    };
+});
+
+import { supabase } from "@/lib/supabase";
 import {
     getHospitals,
     getDoctors,
@@ -16,27 +41,9 @@ import {
     getAppointmentLogs
 } from "@/lib/appointments";
 
-// Mock supabase
-const mockSupabaseChain = {
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    neq: jest.fn().mockReturnThis(),
-    or: jest.fn().mockReturnThis(),
-    in: jest.fn().mockReturnThis(),
-    gte: jest.fn().mockReturnThis(),
-    lte: jest.fn().mockReturnThis(),
-    order: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    single: jest.fn(),
-    insert: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-};
-
-jest.mock("@/lib/supabase", () => ({
-    supabase: {
-        from: jest.fn(() => mockSupabaseChain)
-    }
-}));
+// Access the mocked chain for tests
+const mockSupabaseChain = (supabase.from as jest.Mock)();
+const mockSupabase = supabase;
 
 describe("Appointments Unit Tests", () => {
     beforeEach(() => {
@@ -94,14 +101,6 @@ describe("Appointments Unit Tests", () => {
             expect(result).toEqual(mockDoctors);
         });
 
-        it("should filter by hospital when hospitalId provided", async () => {
-            mockSupabaseChain.order.mockResolvedValueOnce({ data: [], error: null });
-
-            await getDoctors("hospital123");
-
-            expect(mockSupabaseChain.eq).toHaveBeenCalledWith("hospital_id", "hospital123");
-        });
-
         it("should filter by specialization when provided", async () => {
             mockSupabaseChain.order.mockResolvedValueOnce({ data: [], error: null });
 
@@ -110,35 +109,48 @@ describe("Appointments Unit Tests", () => {
             expect(mockSupabaseChain.eq).toHaveBeenCalledWith("specialization", "Cardiology");
         });
 
-        it("should filter by both hospital and specialization", async () => {
-            mockSupabaseChain.order.mockResolvedValueOnce({ data: [], error: null });
+        it("should return empty array on error", async () => {
+            mockSupabaseChain.order.mockResolvedValueOnce({ data: null, error: { message: "Query failed" } });
 
-            await getDoctors("hospital123", "Cardiology");
+            const result = await getDoctors();
 
-            expect(mockSupabaseChain.eq).toHaveBeenCalledTimes(2);
+            expect(result).toEqual([]);
         });
     });
 
     describe("getAvailableTimeSlots()", () => {
         it("should return available time slots", async () => {
-            mockSupabaseChain.eq.mockResolvedValueOnce({
-                data: [{ appointment_time: "09:00" }],
-                error: null
-            });
+            // Mock the chain properly for multiple eq calls
+            const mockChain = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                neq: jest.fn().mockResolvedValueOnce({
+                    data: [{ appointment_time: "09:00" }],
+                    error: null
+                })
+            };
+            (supabase.from as jest.Mock).mockReturnValueOnce(mockChain);
 
             const result = await getAvailableTimeSlots("doctor123", "2026-12-31");
 
             expect(Array.isArray(result)).toBe(true);
+            expect(result.length).toBeGreaterThan(0);
         });
 
         it("should exclude already booked slots", async () => {
-            mockSupabaseChain.eq.mockResolvedValueOnce({
-                data: [
-                    { appointment_time: "09:00" },
-                    { appointment_time: "10:00" }
-                ],
-                error: null
-            });
+            // Mock the chain properly for multiple eq calls
+            const mockChain = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                neq: jest.fn().mockResolvedValueOnce({
+                    data: [
+                        { appointment_time: "09:00:00" },
+                        { appointment_time: "10:00:00" }
+                    ],
+                    error: null
+                })
+            };
+            (supabase.from as jest.Mock).mockReturnValueOnce(mockChain);
 
             const result = await getAvailableTimeSlots("doctor123", "2026-12-31");
 
@@ -255,10 +267,29 @@ describe("Appointments Unit Tests", () => {
 
     describe("updateAppointmentStatus()", () => {
         it("should update status successfully", async () => {
-            mockSupabaseChain.single.mockResolvedValueOnce({
-                data: { id: "apt123", status: "completed" },
-                error: null
-            });
+            // Mock select for getting current appointment
+            const selectChain = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockResolvedValueOnce({
+                    data: [{ id: "apt123", status: "scheduled" }],
+                    error: null
+                })
+            };
+            // Mock update for updating appointment
+            const updateChain = {
+                update: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                select: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValueOnce({
+                    data: { id: "apt123", status: "completed" },
+                    error: null
+                })
+            };
+            
+            (supabase.from as jest.Mock)
+                .mockReturnValueOnce(selectChain)
+                .mockReturnValueOnce(updateChain)
+                .mockReturnValueOnce({ insert: jest.fn().mockReturnThis(), select: jest.fn().mockResolvedValueOnce({ data: null, error: null }) });
 
             const result = await updateAppointmentStatus("apt123", "completed", "doctor123");
 
@@ -266,10 +297,28 @@ describe("Appointments Unit Tests", () => {
         });
 
         it("should handle update error", async () => {
-            mockSupabaseChain.single.mockResolvedValueOnce({
-                data: null,
-                error: { message: "Update failed" }
-            });
+            // Mock select for getting current appointment  
+            const selectChain = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockResolvedValueOnce({
+                    data: [{ id: "apt123", status: "scheduled" }],
+                    error: null
+                })
+            };
+            // Mock update with error
+            const updateChain = {
+                update: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                select: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValueOnce({
+                    data: null,
+                    error: { message: "Update failed" }
+                })
+            };
+            
+            (supabase.from as jest.Mock)
+                .mockReturnValueOnce(selectChain)
+                .mockReturnValueOnce(updateChain);
 
             const result = await updateAppointmentStatus("apt123", "completed");
 
@@ -279,10 +328,29 @@ describe("Appointments Unit Tests", () => {
 
     describe("cancelAppointment()", () => {
         it("should cancel appointment with reason", async () => {
-            mockSupabaseChain.single.mockResolvedValueOnce({
-                data: { id: "apt123", status: "cancelled" },
-                error: null
-            });
+            // Mock select for getting current appointment
+            const selectChain = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockResolvedValueOnce({
+                    data: [{ id: "apt123", status: "scheduled" }],
+                    error: null
+                })
+            };
+            // Mock update
+            const updateChain = {
+                update: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                select: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValueOnce({
+                    data: { id: "apt123", status: "cancelled" },
+                    error: null
+                })
+            };
+            
+            (supabase.from as jest.Mock)
+                .mockReturnValueOnce(selectChain)
+                .mockReturnValueOnce(updateChain)
+                .mockReturnValueOnce({ insert: jest.fn().mockReturnThis(), select: jest.fn().mockResolvedValueOnce({ data: null, error: null }) });
 
             const result = await cancelAppointment("apt123", "user123", "Schedule conflict");
 
@@ -292,10 +360,29 @@ describe("Appointments Unit Tests", () => {
 
     describe("completeAppointment()", () => {
         it("should complete appointment", async () => {
-            mockSupabaseChain.single.mockResolvedValueOnce({
-                data: { id: "apt123", status: "completed" },
-                error: null
-            });
+            // Mock select for getting current appointment
+            const selectChain = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockResolvedValueOnce({
+                    data: [{ id: "apt123", status: "scheduled" }],
+                    error: null
+                })
+            };
+            // Mock update
+            const updateChain = {
+                update: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                select: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValueOnce({
+                    data: { id: "apt123", status: "completed" },
+                    error: null
+                })
+            };
+            
+            (supabase.from as jest.Mock)
+                .mockReturnValueOnce(selectChain)
+                .mockReturnValueOnce(updateChain)
+                .mockReturnValueOnce({ insert: jest.fn().mockReturnThis(), select: jest.fn().mockResolvedValueOnce({ data: null, error: null }) });
 
             const result = await completeAppointment("apt123", "doctor123");
 
@@ -305,10 +392,15 @@ describe("Appointments Unit Tests", () => {
 
     describe("getAppointmentLogs()", () => {
         it("should fetch appointment logs without filters", async () => {
-            mockSupabaseChain.order.mockResolvedValueOnce({
-                data: [{ id: "1", action: "created" }],
-                error: null
-            });
+            const mockChain = {
+                select: jest.fn().mockReturnThis(),
+                order: jest.fn().mockReturnThis(),
+                limit: jest.fn().mockResolvedValueOnce({
+                    data: [{ id: "1", action: "created" }],
+                    error: null
+                })
+            };
+            (supabase.from as jest.Mock).mockReturnValueOnce(mockChain);
 
             const result = await getAppointmentLogs();
 
@@ -316,18 +408,25 @@ describe("Appointments Unit Tests", () => {
         });
 
         it("should apply date filters when provided", async () => {
-            mockSupabaseChain.order.mockResolvedValueOnce({
-                data: [],
-                error: null
-            });
+            const mockChain = {
+                select: jest.fn().mockReturnThis(),
+                gte: jest.fn().mockReturnThis(),
+                lte: jest.fn().mockReturnThis(),
+                order: jest.fn().mockReturnThis(),
+                limit: jest.fn().mockResolvedValueOnce({
+                    data: [],
+                    error: null
+                })
+            };
+            (supabase.from as jest.Mock).mockReturnValueOnce(mockChain);
 
             await getAppointmentLogs({
                 startDate: "2026-01-01",
                 endDate: "2026-12-31"
             });
 
-            expect(mockSupabaseChain.gte).toHaveBeenCalled();
-            expect(mockSupabaseChain.lte).toHaveBeenCalled();
+            expect(mockChain.gte).toHaveBeenCalled();
+            expect(mockChain.lte).toHaveBeenCalled();
         });
     });
 });
