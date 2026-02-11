@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendAppointmentConfirmationEmail, sendDoctorAppointmentNotification } from "@/lib/email";
+import {
+  sendAppointmentConfirmationEmail,
+  sendDoctorAppointmentNotification,
+} from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,10 +16,16 @@ export async function POST(request: NextRequest) {
       const result = await sendDoctorAppointmentNotification(data);
       return NextResponse.json({ success: result });
     } else {
-      return NextResponse.json({ success: false, error: "Invalid notification type" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Invalid notification type" },
+        { status: 400 },
+      );
     }
   } catch (error) {
     console.error("[API] Notification error:", error);
-    return NextResponse.json({ success: false, error: "Failed to send notification" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Failed to send notification" },
+      { status: 500 },
+    );
   }
 }
