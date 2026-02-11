@@ -38,6 +38,7 @@ export default function RoleSelector({
     return (
       <button
         key={role}
+        type="button"
         onClick={() => onRoleChange(role)}
         className={`${themeClasses.roleButton(role)} ${
           isPatient ? "p-2" : "p-3"
