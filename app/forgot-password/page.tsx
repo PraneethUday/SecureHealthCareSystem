@@ -28,8 +28,17 @@ export default function ForgotPasswordPage() {
 
             console.log('[Forgot Password Frontend] Response status:', response.status);
 
-            const data = await response.json();
-            console.log('[Forgot Password Frontend] Response data:', data);
+            const contentType = response.headers.get("content-type");
+            let data;
+
+            if (contentType && contentType.includes("application/json")) {
+                data = await response.json();
+                console.log('[Forgot Password Frontend] Response data:', data);
+            } else {
+                const text = await response.text();
+                console.error('[Forgot Password Frontend] ❌ Non-JSON response:', text);
+                throw new Error(`Server returned non-JSON response (${response.status})`);
+            }
 
             if (response.ok) {
                 console.log('[Forgot Password Frontend] ✅ Success!');
@@ -40,7 +49,14 @@ export default function ForgotPasswordPage() {
             }
         } catch (err: any) {
             console.error('[Forgot Password Frontend] ❌ Exception:', err);
-            setError(err.message || "An error occurred. Please try again.");
+            // DEBUG: Show full error to help identifying why err.message might be empty
+            const errorDetails = err.message || JSON.stringify(err) || "Unknown Error";
+
+            if (errorDetails.includes('Unexpected token') || errorDetails.includes('non-JSON')) {
+                setError("Server error (500): The password reset service is currently failing. Check your server terminal logs.");
+            } else {
+                setError(`Error: ${errorDetails}`);
+            }
         } finally {
             setLoading(false);
         }
