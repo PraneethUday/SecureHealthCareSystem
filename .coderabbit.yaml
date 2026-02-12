@@ -13,7 +13,7 @@ reviews:
     drafts: false
   # Review level - thorough for healthcare security
   review_level: detailed
-  
+
   # Specific review focus areas
   review_focus:
     - security
@@ -22,16 +22,16 @@ reviews:
     - code_quality
     - testing
     - documentation
-  
+
   # Request changes on critical issues
   request_changes_workflow: true
-  
+
   # High-level review on large PRs
   high_level_summary: true
-  
+
   # Poem on approval (optional, can be disabled)
   poem: false
-  
+
   # Collapse walkthrough section
   collapse_walkthrough: false
 
@@ -44,7 +44,7 @@ path_instructions:
       - Ensure proper error handling without exposing sensitive data
       - Validate input sanitization
       - Review rate limiting implementation
-  
+
   - path: "lib/**"
     instructions: |
       - Review security functions carefully
@@ -52,28 +52,28 @@ path_instructions:
       - Verify database query safety
       - Ensure sensitive data is properly encrypted
       - Review authentication and authorization logic
-  
+
   - path: "components/**"
     instructions: |
       - Check for XSS vulnerabilities
       - Verify proper prop types and validation
       - Review accessibility (a11y) compliance
       - Ensure HIPAA-compliant UI/UX patterns
-  
+
   - path: "__tests__/**"
     instructions: |
       - Verify test coverage is adequate
       - Check for edge cases and error scenarios
       - Ensure security-critical paths are tested
       - Review mock data for realistic scenarios
-  
+
   - path: "supabase/**"
     instructions: |
       - Review RLS policies for data security
       - Check database migrations for safety
       - Verify proper indexing
       - Ensure no data leaks in policies
-  
+
   - path: "*.md"
     instructions: |
       - Check for clear and accurate documentation
@@ -105,23 +105,23 @@ labels:
     - "lib/security.ts"
     - "lib/account-lockout.ts"
     - "app/api/auth/**"
-  
+
   database:
     - "supabase/**"
     - "lib/supabase*.ts"
-  
+
   frontend:
     - "app/**/*.tsx"
     - "components/**"
-  
+
   api:
     - "app/api/**"
-  
+
   tests:
     - "__tests__/**"
     - "*.test.ts"
     - "*.test.tsx"
-  
+
   documentation:
     - "docs/**"
     - "*.md"
@@ -147,21 +147,21 @@ checks:
   security:
     enabled: true
     severity: high
-  
+
   # Performance checks
   performance:
     enabled: true
-  
+
   # Code complexity
   complexity:
     enabled: true
     threshold: 15
-  
+
   # Test coverage
   test_coverage:
     enabled: true
     threshold: 70
-  
+
   # Documentation
   documentation:
     enabled: true
@@ -177,21 +177,21 @@ custom_rules:
       - Audit logging of access to patient data
       - Secure authentication and authorization
       - Data retention policies
-  
+
   - id: supabase-rls
     description: "Ensure Row Level Security is enabled"
     severity: critical
     files:
       - "supabase/migrations/**"
     message: "All tables with patient data must have RLS policies"
-  
+
   - id: api-authentication
     description: "API routes must have authentication"
     severity: high
     files:
       - "app/api/**"
     message: "Verify authentication middleware is applied"
-  
+
   - id: sensitive-data-logging
     description: "Prevent logging of sensitive data"
     severity: critical
