@@ -1,0 +1,205 @@
+# CodeRabbit Configuration for SecureHealthCareSystem
+# https://docs.coderabbit.ai/guides/configure-coderabbit/
+
+# Language and tone settings
+language: en-US
+tone_instructions: "Be thorough and security-focused. This is a healthcare application handling sensitive patient data."
+
+# Auto-review settings
+reviews:
+  # Enable automatic reviews on all PRs to main
+  auto_review:
+    enabled: true
+    drafts: false
+  # Review level - thorough for healthcare security
+  review_level: detailed
+  
+  # Specific review focus areas
+  review_focus:
+    - security
+    - performance
+    - best_practices
+    - code_quality
+    - testing
+    - documentation
+  
+  # Request changes on critical issues
+  request_changes_workflow: true
+  
+  # High-level review on large PRs
+  high_level_summary: true
+  
+  # Poem on approval (optional, can be disabled)
+  poem: false
+  
+  # Collapse walkthrough section
+  collapse_walkthrough: false
+
+# Path-based instructions for targeted reviews
+path_instructions:
+  - path: "app/api/**"
+    instructions: |
+      - Verify authentication and authorization checks
+      - Check for SQL injection vulnerabilities
+      - Ensure proper error handling without exposing sensitive data
+      - Validate input sanitization
+      - Review rate limiting implementation
+  
+  - path: "lib/**"
+    instructions: |
+      - Review security functions carefully
+      - Check for proper error handling
+      - Verify database query safety
+      - Ensure sensitive data is properly encrypted
+      - Review authentication and authorization logic
+  
+  - path: "components/**"
+    instructions: |
+      - Check for XSS vulnerabilities
+      - Verify proper prop types and validation
+      - Review accessibility (a11y) compliance
+      - Ensure HIPAA-compliant UI/UX patterns
+  
+  - path: "__tests__/**"
+    instructions: |
+      - Verify test coverage is adequate
+      - Check for edge cases and error scenarios
+      - Ensure security-critical paths are tested
+      - Review mock data for realistic scenarios
+  
+  - path: "supabase/**"
+    instructions: |
+      - Review RLS policies for data security
+      - Check database migrations for safety
+      - Verify proper indexing
+      - Ensure no data leaks in policies
+  
+  - path: "*.md"
+    instructions: |
+      - Check for clear and accurate documentation
+      - Verify setup instructions are complete
+      - Ensure security guidelines are documented
+
+# Enable early access features
+early_access: true
+
+# Chat settings
+chat:
+  auto_reply: true
+
+# Base branch to compare against
+base_branch_pattern: "main"
+
+# Knowledge base - files to help CodeRabbit understand the project
+knowledge_base:
+  - "README.md"
+  - "docs/PROJECT_STRUCTURE.md"
+  - "docs/SECURE_AUTH_IMPLEMENTATION_SUMMARY.md"
+  - "docs/DEPLOYMENT_GUIDE.md"
+  - "docs/API_DOCUMENTATION.md"
+
+# Auto-labeling based on changes
+labels:
+  security:
+    - "lib/auth.ts"
+    - "lib/security.ts"
+    - "lib/account-lockout.ts"
+    - "app/api/auth/**"
+  
+  database:
+    - "supabase/**"
+    - "lib/supabase*.ts"
+  
+  frontend:
+    - "app/**/*.tsx"
+    - "components/**"
+  
+  api:
+    - "app/api/**"
+  
+  tests:
+    - "__tests__/**"
+    - "*.test.ts"
+    - "*.test.tsx"
+  
+  documentation:
+    - "docs/**"
+    - "*.md"
+
+# Files to ignore from reviews
+ignore:
+  - "*.log"
+  - "*.txt"
+  - "build_log*.txt"
+  - "lint*.txt"
+  - "node_modules/**"
+  - "dist/**"
+  - "build/**"
+  - ".next/**"
+  - "coverage/**"
+  - "package-lock.json"
+  - "yarn.lock"
+  - "pnpm-lock.yaml"
+
+# Enable specific checks
+checks:
+  # Security checks
+  security:
+    enabled: true
+    severity: high
+  
+  # Performance checks
+  performance:
+    enabled: true
+  
+  # Code complexity
+  complexity:
+    enabled: true
+    threshold: 15
+  
+  # Test coverage
+  test_coverage:
+    enabled: true
+    threshold: 70
+  
+  # Documentation
+  documentation:
+    enabled: true
+
+# Custom rules for this healthcare application
+custom_rules:
+  - id: hipaa-compliance
+    description: "Ensure HIPAA compliance in healthcare data handling"
+    severity: critical
+    pattern: |
+      Check for:
+      - Proper encryption of PHI (Protected Health Information)
+      - Audit logging of access to patient data
+      - Secure authentication and authorization
+      - Data retention policies
+  
+  - id: supabase-rls
+    description: "Ensure Row Level Security is enabled"
+    severity: critical
+    files:
+      - "supabase/migrations/**"
+    message: "All tables with patient data must have RLS policies"
+  
+  - id: api-authentication
+    description: "API routes must have authentication"
+    severity: high
+    files:
+      - "app/api/**"
+    message: "Verify authentication middleware is applied"
+  
+  - id: sensitive-data-logging
+    description: "Prevent logging of sensitive data"
+    severity: critical
+    pattern: "console\\.log.*(?:password|token|ssn|dob|medical)"
+    message: "Sensitive data should not be logged"
+
+# Notification settings
+notifications:
+  review_submitted: true
+  review_updated: true
+  issue_critical: true
