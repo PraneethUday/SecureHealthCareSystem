@@ -44,7 +44,7 @@ CREATE INDEX IF NOT EXISTS idx_medical_reports_uploaded_at ON medical_reports(up
 -- ==========================================
 CREATE TABLE IF NOT EXISTS medical_report_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  report_id UUID REFERENCES medical_reports(id) ON DELETE CASCADE,
+  report_id UUID, -- No FK constraint to preserve logs after report deletion
   action_type TEXT NOT NULL CHECK (action_type IN ('uploaded', 'viewed', 'downloaded', 'deleted')),
   performed_by_user_id TEXT NOT NULL,
   performed_by_role TEXT NOT NULL,
@@ -141,6 +141,7 @@ BEGIN
         'file_size', NEW.file_size
       )
     );
+    RETURN NEW;
   ELSIF TG_OP = 'DELETE' THEN
     INSERT INTO medical_report_logs (
       report_id,
@@ -158,15 +159,16 @@ BEGIN
         'report_type', OLD.report_type
       )
     );
+    RETURN OLD;
   END IF;
-  RETURN NEW;
+  RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger to auto-log report actions
+-- Trigger to auto-log report actions (BEFORE to capture deletes properly)
 DROP TRIGGER IF EXISTS log_medical_report_action_trigger ON medical_reports;
 CREATE TRIGGER log_medical_report_action_trigger
-  AFTER INSERT OR DELETE ON medical_reports
+  BEFORE INSERT OR DELETE ON medical_reports
   FOR EACH ROW
   EXECUTE FUNCTION log_medical_report_action();
 

@@ -18,7 +18,15 @@ appointments-schema.sql
 
 Creates Tamil Nadu hospitals, appointments table, and related functionality
 
-## 3. Medical Records System
+## 3. Doctor-Hospital Associations
+
+```
+doctor-hospitals-schema.sql
+```
+
+Creates doctor_hospitals junction table to link doctors to specific hospitals
+
+## 4. Medical Records System
 
 ```
 fix-medical-records-rls.sql
@@ -26,7 +34,7 @@ fix-medical-records-rls.sql
 
 Creates medical_records table with proper structure and RLS policies
 
-## 4. Telemedicine & Prescriptions
+## 5. Telemedicine & Prescriptions
 
 ```
 telemedicine-schema.sql
@@ -34,7 +42,7 @@ telemedicine-schema.sql
 
 Adds video call support to appointments and creates prescriptions system
 
-## 5. WebRTC Video Calls
+## 6. WebRTC Video Calls
 
 ```
 webrtc-schema.sql
@@ -42,7 +50,7 @@ webrtc-schema.sql
 
 Creates video_calls and signaling tables for peer-to-peer video calls
 
-## 6. Enable Realtime
+## 7. Enable Realtime
 
 ```
 enable-realtime.sql
@@ -50,13 +58,13 @@ enable-realtime.sql
 
 Enables realtime features for video call notifications
 
-## 7. Seed Data
+## 8. Seed Data
 
 ```
 seed.sql
 ```
 
-Inserts sample users (admin, patients, doctors, nurses, staff)
+Inserts sample users (admin, patients, doctors, nurses, staff) and doctor-hospital associations
 
 ---
 
@@ -67,29 +75,32 @@ Inserts sample users (admin, patients, doctors, nurses, staff)
 - Username: `admin`
 - Password: `admin`
 
-**Patients:**
+**Patients (Indian Names):**
 
-- P001 / patient1
-- P002 / patient2
-- P003 / patient3
+- P001 / patient1 (Arun Krishnamurthy)
+- P002 / patient2 (Meera Sundaram)
+- P003 / patient3 (Venkatesh Raghavan)
 
-**Doctors (Tamil Names):**
+**Doctors (Tamil Names - 30 doctors across 10 hospitals):**
 
-- D001 / doctor1 (Dr. Rajesh Kumar - Cardiology)
-- D002 / doctor2 (Dr. Priya Selvam - Pediatrics)
-- D003 / doctor3 (Dr. Lakshmi Narayanan - Neurology)
+- D001 / doctor1 (Dr. Rajesh Krishnamoorthy - Cardiology, Apollo Chennai)
+- D004 / doctor4 (Dr. Lakshmi Subramanian - Orthopedics, Fortis Chennai)
+- D007 / doctor7 (Dr. Murugan Palaniswamy - Cardiology, KMCH Coimbatore)
+- D010 / doctor10 (Dr. Ramya Krishnan - General Medicine, PSG Coimbatore)
+- D013 / doctor13 (Dr. Senthil Arumugam - Cardiology, Kauvery Trichy)
+- ... and 25 more doctors
 
-**Nurses:**
+**Nurses (Indian Names):**
 
-- N001 / nurse1
-- N002 / nurse2
-- N003 / nurse3
+- N001 / nurse1 (Malathi Venkatesh)
+- N002 / nurse2 (Sudha Ramasamy)
+- N003 / nurse3 (Kanchana Murugesan)
 
-**Staff:**
+**Staff (Indian Names):**
 
-- S001 / staff1
-- S002 / staff2
-- S003 / staff3
+- S001 / staff1 (Kumaran Swaminathan)
+- S002 / staff2 (Jayalakshmi Balasubramanian)
+- S003 / staff3 (Ravi Pandian)
 
 ## Tamil Nadu Hospitals (10 Total)
 
