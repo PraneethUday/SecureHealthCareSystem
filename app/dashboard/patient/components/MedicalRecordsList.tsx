@@ -18,6 +18,7 @@ import {
 } from "@/lib/medicalRecords";
 import { MedicalRecordWithDetails } from "@/lib/database.types";
 import jsPDF from "jspdf";
+import Portal from "@/components/ui/Portal";
 
 interface MedicalRecordsListProps {
   patientId: string;
@@ -55,7 +56,7 @@ export default function MedicalRecordsList({
     pdf.text(
       `Record Date: ${new Date(record.record_date).toLocaleDateString()}`,
       20,
-      28
+      28,
     );
 
     // Patient & Doctor Info
@@ -87,7 +88,7 @@ export default function MedicalRecordsList({
 
     const diagnosisLines = pdf.splitTextToSize(
       `Diagnosis: ${record.diagnosis}`,
-      170
+      170,
     );
     pdf.text(diagnosisLines, 20, y);
     y += diagnosisLines.length * 5 + 5;
@@ -217,7 +218,7 @@ export default function MedicalRecordsList({
       pdf.setTextColor(0, 0, 0);
       const followUpLines = pdf.splitTextToSize(
         record.follow_up_instructions,
-        170
+        170,
       );
       pdf.text(followUpLines, 20, y);
     }
@@ -229,8 +230,9 @@ export default function MedicalRecordsList({
     pdf.text(`Generated on ${new Date().toLocaleString()}`, 20, 290);
 
     // Save PDF
-    const fileName = `Medical_Record_${new Date(record.record_date).toISOString().split("T")[0]
-      }.pdf`;
+    const fileName = `Medical_Record_${
+      new Date(record.record_date).toISOString().split("T")[0]
+    }.pdf`;
     pdf.save(fileName);
 
     // Log the download (only if record has ID)
@@ -316,7 +318,9 @@ export default function MedicalRecordsList({
                     <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1">
                       Diagnosis
                     </p>
-                    <p className="text-sm text-gray-800 dark:text-gray-200">{record.diagnosis}</p>
+                    <p className="text-sm text-gray-800 dark:text-gray-200">
+                      {record.diagnosis}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -327,40 +331,41 @@ export default function MedicalRecordsList({
 
       {/* Detail Modal */}
       {selectedRecord && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-3xl w-full my-8 border border-gray-200 dark:border-gray-800">
-            <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-800">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                Medical Record Details
-              </h2>
-              <button
-                onClick={() => setSelectedRecord(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                aria-label="Close modal"
-              >
-                <AlertCircle className="w-6 h-6" />
-              </button>
-            </div>
+        <Portal>
+          <div className="fixed inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 overflow-y-auto">
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-3xl w-full my-8 border border-gray-200 dark:border-gray-800">
+              <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-800">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  Medical Record Details
+                </h2>
+                <button
+                  onClick={() => setSelectedRecord(null)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  aria-label="Close modal"
+                >
+                  <AlertCircle className="w-6 h-6" />
+                </button>
+              </div>
 
-            <div className="p-6 max-h-[70vh] overflow-y-auto">
-              {/* Full record details - similar to PDF layout */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">
-                    Chief Complaint & Diagnosis
-                  </h3>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    <strong>Chief Complaint:</strong>{" "}
-                    {selectedRecord.chief_complaint}
-                  </p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
-                    <strong>Diagnosis:</strong> {selectedRecord.diagnosis}
-                  </p>
-                </div>
+              <div className="p-6 max-h-[70vh] overflow-y-auto">
+                {/* Full record details - similar to PDF layout */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">
+                      Chief Complaint & Diagnosis
+                    </h3>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      <strong>Chief Complaint:</strong>{" "}
+                      {selectedRecord.chief_complaint}
+                    </p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
+                      <strong>Diagnosis:</strong> {selectedRecord.diagnosis}
+                    </p>
+                  </div>
 
-                {(selectedRecord.blood_pressure ||
-                  selectedRecord.heart_rate ||
-                  selectedRecord.temperature) && (
+                  {(selectedRecord.blood_pressure ||
+                    selectedRecord.heart_rate ||
+                    selectedRecord.temperature) && (
                     <div>
                       <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-2">
                         Vital Signs
@@ -400,61 +405,62 @@ export default function MedicalRecordsList({
                     </div>
                   )}
 
-                {selectedRecord.treatment_plan && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-green-600 dark:text-green-400 mb-2">
-                      Treatment Plan
-                    </h3>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                      {selectedRecord.treatment_plan}
-                    </p>
-                  </div>
-                )}
+                  {selectedRecord.treatment_plan && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-green-600 dark:text-green-400 mb-2">
+                        Treatment Plan
+                      </h3>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                        {selectedRecord.treatment_plan}
+                      </p>
+                    </div>
+                  )}
 
-                {selectedRecord.recommendations && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-orange-600 dark:text-orange-400 mb-2">
-                      Recommendations
-                    </h3>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                      {selectedRecord.recommendations}
-                    </p>
-                  </div>
-                )}
+                  {selectedRecord.recommendations && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-orange-600 dark:text-orange-400 mb-2">
+                        Recommendations
+                      </h3>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                        {selectedRecord.recommendations}
+                      </p>
+                    </div>
+                  )}
 
-                {selectedRecord.follow_up_instructions && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-purple-600 dark:text-purple-400 mb-2">
-                      Follow-up Instructions
-                    </h3>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                      {selectedRecord.follow_up_instructions}
-                    </p>
-                  </div>
-                )}
+                  {selectedRecord.follow_up_instructions && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-purple-600 dark:text-purple-400 mb-2">
+                        Follow-up Instructions
+                      </h3>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                        {selectedRecord.follow_up_instructions}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3">
+                <button
+                  onClick={() => setSelectedRecord(null)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    downloadAsPDF(selectedRecord);
+                    setSelectedRecord(null);
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download PDF
+                </button>
               </div>
             </div>
-
-            <div className="p-6 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3">
-              <button
-                onClick={() => setSelectedRecord(null)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  downloadAsPDF(selectedRecord);
-                  setSelectedRecord(null);
-                }}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Download PDF
-              </button>
-            </div>
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );

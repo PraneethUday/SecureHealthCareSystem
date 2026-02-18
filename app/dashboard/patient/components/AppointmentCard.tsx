@@ -69,7 +69,7 @@ export default function AppointmentCard({
     const result = await cancelAppointment(
       appointment.id,
       appointment.patient_id,
-      "Cancelled by patient"
+      "Cancelled by patient",
     );
     setCancelling(false);
     if (result.success) {
@@ -81,18 +81,20 @@ export default function AppointmentCard({
   const handleStartVideoCall = () => {
     // Open Zoom meeting in new tab
     if (appointment.zoom_join_url) {
-      window.open(appointment.zoom_join_url, '_blank', 'noopener,noreferrer');
+      window.open(appointment.zoom_join_url, "_blank", "noopener,noreferrer");
     } else if (appointment.video_call_link) {
       // Fallback to old video_call_link field
-      window.open(appointment.video_call_link, '_blank', 'noopener,noreferrer');
+      window.open(appointment.video_call_link, "_blank", "noopener,noreferrer");
     } else {
-      alert('Video call link is being generated. Please refresh the page in a moment, or contact your doctor if the issue persists.');
+      alert(
+        "Video call link is being generated. Please refresh the page in a moment, or contact your doctor if the issue persists.",
+      );
     }
   };
 
   const isPast =
     new Date(
-      appointment.appointment_date + "T" + appointment.appointment_time
+      appointment.appointment_date + "T" + appointment.appointment_time,
     ) < new Date();
   const canCancel = appointment.status === "scheduled" && !isPast;
   // Show video call button for ALL telemedicine appointments
@@ -116,7 +118,7 @@ export default function AppointmentCard({
           <div className="flex items-center gap-2 flex-wrap">
             <span
               className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                appointment.status
+                appointment.status,
               )} dark:bg-opacity-20 dark:border-opacity-30`}
             >
               {appointment.status.charAt(0).toUpperCase() +
@@ -124,7 +126,7 @@ export default function AppointmentCard({
             </span>
             {appointment.is_telemedicine && (
               <span className="px-3 py-1 rounded-full text-xs font-medium border bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800">
-                📹 Telemedicine
+                Telemedicine
               </span>
             )}
             {prescriptionCount > 0 && (
@@ -161,7 +163,7 @@ export default function AppointmentCard({
                 year: "numeric",
                 month: "short",
                 day: "numeric",
-              }
+              },
             )}
           </span>
         </div>
@@ -188,7 +190,9 @@ export default function AppointmentCard({
       {/* Notes */}
       {appointment.notes && (
         <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 text-sm text-gray-700 dark:text-gray-300 mb-4">
-          <p className="font-medium text-gray-800 dark:text-gray-100 mb-1">Notes:</p>
+          <p className="font-medium text-gray-800 dark:text-gray-100 mb-1">
+            Notes:
+          </p>
           <p>{appointment.notes}</p>
         </div>
       )}
@@ -196,7 +200,9 @@ export default function AppointmentCard({
       {/* Cancellation Reason */}
       {appointment.cancellation_reason && (
         <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 text-sm text-red-700 dark:text-red-300 mb-4">
-          <p className="font-medium text-red-800 dark:text-red-200 mb-1">Cancellation Reason:</p>
+          <p className="font-medium text-red-800 dark:text-red-200 mb-1">
+            Cancellation Reason:
+          </p>
           <p>{appointment.cancellation_reason}</p>
         </div>
       )}
@@ -208,14 +214,10 @@ export default function AppointmentCard({
             onClick={handleStartVideoCall}
             className="w-full px-4 py-3 mb-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
           >
-            <svg
-              className="w-5 h-5"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M15.5 1h-8C6.12 1 5 2.12 5 3.5v17C5 21.88 6.12 23 7.5 23h8c1.38 0 2.5-1.12 2.5-2.5v-17C18 2.12 16.88 1 15.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z" />
             </svg>
-            🎥 Join Video Call (Zoom)
+            Join Video Call (Zoom)
           </button>
         )}
 

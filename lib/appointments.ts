@@ -24,9 +24,54 @@ export async function getHospitals(): Promise<Hospital[]> {
 
 // Fetch doctors by hospital and/or specialization
 export async function getDoctors(hospitalId?: string, specialization?: string) {
+  // If hospitalId is provided, fetch doctors associated with that hospital via junction table
+  if (hospitalId) {
+    const { data, error } = await supabase
+      .from("doctor_hospitals")
+      .select(
+        `
+        doctors (
+          id,
+          doctor_id,
+          first_name,
+          last_name,
+          specialization,
+          department,
+          years_of_experience
+        ),
+        consultation_fee,
+        available_days
+      `,
+      )
+      .eq("hospital_id", hospitalId);
+
+    if (error) {
+      console.error("Error fetching doctors by hospital:", error);
+      return [];
+    }
+
+    // Flatten the result and filter by specialization if needed
+    const doctors = (data || [])
+      .filter((item: any) => item.doctors)
+      .map((item: any) => ({
+        ...item.doctors,
+        consultation_fee: item.consultation_fee,
+        available_days: item.available_days,
+      }));
+
+    if (specialization) {
+      return doctors.filter((d: any) => d.specialization === specialization);
+    }
+
+    return doctors;
+  }
+
+  // Fallback: fetch all doctors if no hospitalId provided
   let query = supabase
     .from("doctors")
-    .select("id, doctor_id, first_name, last_name, specialization, department");
+    .select(
+      "id, doctor_id, first_name, last_name, specialization, department, years_of_experience",
+    );
 
   if (specialization) {
     query = query.eq("specialization", specialization);
