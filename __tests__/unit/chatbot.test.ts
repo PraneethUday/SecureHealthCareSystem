@@ -21,11 +21,11 @@ describe('Chatbot API Logic', () => {
                 }),
             });
 
-            const response = await fetch('http://localhost:11434/api/generate', {
+            const response = await fetch('http://127.0.0.1:11434/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model: 'llama2',
+                    model: 'llama3.2:3b',
                     prompt: 'What are the symptoms of flu?',
                 }),
             });
@@ -41,9 +41,9 @@ describe('Chatbot API Logic', () => {
             mockFetch.mockRejectedValueOnce(new Error('Connection refused'));
 
             await expect(
-                fetch('http://localhost:11434/api/generate', {
+                fetch('http://127.0.0.1:11434/api/generate', {
                     method: 'POST',
-                    body: JSON.stringify({ model: 'llama2', prompt: 'test' }),
+                    body: JSON.stringify({ model: 'llama3.2:3b', prompt: 'test' }),
                 })
             ).rejects.toThrow('Connection refused');
         });
@@ -55,9 +55,9 @@ describe('Chatbot API Logic', () => {
                 json: async () => ({ error: 'Internal server error' }),
             });
 
-            const response = await fetch('http://localhost:11434/api/generate', {
+            const response = await fetch('http://127.0.0.1:11434/api/generate', {
                 method: 'POST',
-                body: JSON.stringify({ model: 'llama2', prompt: 'test' }),
+                body: JSON.stringify({ model: 'llama3.2:3b', prompt: 'test' }),
             });
 
             expect(response.ok).toBe(false);
@@ -100,7 +100,7 @@ describe('Chatbot API Logic', () => {
             const maliciousInput = '<script>alert("xss")</script>What is diabetes?';
             expect(maliciousInput).toContain('<script>');
 
-            // In real implementation, you would sanitize this
+            // Sanitize
             const sanitized = maliciousInput.replace(/<script[^>]*>.*?<\/script>/gi, '');
             expect(sanitized).not.toContain('<script>');
             expect(sanitized).toBe('What is diabetes?');
@@ -168,6 +168,25 @@ describe('Chatbot API Logic', () => {
         });
     });
 
+    describe('Context Handling', () => {
+        it('should include user role in prompt', () => {
+            const context = { role: 'patient', page: 'dashboard' };
+            const prompt = `User role: ${context.role}\nPage: ${context.page}`;
+
+            expect(prompt).toContain('patient');
+            expect(prompt).toContain('dashboard');
+        });
+
+        it('should handle missing context gracefully', () => {
+            const context: { role?: string; page?: string } = {};
+            const role = context.role ?? 'unknown';
+            const page = context.page ?? 'unknown';
+
+            expect(role).toBe('unknown');
+            expect(page).toBe('unknown');
+        });
+    });
+
     describe('Rate Limiting Logic', () => {
         it('should track request timestamps', () => {
             const requests = [
@@ -214,7 +233,7 @@ describe('Chatbot API Logic', () => {
             );
 
             await expect(
-                fetch('http://localhost:11434/api/generate')
+                fetch('http://127.0.0.1:11434/api/generate')
             ).rejects.toThrow('Timeout');
         });
 
@@ -223,14 +242,32 @@ describe('Chatbot API Logic', () => {
 
             expect(response).not.toHaveProperty('response');
         });
+
+        it('should handle abort errors', () => {
+            const error = { name: 'AbortError', message: 'Request aborted' };
+
+            expect(error.name).toBe('AbortError');
+        });
     });
 
     describe('Prompt Engineering', () => {
         it('should construct proper system prompts', () => {
-            const systemPrompt = 'You are a helpful medical assistant. Provide accurate medical information but always recommend consulting healthcare professionals for specific medical advice.';
+            const systemPrompt = 'You are a healthcare system assistant. Provide accurate medical information but always recommend consulting healthcare professionals.';
 
-            expect(systemPrompt).toContain('medical assistant');
-            expect(systemPrompt).toContain('healthcare professionals');
+            expect(systemPrompt).toContain('healthcare');
+            expect(systemPrompt).toContain('consulting');
+        });
+
+        it('should include safety rules in prompt', () => {
+            const rules = [
+                'Do NOT diagnose diseases',
+                'Do NOT prescribe medication',
+                'Do NOT give treatment plans',
+                'Provide general health education only',
+            ];
+
+            expect(rules).toHaveLength(4);
+            expect(rules[0]).toContain('NOT diagnose');
         });
 
         it('should include context in prompts', () => {
@@ -239,6 +276,28 @@ describe('Chatbot API Logic', () => {
 
             expect(fullPrompt).toContain(userQuery);
             expect(fullPrompt).toContain('medical assistant');
+        });
+    });
+
+    describe('Model Configuration', () => {
+        it('should use correct model name', () => {
+            const config = {
+                model: 'llama3.2:3b',
+                stream: false,
+            };
+
+            expect(config.model).toBe('llama3.2:3b');
+            expect(config.stream).toBe(false);
+        });
+
+        it('should disable streaming for synchronous responses', () => {
+            const requestBody = {
+                model: 'llama3.2:3b',
+                prompt: 'test',
+                stream: false,
+            };
+
+            expect(requestBody.stream).toBe(false);
         });
     });
 });

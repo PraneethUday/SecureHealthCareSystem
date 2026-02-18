@@ -1,4 +1,4 @@
-# 🔒 Secure Chat Feature - Development Documentation
+﻿# 🔒 Secure Chat Feature - Development Documentation
 
 > **Status**: 🚧 In Development  
 > **Branch**: `telemedicine-secure-communication`  

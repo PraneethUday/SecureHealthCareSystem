@@ -343,7 +343,15 @@ export default function DoctorDashboard() {
                         appointment={apt}
                         doctorId={user.id}
                         onUpdate={() => loadAppointments(user.id)}
-                        onStartVideoCall={() => alert("Waiting for patient to join...")}
+                        onStartVideoCall={() => {
+                          if (apt.zoom_host_url) {
+                            window.open(apt.zoom_host_url, '_blank', 'noopener,noreferrer');
+                          } else if (apt.video_call_link) {
+                            window.open(apt.video_call_link, '_blank', 'noopener,noreferrer');
+                          } else {
+                            alert('Video call link not available yet. Please wait a moment and refresh.');
+                          }
+                        }}
                         onPrescribe={() => setSelectedAppointmentForPrescription(apt)}
                         onCreateMedicalRecord={() => setSelectedAppointmentForMedicalRecord(apt)}
                       />
@@ -365,7 +373,15 @@ export default function DoctorDashboard() {
                         appointment={apt}
                         doctorId={user.id}
                         onUpdate={() => loadAppointments(user.id)}
-                        onStartVideoCall={() => alert("Waiting for patient to join...")}
+                        onStartVideoCall={() => {
+                          if (apt.zoom_host_url) {
+                            window.open(apt.zoom_host_url, '_blank', 'noopener,noreferrer');
+                          } else if (apt.video_call_link) {
+                            window.open(apt.video_call_link, '_blank', 'noopener,noreferrer');
+                          } else {
+                            alert('Video call link not available yet. Please wait a moment and refresh.');
+                          }
+                        }}
                         onPrescribe={() => setSelectedAppointmentForPrescription(apt)}
                         onCreateMedicalRecord={() => setSelectedAppointmentForMedicalRecord(apt)}
                       />

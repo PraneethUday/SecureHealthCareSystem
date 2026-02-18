@@ -5,6 +5,7 @@ import { UserRole } from "@/lib/database.types";
 import { logAction } from "@/lib/logging";
 import { verifyPassword, generateOTP, generateOTPExpiry, hashOTP, isPasswordExpired, validatePasswordComplexity, hashPassword } from "@/lib/security";
 import { sendOTPEmail } from "@/lib/email";
+import { checkAccountLock, recordLoginAttempt } from "@/lib/account-lockout";
 
 interface LoginResult {
   success: boolean;
@@ -72,6 +73,14 @@ export async function login(
       .single();
 
     if (error || !data) {
+      // Record failed login attempt - user not found
+      await recordLoginAttempt(
+        identifier,
+        role,
+        "failed",
+        "user_not_found"
+      );
+
       await logAction({
         userId: identifier,
         userRole: role,
@@ -82,33 +91,58 @@ export async function login(
       return { success: false, message: "Invalid credentials" };
     }
 
-    // Check if account is locked
-    if (data.is_locked && data.locked_until) {
-      const now = new Date();
-      const lockedUntil = new Date(data.locked_until);
-      if (now < lockedUntil) {
-        const minutesRemaining = Math.ceil((lockedUntil.getTime() - now.getTime()) / 60000);
+    // Check if account is locked using new centralized system
+    const lockStatus = await checkAccountLock(identifier, role);
+    if (lockStatus.isLocked) {
+      if (lockStatus.isManuallyLocked) {
+        // Manually locked by admin - no auto-unlock
+        await recordLoginAttempt(
+          identifier,
+          role,
+          "failed",
+          "account_locked_by_admin"
+        );
+
         await logAction({
           userId: identifier,
           userRole: role,
           action: "login_failed",
-          details: `Account locked for ${minutesRemaining} more minutes`,
+          details: "Account manually locked by administrator",
           status: "failure",
         });
+
         return {
           success: false,
-          message: `Account is locked. Try again in ${minutesRemaining} minutes.`,
+          message: "Your account has been locked by an administrator. Please contact support.",
         };
-      } else {
-        // Unlock account if lock period has expired
-        await supabase
-          .from(table)
-          .update({
-            is_locked: false,
-            locked_until: null,
-            login_attempts: 0,
-          })
-          .eq(idField, identifier);
+      } else if (lockStatus.lockedUntil) {
+        // Auto-locked due to failed attempts
+        const now = new Date();
+        if (now < lockStatus.lockedUntil) {
+          const minutesRemaining = Math.ceil(
+            (lockStatus.lockedUntil.getTime() - now.getTime()) / 60000
+          );
+
+          await recordLoginAttempt(
+            identifier,
+            role,
+            "failed",
+            "account_locked"
+          );
+
+          await logAction({
+            userId: identifier,
+            userRole: role,
+            action: "login_failed",
+            details: `Account locked for ${minutesRemaining} more minutes`,
+            status: "failure",
+          });
+
+          return {
+            success: false,
+            message: `Account is locked due to too many failed login attempts. Please try again in ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}.`,
+          };
+        }
       }
     }
 
@@ -126,18 +160,13 @@ export async function login(
     }
 
     if (!passwordValid) {
-      // Increment login attempts
-      const newAttempts = (data.login_attempts || 0) + 1;
-      const maxAttempts = 5;
-
-      await supabase
-        .from(table)
-        .update({
-          login_attempts: newAttempts,
-          is_locked: newAttempts >= maxAttempts,
-          locked_until: newAttempts >= maxAttempts ? new Date(Date.now() + 30 * 60000) : null,
-        })
-        .eq(idField, identifier);
+      // Record failed login attempt
+      const attemptResult = await recordLoginAttempt(
+        identifier,
+        role,
+        "failed",
+        "invalid_password"
+      );
 
       // Log audit
       await supabase.from("login_audit").insert({
@@ -151,18 +180,22 @@ export async function login(
         userId: identifier,
         userRole: role,
         action: "login_failed",
-        details: `Invalid password (attempt ${newAttempts}/${maxAttempts})`,
+        details: `Invalid password (attempt ${attemptResult.failedCount}/5)`,
         status: "failure",
       });
 
-      if (newAttempts >= maxAttempts) {
+      if (attemptResult.shouldLock && attemptResult.lockedUntil) {
         return {
           success: false,
-          message: "Account locked due to too many failed attempts. Try again in 30 minutes.",
+          message: "Account locked due to too many failed login attempts. Please try again in 3 minutes.",
         };
       }
 
-      return { success: false, message: "Invalid credentials" };
+      const attemptsRemaining = 5 - attemptResult.failedCount;
+      return {
+        success: false,
+        message: `Invalid credentials. ${attemptsRemaining} attempt${attemptsRemaining !== 1 ? "s" : ""} remaining before account lockout.`,
+      };
     }
 
     // Password is valid - check for expiry
@@ -188,7 +221,14 @@ export async function login(
       };
     }
 
-    // Password is valid - reset login attempts
+    // Password is valid - record successful attempt and clear locks
+    await recordLoginAttempt(
+      identifier,
+      role,
+      "success"
+    );
+
+    // Also reset old login attempts columns for backward compatibility
     await supabase
       .from(table)
       .update({

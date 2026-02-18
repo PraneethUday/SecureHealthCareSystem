@@ -1,0 +1,204 @@
+    @startuml SecureHealthCare System - Use Case Diagram
+
+    title SecureHealthCare System - Use Case Diagram
+
+    left to right direction
+    skinparam packageStyle rectangle
+
+    ' Actors
+    actor Patient as patient
+    actor Doctor as doctor
+    actor Nurse as nurse
+    actor Staff as staff
+    actor Admin as admin
+    actor "Zoom API" as zoom <<External System>>
+    actor "Email Service" as email <<External System>>
+
+    ' System Boundary
+    rectangle "SecureHealthCare System" {
+      
+      ' Authentication & Authorization
+      package "Authentication & User Management" {
+        usecase (Register Account) as UC1
+        usecase (Login) as UC2
+        usecase (Logout) as UC3
+        usecase (Reset Password) as UC4
+        usecase (Manage Profile) as UC5
+      }
+      
+      ' Patient Use Cases
+      package "Patient Management" {
+        usecase (Complete Health Profile) as UC6
+        usecase (View Medical History) as UC7
+        usecase (Book Appointment) as UC8
+        usecase (Cancel Appointment) as UC9
+        usecase (View Prescriptions) as UC10
+        usecase (View Medical Records) as UC11
+        usecase (Share Health Profile) as UC12
+      }
+      
+      ' Telemedicine Use Cases
+      package "Telemedicine" {
+        usecase (Join Video Call) as UC13
+        usecase (Start Video Call) as UC14
+        usecase (Create Zoom Meeting) as UC15
+        usecase (Record Consultation) as UC16
+      }
+      
+      ' Doctor Use Cases
+      package "Doctor Management" {
+        usecase (View Appointments) as UC17
+        usecase (Complete Appointment) as UC18
+        usecase (Mark No Show) as UC19
+        usecase (Create Prescription) as UC20
+        usecase (Create Medical Record) as UC21
+        usecase (View Patient Vitals) as UC22
+        usecase (View Patient Profile) as UC23
+        usecase (Assign Nurse) as UC24
+      }
+      
+      ' Nurse Use Cases
+      package "Nurse Management" {
+        usecase (Record Patient Vitals) as UC25
+        usecase (Upload Medical Reports) as UC26
+        usecase (View Assigned Appointments) as UC27
+        usecase (Manage Patients) as UC28
+      }
+      
+      ' Staff Use Cases
+      package "Staff Management" {
+        usecase (Manage Appointments) as UC29
+        usecase (Manage Patients) as UC30
+        usecase (Generate Reports) as UC31
+      }
+      
+      ' Admin Use Cases
+      package "Admin Management" {
+        usecase (Manage Users) as UC32
+        usecase (Manage Hospitals) as UC33
+        usecase (View System Logs) as UC34
+        usecase (Configure System) as UC35
+        usecase (Manage Departments) as UC36
+      }
+      
+      ' Security & Compliance
+      package "Security & Compliance" {
+        usecase (Audit Access Logs) as UC37
+        usecase (Encrypt Data) as UC38
+        usecase (HIPAA Compliance Check) as UC39
+        usecase (Blockchain Verification) as UC40
+      }
+      
+      ' Notification System
+      package "Notifications" {
+        usecase (Send Email Notification) as UC41
+        usecase (Send Appointment Reminder) as UC42
+      }
+    }
+
+    ' Patient Relationships
+    patient --> UC1
+    patient --> UC2
+    patient --> UC3
+    patient --> UC4
+    patient --> UC5
+    patient --> UC6
+    patient --> UC7
+    patient --> UC8
+    patient --> UC9
+    patient --> UC10
+    patient --> UC11
+    patient --> UC12
+    patient --> UC13
+
+    ' Doctor Relationships
+    doctor --> UC2
+    doctor --> UC3
+    doctor --> UC5
+    doctor --> UC17
+    doctor --> UC18
+    doctor --> UC19
+    doctor --> UC20
+    doctor --> UC21
+    doctor --> UC22
+    doctor --> UC23
+    doctor --> UC24
+    doctor --> UC14
+
+    ' Nurse Relationships
+    nurse --> UC2
+    nurse --> UC3
+    nurse --> UC5
+    nurse --> UC25
+    nurse --> UC26
+    nurse --> UC27
+    nurse --> UC28
+
+    ' Staff Relationships
+    staff --> UC2
+    staff --> UC3
+    staff --> UC5
+    staff --> UC29
+    staff --> UC30
+    staff --> UC31
+
+    ' Admin Relationships
+    admin --> UC2
+    admin --> UC3
+    admin --> UC32
+    admin --> UC33
+    admin --> UC34
+    admin --> UC35
+    admin --> UC36
+
+    ' Include Relationships
+    UC8 ..> UC15 : <<include>>
+    UC13 ..> UC15 : <<include>>
+    UC14 ..> UC15 : <<include>>
+    UC15 ..> zoom : <<uses>>
+    UC41 ..> email : <<uses>>
+    UC42 ..> email : <<uses>>
+
+    UC8 ..> UC41 : <<include>>
+    UC20 ..> UC41 : <<include>>
+    UC21 ..> UC41 : <<include>>
+
+    ' Extend Relationships
+    UC8 ..> UC12 : <<extend>>
+    UC8 ..> UC42 : <<extend>>
+    UC14 ..> UC16 : <<extend>>
+
+    ' Generalization
+    UC32 --|> UC1 : <<extends>>
+    UC6 --|> UC5 : <<extends>>
+
+    ' Security applies to all
+    UC37 ..> UC2 : <<include>>
+    UC38 ..> UC11 : <<include>>
+    UC38 ..> UC21 : <<include>>
+    UC39 ..> UC15 : <<include>>
+    UC40 ..> UC37 : <<include>>
+
+    note right of UC15
+      Zoom meeting is created automatically
+      when telemedicine appointment is booked.
+      Uses Server-to-Server OAuth for security.
+    end note
+
+    note right of UC38
+      All sensitive medical data is encrypted
+      at rest and in transit using AES-256.
+    end note
+
+    note right of UC40
+      Access logs are verified using
+      blockchain for tamper-proof audit trail.
+    end note
+
+    note left of UC12
+      Patients can choose to share their
+      complete health profile with doctors
+      during appointment booking.
+    end note
+
+    @enduml

@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   notes TEXT,
   cancellation_reason TEXT,
   is_telemedicine BOOLEAN DEFAULT false,
+  share_health_profile BOOLEAN DEFAULT false,
   video_call_link TEXT,
   video_call_started_at TIMESTAMP WITH TIME ZONE,
   video_call_ended_at TIMESTAMP WITH TIME ZONE,

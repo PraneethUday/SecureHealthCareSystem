@@ -375,9 +375,21 @@ export function subscribeToIncomingCalls(
         console.log(
           `[WebRTC] ✅ Successfully subscribed to incoming calls for doctor: ${doctorId}`
         );
-      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-        console.error(`[WebRTC] ❌ Channel subscription error: ${status}`);
-        onError?.(new Error(`Channel error: ${status}`));
+      } else if (status === "CHANNEL_ERROR") {
+        console.warn(
+          `[WebRTC] ⚠️ Channel error (this may be expected if realtime is not enabled)`
+        );
+        console.warn(
+          `[WebRTC] 💡 The system will fall back to polling for call updates`
+        );
+        // Don't treat this as a fatal error - the system can still work with polling
+      } else if (status === "TIMED_OUT") {
+        console.warn(`[WebRTC] ⏱️ Channel subscription timed out`);
+        console.warn(
+          `[WebRTC] 💡 The system will fall back to polling for call updates`
+        );
+      } else if (status === "CLOSED") {
+        console.log(`[WebRTC] 🔌 Channel closed`);
       }
     });
 

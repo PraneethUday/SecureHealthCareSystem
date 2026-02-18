@@ -88,26 +88,63 @@ export async function createAppointment(appointmentData: {
   try {
     console.log("Creating appointment with data:", appointmentData);
 
+    const insertData = {
+      patient_id: appointmentData.patientId,
+      doctor_id: appointmentData.doctorId,
+      hospital_id: appointmentData.hospitalId,
+      appointment_date: appointmentData.appointmentDate,
+      appointment_time: appointmentData.appointmentTime,
+      reason: appointmentData.reason,
+      notes: appointmentData.notes,
+      is_telemedicine: appointmentData.isTelemedicine || false,
+      share_health_profile: appointmentData.shareHealthProfile || false,
+      status: "scheduled",
+    };
+
+    console.log("[Appointments] Insert data:", insertData);
+    console.log("[Appointments] Calling Supabase insert...");
+
     const { data, error } = await supabase
       .from("appointments")
-      .insert({
-        patient_id: appointmentData.patientId,
-        doctor_id: appointmentData.doctorId,
-        hospital_id: appointmentData.hospitalId,
-        appointment_date: appointmentData.appointmentDate,
-        appointment_time: appointmentData.appointmentTime,
-        reason: appointmentData.reason,
-        notes: appointmentData.notes,
-        is_telemedicine: appointmentData.isTelemedicine || false,
-        status: "scheduled",
-      })
+      .insert(insertData)
       .select()
       .single();
 
+    console.log("[Appointments] Supabase response:", { data, error });
+    console.log("[Appointments] Error type:", typeof error);
+    console.log("[Appointments] Error is null?", error === null);
+    console.log(
+      "[Appointments] Error stringified:",
+      JSON.stringify(error, null, 2),
+    );
+
     if (error) {
       console.error("Error creating appointment:", error);
+      console.error("Error details:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      });
+      console.error(
+        "Full error object:",
+        JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
+      );
+
+      // Check for duplicate time slot error
+      if (
+        error.code === "23505" &&
+        error.message?.includes("unique_doctor_time")
+      ) {
+        return {
+          success: false,
+          error:
+            "This time slot is already booked for this doctor. Please choose a different time.",
+        };
+      }
+
       const errorMessage =
-        error.message || error.details || JSON.stringify(error);
+        error.message || error.details || error.hint || JSON.stringify(error);
       return {
         success: false,
         error: `Failed to create appointment: ${errorMessage}`,
@@ -115,10 +152,121 @@ export async function createAppointment(appointmentData: {
     }
 
     if (!data) {
+      console.error("[Appointments] No data returned from insert!");
       return { success: false, error: "No data returned from insert" };
     }
 
     console.log("Appointment created successfully:", data);
+
+    // Create Zoom meeting for telemedicine appointments
+    let zoomMeetingData = null;
+    if (appointmentData.isTelemedicine) {
+      try {
+        console.log(
+          "[Appointments] Creating Zoom meeting for telemedicine appointment...",
+        );
+
+        // Get patient and doctor names for meeting topic
+        const { data: patientData } = await supabase
+          .from("patients")
+          .select("first_name, last_name")
+          .eq("id", appointmentData.patientId)
+          .single();
+
+        const { data: doctorData } = await supabase
+          .from("doctors")
+          .select("first_name, last_name")
+          .eq("doctor_id", appointmentData.doctorId)
+          .single();
+
+        const patientName = patientData
+          ? `${patientData.first_name} ${patientData.last_name}`
+          : "Patient";
+        const doctorName = doctorData
+          ? `${doctorData.first_name} ${doctorData.last_name}`
+          : "Doctor";
+
+        // Call API route to create Zoom meeting (server-side where env vars are available)
+        const response = await fetch("/api/zoom/create-meeting", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            appointmentId: data.id,
+            patientName,
+            doctorName,
+            duration: data.duration_minutes || 30,
+          }),
+        });
+
+        if (response.ok) {
+          const { meeting } = await response.json();
+          zoomMeetingData = meeting;
+
+          // Update appointment with Zoom details
+          try {
+            const { error: updateError } = await supabase
+              .from("appointments")
+              .update({
+                zoom_meeting_id: meeting.id,
+                zoom_host_url: meeting.start_url,
+                zoom_join_url: meeting.join_url,
+                zoom_password: meeting.password,
+                zoom_created_at: new Date().toISOString(),
+                video_call_link: meeting.join_url, // Backward compatibility
+              })
+              .eq("id", data.id);
+
+            if (updateError) {
+              console.error(
+                "[Appointments] Error updating appointment with Zoom details:",
+                updateError,
+              );
+              console.warn(
+                "[Appointments] Trying fallback update with just video_call_link...",
+              );
+
+              // Fallback: Just update video_call_link if Zoom columns don't exist
+              const { error: fallbackError } = await supabase
+                .from("appointments")
+                .update({
+                  video_call_link: meeting.join_url,
+                })
+                .eq("id", data.id);
+
+              if (fallbackError) {
+                console.error(
+                  "[Appointments] Fallback update also failed:",
+                  fallbackError,
+                );
+              } else {
+                console.log(
+                  "[Appointments] ✅ Zoom meeting created (using fallback video_call_link)",
+                );
+              }
+            } else {
+              console.log(
+                "[Appointments] ✅ Zoom meeting created and linked to appointment",
+              );
+            }
+          } catch (updateException) {
+            console.error(
+              "[Appointments] Exception during Zoom update:",
+              updateException,
+            );
+          }
+        } else {
+          console.warn(
+            "[Appointments] Zoom API call failed, skipping meeting creation",
+          );
+        }
+      } catch (zoomError) {
+        console.error("[Appointments] Error creating Zoom meeting:", zoomError);
+        // Don't fail the appointment creation if Zoom fails
+        // The appointment is still valid, just without a Zoom link
+      }
+    }
 
     // Log the appointment creation
     const actionType: "created" = "created";
@@ -133,11 +281,118 @@ export async function createAppointment(appointmentData: {
         doctor_id: appointmentData.doctorId,
         date: appointmentData.appointmentDate,
         time: appointmentData.appointmentTime,
+        zoom_meeting_created: !!zoomMeetingData,
       },
     });
 
     if (logResult.error) {
       console.error("Error logging appointment creation:", logResult.error);
+    }
+
+    // Send email notifications via API route (to avoid bundling nodemailer in client)
+    try {
+      console.log("[Appointments] Sending email notifications...");
+
+      // Get patient, doctor, and hospital details for email
+      const { data: patientData } = await supabase
+        .from("patients")
+        .select("first_name, last_name, email")
+        .eq("id", appointmentData.patientId)
+        .single();
+
+      const { data: doctorData } = await supabase
+        .from("doctors")
+        .select("first_name, last_name, email, specialization")
+        .eq("doctor_id", appointmentData.doctorId)
+        .single();
+
+      const { data: hospitalData } = await supabase
+        .from("hospitals")
+        .select("name")
+        .eq("id", appointmentData.hospitalId)
+        .single();
+
+      if (patientData && doctorData && hospitalData) {
+        const patientName = `${patientData.first_name} ${patientData.last_name}`;
+        const doctorName = `${doctorData.first_name} ${doctorData.last_name}`;
+
+        // Determine base URL for API calls
+        const baseUrl =
+          typeof window !== "undefined"
+            ? window.location.origin
+            : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+        // Send confirmation email to patient via API
+        try {
+          const patientEmailResponse = await fetch(
+            `${baseUrl}/api/email/send`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "appointment_confirmation",
+                data: {
+                  patientEmail: patientData.email,
+                  patientName,
+                  doctorName,
+                  appointmentDate: appointmentData.appointmentDate,
+                  appointmentTime: appointmentData.appointmentTime,
+                  department: doctorData.specialization || "General",
+                  hospitalName: hospitalData.name,
+                  isTelemedicine: appointmentData.isTelemedicine || false,
+                  zoomJoinUrl: zoomMeetingData?.join_url,
+                  appointmentId: data.id,
+                },
+              }),
+            },
+          );
+
+          if (patientEmailResponse.ok) {
+            console.log("[Appointments] ✅ Patient confirmation email sent");
+          }
+        } catch (emailErr) {
+          console.error("[Appointments] Patient email error:", emailErr);
+        }
+
+        // Send notification email to doctor via API
+        try {
+          const doctorEmailResponse = await fetch(
+            `${baseUrl}/api/email/send`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "doctor_notification",
+                data: {
+                  doctorEmail: doctorData.email,
+                  doctorName,
+                  patientName,
+                  appointmentDate: appointmentData.appointmentDate,
+                  appointmentTime: appointmentData.appointmentTime,
+                  department: doctorData.specialization || "General",
+                  hospitalName: hospitalData.name,
+                  isTelemedicine: appointmentData.isTelemedicine || false,
+                  zoomHostUrl: zoomMeetingData?.start_url,
+                  appointmentId: data.id,
+                  reason: appointmentData.reason,
+                },
+              }),
+            },
+          );
+
+          if (doctorEmailResponse.ok) {
+            console.log("[Appointments] ✅ Doctor notification email sent");
+          }
+        } catch (emailErr) {
+          console.error("[Appointments] Doctor email error:", emailErr);
+        }
+      }
+    } catch (emailError) {
+      console.error(
+        "[Appointments] Error sending email notifications:",
+        emailError,
+      );
+      // Don't fail the appointment creation if email fails
     }
 
     return { success: true, appointment: data };
@@ -296,9 +551,8 @@ export async function updateAppointmentStatus(
       console.error("Error fetching appointment:", fetchError);
       return {
         success: false,
-        error: `Failed to fetch appointment: ${
-          fetchError.message || JSON.stringify(fetchError)
-        }`,
+        error: `Failed to fetch appointment: ${fetchError.message || JSON.stringify(fetchError)
+          }`,
       };
     }
 
