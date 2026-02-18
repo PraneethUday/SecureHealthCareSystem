@@ -6,11 +6,11 @@ All doctors use their **Doctor ID** as username and **password** as shown below.
 
 ## Apollo Hospitals, Chennai
 
-| Doctor ID | Password | Name                      | Specialization | Experience |
-| --------- | -------- | ------------------------- | -------------- | ---------- |
-| D001      | doctor1  | Dr. Rajesh Krishnamoorthy | Cardiology     | 18 years   |
-| D002      | doctor2  | Dr. Priya Venkataraman    | Neurology      | 15 years   |
-| D003      | doctor3  | Dr. Suresh Narayanan      | Oncology       | 20 years   |
+| Doctor ID | Password     | Name                      | Specialization | Experience |
+| --------- | ------------ | ------------------------- | -------------- | ---------- |
+| D001      | Doctor@12345 | Dr. Rajesh Krishnamoorthy | Cardiology     | 18 years   |
+| D002      | doctor2      | Dr. Priya Venkataraman    | Neurology      | 15 years   |
+| D003      | doctor3      | Dr. Suresh Narayanan      | Oncology       | 20 years   |
 
 ---
 
