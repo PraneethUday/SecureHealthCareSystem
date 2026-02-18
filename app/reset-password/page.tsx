@@ -34,6 +34,7 @@ function ResetPasswordForm() {
         };
 
         checkSession();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const validatePassword = (pwd: string) => {

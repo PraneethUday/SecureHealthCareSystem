@@ -74,6 +74,7 @@ export default function VitalsViewer({ patientId, patientName }: VitalsViewerPro
     useEffect(() => {
         loadVitals();
         loadAlerts();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [patientId]);
 
     const loadVitals = async () => {

@@ -96,6 +96,7 @@ export default function VitalsForm({ patientId, onClose, onSuccess }: VitalsForm
     // Load latest vitals on mount
     useEffect(() => {
         loadLatestVitals();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [patientId]);
 
     const loadLatestVitals = async () => {

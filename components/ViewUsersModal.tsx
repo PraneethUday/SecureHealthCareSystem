@@ -58,10 +58,12 @@ export default function ViewUsersModal({
     if (isOpen) {
       fetchUsers();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   useEffect(() => {
     filterUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [users, searchQuery, roleFilter]);
 
   const fetchUsers = async () => {
