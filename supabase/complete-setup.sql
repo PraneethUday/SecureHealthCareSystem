@@ -1,10 +1,10 @@
 -- ======================================================================================================
 -- SECURE HEALTHCARE SYSTEM - COMPLETE DATABASE SETUP (ALL-IN-ONE)
 -- Run this ONCE in Supabase SQL Editor to create ALL tables and configurations
--- This file includes: Base tables, Chat, Medical Reports, OTP/MFA, and all missing columns
+-- This file includes: Base tables, Chat, Medical Reports, OTP/MFA, Telemedicine, WebRTC, and all features
 -- ======================================================================================================
--- Version: 2.0
--- Last Updated: 2026-02-10
+-- Version: 3.0
+-- Last Updated: 2026-02-18
 -- ======================================================================================================
 
 -- Enable required extensions
@@ -18,11 +18,20 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- Admin table
 CREATE TABLE IF NOT EXISTS admins (
   id TEXT PRIMARY KEY CHECK (id = 'admin'),
-  password TEXT NOT NULL,
+  password TEXT,
   password_hash TEXT,
   full_name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
+  is_mfa_enabled BOOLEAN DEFAULT TRUE,
+  mfa_method TEXT DEFAULT 'email',
+  mfa_secret TEXT,
+  last_login TIMESTAMP WITH TIME ZONE,
+  login_attempts INTEGER DEFAULT 0,
+  is_locked BOOLEAN DEFAULT FALSE,
+  locked_until TIMESTAMP WITH TIME ZONE,
   password_changed_at TIMESTAMP WITH TIME ZONE,
+  password_reset_token TEXT,
+  password_reset_expires_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
@@ -47,10 +56,16 @@ CREATE TABLE IF NOT EXISTS patients (
   current_medications TEXT,
   health_profile JSONB,
   is_profile_completed BOOLEAN DEFAULT false,
-  is_mfa_enabled BOOLEAN DEFAULT false,
+  is_mfa_enabled BOOLEAN DEFAULT TRUE,
   mfa_secret TEXT,
   mfa_method TEXT DEFAULT 'email',
+  last_login TIMESTAMP WITH TIME ZONE,
+  login_attempts INTEGER DEFAULT 0,
+  is_locked BOOLEAN DEFAULT FALSE,
+  locked_until TIMESTAMP WITH TIME ZONE,
   password_changed_at TIMESTAMP WITH TIME ZONE,
+  password_reset_token TEXT,
+  password_reset_expires_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
@@ -59,7 +74,7 @@ CREATE TABLE IF NOT EXISTS patients (
 CREATE TABLE IF NOT EXISTS doctors (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   doctor_id TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
+  password TEXT,
   password_hash TEXT,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
@@ -69,7 +84,15 @@ CREATE TABLE IF NOT EXISTS doctors (
   license_number TEXT UNIQUE NOT NULL,
   department TEXT,
   years_of_experience INTEGER,
+  is_mfa_enabled BOOLEAN DEFAULT TRUE,
+  mfa_method TEXT DEFAULT 'email',
+  last_login TIMESTAMP WITH TIME ZONE,
+  login_attempts INTEGER DEFAULT 0,
+  is_locked BOOLEAN DEFAULT FALSE,
+  locked_until TIMESTAMP WITH TIME ZONE,
   password_changed_at TIMESTAMP WITH TIME ZONE,
+  password_reset_token TEXT,
+  password_reset_expires_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
@@ -78,7 +101,7 @@ CREATE TABLE IF NOT EXISTS doctors (
 CREATE TABLE IF NOT EXISTS nurses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   nurse_id TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
+  password TEXT,
   password_hash TEXT,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
@@ -87,7 +110,15 @@ CREATE TABLE IF NOT EXISTS nurses (
   license_number TEXT UNIQUE NOT NULL,
   department TEXT,
   shift TEXT,
+  is_mfa_enabled BOOLEAN DEFAULT TRUE,
+  mfa_method TEXT DEFAULT 'email',
+  last_login TIMESTAMP WITH TIME ZONE,
+  login_attempts INTEGER DEFAULT 0,
+  is_locked BOOLEAN DEFAULT FALSE,
+  locked_until TIMESTAMP WITH TIME ZONE,
   password_changed_at TIMESTAMP WITH TIME ZONE,
+  password_reset_token TEXT,
+  password_reset_expires_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
@@ -96,7 +127,7 @@ CREATE TABLE IF NOT EXISTS nurses (
 CREATE TABLE IF NOT EXISTS staff (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   staff_id TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
+  password TEXT,
   password_hash TEXT,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
@@ -104,7 +135,15 @@ CREATE TABLE IF NOT EXISTS staff (
   phone TEXT,
   role TEXT NOT NULL,
   department TEXT,
+  is_mfa_enabled BOOLEAN DEFAULT TRUE,
+  mfa_method TEXT DEFAULT 'email',
+  last_login TIMESTAMP WITH TIME ZONE,
+  login_attempts INTEGER DEFAULT 0,
+  is_locked BOOLEAN DEFAULT FALSE,
+  locked_until TIMESTAMP WITH TIME ZONE,
   password_changed_at TIMESTAMP WITH TIME ZONE,
+  password_reset_token TEXT,
+  password_reset_expires_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
@@ -135,11 +174,17 @@ CREATE TABLE IF NOT EXISTS otp_logs (
   is_used BOOLEAN DEFAULT FALSE,
   is_verified BOOLEAN DEFAULT FALSE,
   verified_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+  ip_address TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+  CONSTRAINT max_attempts CHECK (attempts <= 5)
 );
 
 CREATE INDEX IF NOT EXISTS idx_otp_logs_user ON otp_logs(user_id, user_role);
+CREATE INDEX IF NOT EXISTS idx_otp_logs_user_id ON otp_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_otp_logs_user_role ON otp_logs(user_role);
 CREATE INDEX IF NOT EXISTS idx_otp_logs_expires ON otp_logs(expires_at);
+CREATE INDEX IF NOT EXISTS idx_otp_logs_created_at ON otp_logs(created_at);
 
 -- Login Audit table
 CREATE TABLE IF NOT EXISTS login_audit (
@@ -154,8 +199,10 @@ CREATE TABLE IF NOT EXISTS login_audit (
 );
 
 CREATE INDEX IF NOT EXISTS idx_login_audit_user ON login_audit(user_id, user_role);
+CREATE INDEX IF NOT EXISTS idx_login_audit_user_id ON login_audit(user_id);
 CREATE INDEX IF NOT EXISTS idx_login_audit_status ON login_audit(login_status);
 CREATE INDEX IF NOT EXISTS idx_login_audit_created ON login_audit(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_login_audit_created_at ON login_audit(created_at);
 
 -- Password History table
 CREATE TABLE IF NOT EXISTS password_history (
@@ -167,6 +214,7 @@ CREATE TABLE IF NOT EXISTS password_history (
 );
 
 CREATE INDEX IF NOT EXISTS idx_password_history_user ON password_history(user_id, user_role);
+CREATE INDEX IF NOT EXISTS idx_password_history_user_id ON password_history(user_id);
 CREATE INDEX IF NOT EXISTS idx_password_history_changed ON password_history(changed_at DESC);
 
 -- Access Logs table (with all required columns)
@@ -276,7 +324,9 @@ CREATE TABLE IF NOT EXISTS appointment_logs (
 
 CREATE INDEX IF NOT EXISTS idx_appointment_logs_appointment ON appointment_logs(appointment_id);
 CREATE INDEX IF NOT EXISTS idx_appointment_logs_user ON appointment_logs(performed_by_user_id);
+CREATE INDEX IF NOT EXISTS idx_appointment_logs_action ON appointment_logs(action_type);
 CREATE INDEX IF NOT EXISTS idx_appointment_logs_timestamp ON appointment_logs(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_appointment_logs_role ON appointment_logs(performed_by_role);
 
 
 -- ######################################################################################################
@@ -331,6 +381,7 @@ CREATE TABLE IF NOT EXISTS medical_record_logs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_medical_record_logs_record ON medical_record_logs(medical_record_id);
+CREATE INDEX IF NOT EXISTS idx_medical_record_logs_user ON medical_record_logs(performed_by_user_id);
 CREATE INDEX IF NOT EXISTS idx_medical_record_logs_timestamp ON medical_record_logs(timestamp DESC);
 
 -- Prescriptions table
@@ -373,6 +424,7 @@ CREATE TABLE IF NOT EXISTS prescription_logs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_prescription_logs_prescription ON prescription_logs(prescription_id);
+CREATE INDEX IF NOT EXISTS idx_prescription_logs_user ON prescription_logs(performed_by_user_id);
 CREATE INDEX IF NOT EXISTS idx_prescription_logs_timestamp ON prescription_logs(timestamp DESC);
 
 
@@ -407,6 +459,7 @@ CREATE INDEX IF NOT EXISTS idx_medical_reports_patient ON medical_reports(patien
 CREATE INDEX IF NOT EXISTS idx_medical_reports_type ON medical_reports(report_type);
 CREATE INDEX IF NOT EXISTS idx_medical_reports_date ON medical_reports(report_date DESC);
 CREATE INDEX IF NOT EXISTS idx_medical_reports_uploader ON medical_reports(uploaded_by_user_id, uploaded_by_role);
+CREATE INDEX IF NOT EXISTS idx_medical_reports_uploaded_at ON medical_reports(uploaded_at DESC);
 
 -- Medical Report Logs table
 CREATE TABLE IF NOT EXISTS medical_report_logs (
@@ -420,6 +473,7 @@ CREATE TABLE IF NOT EXISTS medical_report_logs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_medical_report_logs_report ON medical_report_logs(report_id);
+CREATE INDEX IF NOT EXISTS idx_medical_report_logs_user ON medical_report_logs(performed_by_user_id);
 CREATE INDEX IF NOT EXISTS idx_medical_report_logs_timestamp ON medical_report_logs(timestamp DESC);
 
 
@@ -494,6 +548,8 @@ CREATE TABLE IF NOT EXISTS video_call_logs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_video_call_logs_appointment ON video_call_logs(appointment_id);
+CREATE INDEX IF NOT EXISTS idx_video_call_logs_patient ON video_call_logs(patient_id);
+CREATE INDEX IF NOT EXISTS idx_video_call_logs_doctor ON video_call_logs(doctor_id);
 CREATE INDEX IF NOT EXISTS idx_video_call_logs_date ON video_call_logs(call_started_at DESC);
 
 -- Video Calls table
@@ -518,6 +574,7 @@ CREATE INDEX IF NOT EXISTS idx_video_calls_appointment ON video_calls(appointmen
 CREATE INDEX IF NOT EXISTS idx_video_calls_patient ON video_calls(patient_id);
 CREATE INDEX IF NOT EXISTS idx_video_calls_doctor ON video_calls(doctor_id);
 CREATE INDEX IF NOT EXISTS idx_video_calls_status ON video_calls(status);
+CREATE INDEX IF NOT EXISTS idx_video_calls_created ON video_calls(created_at DESC);
 
 -- Video Call Signaling table
 CREATE TABLE IF NOT EXISTS video_call_signaling (
@@ -532,6 +589,9 @@ CREATE TABLE IF NOT EXISTS video_call_signaling (
 );
 
 CREATE INDEX IF NOT EXISTS idx_video_call_signaling_call ON video_call_signaling(video_call_id);
+CREATE INDEX IF NOT EXISTS idx_video_call_signaling_from ON video_call_signaling(from_user_id);
+CREATE INDEX IF NOT EXISTS idx_video_call_signaling_to ON video_call_signaling(to_user_id);
+CREATE INDEX IF NOT EXISTS idx_video_call_signaling_created ON video_call_signaling(created_at DESC);
 
 
 -- ######################################################################################################
@@ -539,9 +599,15 @@ CREATE INDEX IF NOT EXISTS idx_video_call_signaling_call ON video_call_signaling
 -- ######################################################################################################
 
 -- Enable RLS on all tables
+ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE doctors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE nurses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE staff ENABLE ROW LEVEL SECURITY;
 ALTER TABLE otp_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE login_audit ENABLE ROW LEVEL SECURITY;
 ALTER TABLE password_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE access_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE hospitals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointment_logs ENABLE ROW LEVEL SECURITY;
@@ -558,7 +624,25 @@ ALTER TABLE video_call_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE video_calls ENABLE ROW LEVEL SECURITY;
 ALTER TABLE video_call_signaling ENABLE ROW LEVEL SECURITY;
 
--- Create permissive policies (app handles authorization)
+-- Create permissive policies (app handles authorization via service role key)
+
+-- User table policies
+DROP POLICY IF EXISTS "Allow all admins operations" ON admins;
+CREATE POLICY "Allow all admins operations" ON admins FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all patients operations" ON patients;
+CREATE POLICY "Allow all patients operations" ON patients FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all doctors operations" ON doctors;
+CREATE POLICY "Allow all doctors operations" ON doctors FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all nurses operations" ON nurses;
+CREATE POLICY "Allow all nurses operations" ON nurses FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all staff operations" ON staff;
+CREATE POLICY "Allow all staff operations" ON staff FOR ALL USING (true) WITH CHECK (true);
+
+-- Auth & audit table policies
 DROP POLICY IF EXISTS "Allow all otp_logs operations" ON otp_logs;
 CREATE POLICY "Allow all otp_logs operations" ON otp_logs FOR ALL USING (true) WITH CHECK (true);
 
@@ -568,6 +652,10 @@ CREATE POLICY "Allow all login_audit operations" ON login_audit FOR ALL USING (t
 DROP POLICY IF EXISTS "Allow all password_history operations" ON password_history;
 CREATE POLICY "Allow all password_history operations" ON password_history FOR ALL USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow all access_logs operations" ON access_logs;
+CREATE POLICY "Allow all access_logs operations" ON access_logs FOR ALL USING (true) WITH CHECK (true);
+
+-- Hospital & appointment policies
 DROP POLICY IF EXISTS "Allow all hospital operations" ON hospitals;
 CREATE POLICY "Allow all hospital operations" ON hospitals FOR ALL USING (true) WITH CHECK (true);
 
@@ -577,24 +665,28 @@ CREATE POLICY "Allow all appointment operations" ON appointments FOR ALL USING (
 DROP POLICY IF EXISTS "Allow all appointment log operations" ON appointment_logs;
 CREATE POLICY "Allow all appointment log operations" ON appointment_logs FOR ALL USING (true) WITH CHECK (true);
 
+-- Medical record policies
 DROP POLICY IF EXISTS "Allow all medical record operations" ON medical_records;
 CREATE POLICY "Allow all medical record operations" ON medical_records FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow all medical record log operations" ON medical_record_logs;
 CREATE POLICY "Allow all medical record log operations" ON medical_record_logs FOR ALL USING (true) WITH CHECK (true);
 
+-- Prescription policies
 DROP POLICY IF EXISTS "Allow all prescription operations" ON prescriptions;
 CREATE POLICY "Allow all prescription operations" ON prescriptions FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow all prescription log operations" ON prescription_logs;
 CREATE POLICY "Allow all prescription log operations" ON prescription_logs FOR ALL USING (true) WITH CHECK (true);
 
+-- Medical report policies
 DROP POLICY IF EXISTS "Allow all medical report operations" ON medical_reports;
 CREATE POLICY "Allow all medical report operations" ON medical_reports FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow all medical report log operations" ON medical_report_logs;
 CREATE POLICY "Allow all medical report log operations" ON medical_report_logs FOR ALL USING (true) WITH CHECK (true);
 
+-- Chat policies
 DROP POLICY IF EXISTS "Allow all chat conversation operations" ON chat_conversations;
 CREATE POLICY "Allow all chat conversation operations" ON chat_conversations FOR ALL USING (true) WITH CHECK (true);
 
@@ -604,6 +696,7 @@ CREATE POLICY "Allow all chat message operations" ON chat_messages FOR ALL USING
 DROP POLICY IF EXISTS "Allow all chat attachment operations" ON chat_attachments;
 CREATE POLICY "Allow all chat attachment operations" ON chat_attachments FOR ALL USING (true) WITH CHECK (true);
 
+-- Video call policies
 DROP POLICY IF EXISTS "Allow all video call log operations" ON video_call_logs;
 CREATE POLICY "Allow all video call log operations" ON video_call_logs FOR ALL USING (true) WITH CHECK (true);
 
@@ -613,12 +706,37 @@ CREATE POLICY "Allow all video call operations" ON video_calls FOR ALL USING (tr
 DROP POLICY IF EXISTS "Allow all video call signaling operations" ON video_call_signaling;
 CREATE POLICY "Allow all video call signaling operations" ON video_call_signaling FOR ALL USING (true) WITH CHECK (true);
 
+-- Storage policies for medical-reports bucket
+-- Note: The 'medical-reports' storage bucket must be created via Supabase Dashboard first
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'storage' AND tablename = 'objects') THEN
+    -- Allow uploads
+    DROP POLICY IF EXISTS "Allow authenticated uploads to medical-reports" ON storage.objects;
+    CREATE POLICY "Allow authenticated uploads to medical-reports"
+      ON storage.objects FOR INSERT
+      WITH CHECK (bucket_id = 'medical-reports');
+
+    -- Allow reads
+    DROP POLICY IF EXISTS "Allow authenticated reads from medical-reports" ON storage.objects;
+    CREATE POLICY "Allow authenticated reads from medical-reports"
+      ON storage.objects FOR SELECT
+      USING (bucket_id = 'medical-reports');
+
+    -- Allow deletes
+    DROP POLICY IF EXISTS "Allow authenticated deletes from medical-reports" ON storage.objects;
+    CREATE POLICY "Allow authenticated deletes from medical-reports"
+      ON storage.objects FOR DELETE
+      USING (bucket_id = 'medical-reports');
+  END IF;
+END $$;
+
 
 -- ######################################################################################################
 -- SECTION 9: HELPER FUNCTIONS & TRIGGERS
 -- ######################################################################################################
 
--- Update timestamp function
+-- Update timestamp function (shared)
 CREATE OR REPLACE FUNCTION update_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -640,7 +758,7 @@ CREATE TRIGGER update_video_calls_timestamp BEFORE UPDATE ON video_calls FOR EAC
 DROP TRIGGER IF EXISTS update_chat_conversations_timestamp ON chat_conversations;
 CREATE TRIGGER update_chat_conversations_timestamp BEFORE UPDATE ON chat_conversations FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
--- Function to calculate video call duration
+-- Function to calculate video call log duration (for video_call_logs table)
 CREATE OR REPLACE FUNCTION calc_video_call_duration()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -653,6 +771,33 @@ $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS calc_video_call_duration_trigger ON video_call_logs;
 CREATE TRIGGER calc_video_call_duration_trigger BEFORE INSERT OR UPDATE ON video_call_logs FOR EACH ROW EXECUTE FUNCTION calc_video_call_duration();
+
+-- Function to calculate video call duration in seconds (for video_calls table - WebRTC)
+CREATE OR REPLACE FUNCTION calculate_call_duration()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.status = 'ended' AND NEW.call_started_at IS NOT NULL THEN
+    NEW.duration_seconds = EXTRACT(EPOCH FROM (NEW.call_ended_at - NEW.call_started_at))::INTEGER;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS video_calls_calculate_duration ON video_calls;
+CREATE TRIGGER video_calls_calculate_duration BEFORE UPDATE ON video_calls FOR EACH ROW EXECUTE FUNCTION calculate_call_duration();
+
+-- Function to clean up old signaling data
+CREATE OR REPLACE FUNCTION cleanup_old_signaling_data()
+RETURNS TRIGGER AS $$
+BEGIN
+  DELETE FROM video_call_signaling
+  WHERE created_at < TIMEZONE('utc', NOW()) - INTERVAL '24 hours';
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS video_calls_cleanup_signaling ON video_calls;
+CREATE TRIGGER video_calls_cleanup_signaling AFTER UPDATE ON video_calls FOR EACH ROW EXECUTE FUNCTION cleanup_old_signaling_data();
 
 -- Function to update conversation timestamp when new message
 CREATE OR REPLACE FUNCTION update_conversation_on_message()
@@ -709,9 +854,219 @@ CREATE TRIGGER log_medical_report_action_trigger
   FOR EACH ROW
   EXECUTE FUNCTION log_medical_report_action();
 
+-- Function to auto-assign nurse to appointment
+CREATE OR REPLACE FUNCTION auto_assign_nurse_to_appointment()
+RETURNS TRIGGER AS $$
+DECLARE
+  assigned_nurse_id UUID;
+  doctor_department TEXT;
+BEGIN
+  -- Get the doctor's department
+  SELECT department INTO doctor_department
+  FROM doctors
+  WHERE id = NEW.doctor_id;
+
+  -- Find an available nurse in the same department
+  -- Prioritize nurses with fewer current assignments
+  SELECT n.id INTO assigned_nurse_id
+  FROM nurses n
+  LEFT JOIN appointments a ON a.nurse_id = n.id
+    AND a.appointment_date = NEW.appointment_date
+    AND a.status = 'scheduled'
+  WHERE n.department = doctor_department
+  GROUP BY n.id
+  ORDER BY COUNT(a.id) ASC, RANDOM()
+  LIMIT 1;
+
+  -- If found, assign the nurse
+  IF assigned_nurse_id IS NOT NULL THEN
+    NEW.nurse_id := assigned_nurse_id;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS auto_assign_nurse_trigger ON appointments;
+CREATE TRIGGER auto_assign_nurse_trigger
+  BEFORE INSERT ON appointments
+  FOR EACH ROW
+  EXECUTE FUNCTION auto_assign_nurse_to_appointment();
+
+-- Function to log appointment changes (audit trigger)
+CREATE OR REPLACE FUNCTION log_appointment_change()
+RETURNS TRIGGER AS $$
+DECLARE
+  audit_user_id TEXT;
+  audit_user_role TEXT;
+BEGIN
+  -- Safely get user ID and role, use defaults if not available
+  BEGIN
+    audit_user_id := current_setting('request.jwt.claims', true)::json->>'sub';
+    audit_user_role := current_setting('request.jwt.claims', true)::json->>'role';
+  EXCEPTION WHEN OTHERS THEN
+    audit_user_id := 'system';
+    audit_user_role := 'system';
+  END;
+
+  -- Use default values if null
+  IF audit_user_id IS NULL THEN
+    audit_user_id := 'system';
+  END IF;
+  IF audit_user_role IS NULL THEN
+    audit_user_role := 'system';
+  END IF;
+
+  IF TG_OP = 'INSERT' THEN
+    INSERT INTO appointment_logs (
+      appointment_id, action_type, performed_by_user_id, performed_by_role, new_status, metadata
+    ) VALUES (
+      NEW.id, 'created', audit_user_id, audit_user_role, NEW.status,
+      jsonb_build_object(
+        'appointment_date', NEW.appointment_date,
+        'appointment_time', NEW.appointment_time,
+        'doctor_id', NEW.doctor_id,
+        'hospital_id', NEW.hospital_id
+      )
+    );
+  ELSIF TG_OP = 'UPDATE' THEN
+    IF OLD.status != NEW.status THEN
+      INSERT INTO appointment_logs (
+        appointment_id, action_type, performed_by_user_id, performed_by_role, old_status, new_status, metadata
+      ) VALUES (
+        NEW.id,
+        CASE NEW.status::text
+          WHEN 'cancelled' THEN 'cancelled'::action_type
+          WHEN 'completed' THEN 'completed'::action_type
+          ELSE 'updated'::action_type
+        END,
+        audit_user_id, audit_user_role, OLD.status, NEW.status,
+        jsonb_build_object(
+          'cancellation_reason', NEW.cancellation_reason,
+          'old_date', OLD.appointment_date,
+          'new_date', NEW.appointment_date
+        )
+      );
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS appointments_audit_trigger ON appointments;
+CREATE TRIGGER appointments_audit_trigger
+  AFTER INSERT OR UPDATE ON appointments
+  FOR EACH ROW
+  EXECUTE FUNCTION log_appointment_change();
+
+-- Function to increment login attempts
+CREATE OR REPLACE FUNCTION increment_login_attempts(
+  p_user_id TEXT,
+  p_user_table TEXT
+) RETURNS void AS $$
+BEGIN
+  CASE p_user_table
+    WHEN 'patients' THEN
+      UPDATE patients SET login_attempts = login_attempts + 1 WHERE patient_id = p_user_id;
+    WHEN 'doctors' THEN
+      UPDATE doctors SET login_attempts = login_attempts + 1 WHERE doctor_id = p_user_id;
+    WHEN 'nurses' THEN
+      UPDATE nurses SET login_attempts = login_attempts + 1 WHERE nurse_id = p_user_id;
+    WHEN 'staff' THEN
+      UPDATE staff SET login_attempts = login_attempts + 1 WHERE staff_id = p_user_id;
+    WHEN 'admins' THEN
+      UPDATE admins SET login_attempts = login_attempts + 1 WHERE id = p_user_id;
+  END CASE;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to reset login attempts
+CREATE OR REPLACE FUNCTION reset_login_attempts(
+  p_user_id TEXT,
+  p_user_table TEXT
+) RETURNS void AS $$
+BEGIN
+  CASE p_user_table
+    WHEN 'patients' THEN
+      UPDATE patients SET login_attempts = 0, is_locked = FALSE WHERE patient_id = p_user_id;
+    WHEN 'doctors' THEN
+      UPDATE doctors SET login_attempts = 0, is_locked = FALSE WHERE doctor_id = p_user_id;
+    WHEN 'nurses' THEN
+      UPDATE nurses SET login_attempts = 0, is_locked = FALSE WHERE nurse_id = p_user_id;
+    WHEN 'staff' THEN
+      UPDATE staff SET login_attempts = 0, is_locked = FALSE WHERE staff_id = p_user_id;
+    WHEN 'admins' THEN
+      UPDATE admins SET login_attempts = 0, is_locked = FALSE WHERE id = p_user_id;
+  END CASE;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to lock account after failed attempts
+CREATE OR REPLACE FUNCTION lock_account_after_failed_attempts(
+  p_user_id TEXT,
+  p_user_table TEXT,
+  p_max_attempts INTEGER DEFAULT 5
+) RETURNS void AS $$
+DECLARE
+  current_attempts INTEGER;
+  lock_duration INTERVAL := '30 minutes';
+BEGIN
+  CASE p_user_table
+    WHEN 'patients' THEN
+      SELECT login_attempts INTO current_attempts FROM patients WHERE patient_id = p_user_id;
+      IF current_attempts >= p_max_attempts THEN
+        UPDATE patients SET is_locked = TRUE, locked_until = NOW() + lock_duration WHERE patient_id = p_user_id;
+      END IF;
+    WHEN 'doctors' THEN
+      SELECT login_attempts INTO current_attempts FROM doctors WHERE doctor_id = p_user_id;
+      IF current_attempts >= p_max_attempts THEN
+        UPDATE doctors SET is_locked = TRUE, locked_until = NOW() + lock_duration WHERE doctor_id = p_user_id;
+      END IF;
+    WHEN 'nurses' THEN
+      SELECT login_attempts INTO current_attempts FROM nurses WHERE nurse_id = p_user_id;
+      IF current_attempts >= p_max_attempts THEN
+        UPDATE nurses SET is_locked = TRUE, locked_until = NOW() + lock_duration WHERE nurse_id = p_user_id;
+      END IF;
+    WHEN 'staff' THEN
+      SELECT login_attempts INTO current_attempts FROM staff WHERE staff_id = p_user_id;
+      IF current_attempts >= p_max_attempts THEN
+        UPDATE staff SET is_locked = TRUE, locked_until = NOW() + lock_duration WHERE staff_id = p_user_id;
+      END IF;
+    WHEN 'admins' THEN
+      SELECT login_attempts INTO current_attempts FROM admins WHERE id = p_user_id;
+      IF current_attempts >= p_max_attempts THEN
+        UPDATE admins SET is_locked = TRUE, locked_until = NOW() + lock_duration WHERE id = p_user_id;
+      END IF;
+  END CASE;
+END;
+$$ LANGUAGE plpgsql;
+
 
 -- ######################################################################################################
--- SECTION 10: ENABLE REALTIME
+-- SECTION 10: VIEWS
+-- ######################################################################################################
+
+-- View for upcoming appointments
+CREATE OR REPLACE VIEW upcoming_appointments AS
+SELECT
+  a.*,
+  p.first_name || ' ' || p.last_name as patient_name,
+  p.email as patient_email,
+  d.first_name || ' ' || d.last_name as doctor_name,
+  d.specialization,
+  h.name as hospital_name,
+  h.address as hospital_address
+FROM appointments a
+JOIN patients p ON a.patient_id = p.id
+JOIN doctors d ON a.doctor_id = d.id
+JOIN hospitals h ON a.hospital_id = h.id
+WHERE a.appointment_date >= CURRENT_DATE
+  AND a.status = 'scheduled'
+ORDER BY a.appointment_date, a.appointment_time;
+
+
+-- ######################################################################################################
+-- SECTION 11: ENABLE REALTIME
 -- ######################################################################################################
 
 DO $$
@@ -738,7 +1093,18 @@ END $$;
 
 
 -- ######################################################################################################
--- SECTION 11: SEED DATA
+-- SECTION 12: TABLE COMMENTS
+-- ######################################################################################################
+
+COMMENT ON TABLE appointments IS 'Core appointments table with doctor-patient scheduling';
+COMMENT ON TABLE appointment_logs IS 'Audit trail for all appointment actions';
+COMMENT ON TABLE hospitals IS 'Healthcare facilities where appointments take place';
+COMMENT ON COLUMN appointments.duration_minutes IS 'Default 30 minutes, can be adjusted';
+COMMENT ON CONSTRAINT unique_doctor_time ON appointments IS 'Prevents double booking for doctors';
+
+
+-- ######################################################################################################
+-- SECTION 13: SEED DATA
 -- ######################################################################################################
 
 -- Insert Tamil Nadu Hospitals
@@ -761,6 +1127,7 @@ ON CONFLICT (id) DO NOTHING;
 -- ######################################################################################################
 
 SELECT '✅ Secure Healthcare System - Complete database setup finished!' as message;
-SELECT '📋 All tables, indexes, triggers, and policies have been created.' as info;
-SELECT '🔐 Row Level Security (RLS) is enabled with permissive policies.' as security;
-SELECT '💬 Chat system, Medical Reports, OTP/MFA, and all features are ready!' as features;
+SELECT '📋 All tables, indexes, triggers, functions, and policies have been created.' as info;
+SELECT '🔐 Row Level Security (RLS) is enabled with permissive policies on ALL tables.' as security;
+SELECT '💬 Chat system, Medical Reports, OTP/MFA, WebRTC Video Calls, and all features are ready!' as features;
+SELECT '🏥 10 Tamil Nadu hospitals seeded.' as seed_data;
