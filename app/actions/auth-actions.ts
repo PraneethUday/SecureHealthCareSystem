@@ -3,7 +3,15 @@
 import { supabaseAdmin as supabase } from "@/lib/supabase-admin";
 import { UserRole } from "@/lib/database.types";
 import { logAction } from "@/lib/logging";
-import { verifyPassword, generateOTP, generateOTPExpiry, hashOTP, isPasswordExpired, validatePasswordComplexity, hashPassword } from "@/lib/security";
+import {
+  verifyPassword,
+  generateOTP,
+  generateOTPExpiry,
+  hashOTP,
+  isPasswordExpired,
+  validatePasswordComplexity,
+  hashPassword,
+} from "@/lib/security";
 import { sendOTPEmail } from "@/lib/email";
 import { checkAccountLock, recordLoginAttempt } from "@/lib/account-lockout";
 
@@ -27,7 +35,7 @@ interface OTPVerifyResult {
 export async function login(
   identifier: string,
   password: string,
-  role: UserRole
+  role: UserRole,
 ): Promise<LoginResult> {
   try {
     // Determine the table based on role
@@ -74,12 +82,7 @@ export async function login(
 
     if (error || !data) {
       // Record failed login attempt - user not found
-      await recordLoginAttempt(
-        identifier,
-        role,
-        "failed",
-        "user_not_found"
-      );
+      await recordLoginAttempt(identifier, role, "failed", "user_not_found");
 
       await logAction({
         userId: identifier,
@@ -100,7 +103,7 @@ export async function login(
           identifier,
           role,
           "failed",
-          "account_locked_by_admin"
+          "account_locked_by_admin",
         );
 
         await logAction({
@@ -113,21 +116,22 @@ export async function login(
 
         return {
           success: false,
-          message: "Your account has been locked by an administrator. Please contact support.",
+          message:
+            "Your account has been locked by an administrator. Please contact support.",
         };
       } else if (lockStatus.lockedUntil) {
         // Auto-locked due to failed attempts
         const now = new Date();
         if (now < lockStatus.lockedUntil) {
           const minutesRemaining = Math.ceil(
-            (lockStatus.lockedUntil.getTime() - now.getTime()) / 60000
+            (lockStatus.lockedUntil.getTime() - now.getTime()) / 60000,
           );
 
           await recordLoginAttempt(
             identifier,
             role,
             "failed",
-            "account_locked"
+            "account_locked",
           );
 
           await logAction({
@@ -155,7 +159,9 @@ export async function login(
       // Fallback for old plaintext passwords (migrate on next login)
       passwordValid = data.password === password;
       if (passwordValid) {
-        console.warn(`User ${identifier} still has plaintext password. Consider migrating.`);
+        console.warn(
+          `User ${identifier} still has plaintext password. Consider migrating.`,
+        );
       }
     }
 
@@ -165,7 +171,7 @@ export async function login(
         identifier,
         role,
         "failed",
-        "invalid_password"
+        "invalid_password",
       );
 
       // Log audit
@@ -187,7 +193,8 @@ export async function login(
       if (attemptResult.shouldLock && attemptResult.lockedUntil) {
         return {
           success: false,
-          message: "Account locked due to too many failed login attempts. Please try again in 3 minutes.",
+          message:
+            "Account locked due to too many failed login attempts. Please try again in 3 minutes.",
         };
       }
 
@@ -224,11 +231,7 @@ export async function login(
     }
 
     // Password is valid - record successful attempt and clear locks
-    await recordLoginAttempt(
-      identifier,
-      role,
-      "success"
-    );
+    await recordLoginAttempt(identifier, role, "success");
 
     // Also reset old login attempts columns for backward compatibility
     await supabase
@@ -269,7 +272,7 @@ export async function login(
       const emailSent = await sendOTPEmail(
         data.email,
         otp,
-        `${data.first_name || data.firstName} ${data.last_name || data.lastName}`
+        `${data.first_name || data.firstName} ${data.last_name || data.lastName}`,
       );
 
       if (!emailSent) {
@@ -295,7 +298,13 @@ export async function login(
       });
 
       // Create a temporary token for MFA verification (JWT-like)
-      const mfaToken = Buffer.from(JSON.stringify({ userId: data[userIdField], role, timestamp: Date.now() })).toString("base64");
+      const mfaToken = Buffer.from(
+        JSON.stringify({
+          userId: data[userIdField],
+          role,
+          timestamp: Date.now(),
+        }),
+      ).toString("base64");
 
       await logAction({
         userId: identifier,
@@ -343,7 +352,11 @@ export async function login(
       .eq(idField, identifier);
 
     // Remove sensitive data
-    const { password_hash, password: _dbPassword, ...userWithoutPassword } = data;
+    const {
+      password_hash,
+      password: _dbPassword,
+      ...userWithoutPassword
+    } = data;
 
     return {
       success: true,
@@ -371,14 +384,14 @@ export async function updatePassword(
   identifier: string,
   oldPassword: string,
   newPassword: string,
-  role: UserRole
+  role: UserRole,
 ): Promise<LoginResult> {
   try {
     // Admin password cannot be changed - it must remain as "admin"
     if (role === "admin") {
-      return { 
-        success: false, 
-        message: "Admin password cannot be changed for security reasons" 
+      return {
+        success: false,
+        message: "Admin password cannot be changed for security reasons",
       };
     }
 
@@ -451,7 +464,10 @@ export async function updatePassword(
     // 4. Validate new password complexity
     const complexityResult = validatePasswordComplexity(newPassword);
     if (!complexityResult.valid) {
-      return { success: false, message: complexityResult.message || "Invalid password format" };
+      return {
+        success: false,
+        message: complexityResult.message || "Invalid password format",
+      };
     }
 
     // 5. Check password history (prevent reuse of last 3 passwords)
@@ -518,7 +534,10 @@ export async function updatePassword(
     };
   } catch (error) {
     console.error("Password update error:", error);
-    return { success: false, message: "Failed to update password. Please try again." };
+    return {
+      success: false,
+      message: "Failed to update password. Please try again.",
+    };
   }
 }
 
@@ -528,7 +547,7 @@ export async function updatePassword(
 export async function verifyMFAOTP(
   mfaToken: string,
   otpCode: string,
-  role: UserRole
+  role: UserRole,
 ): Promise<OTPVerifyResult> {
   try {
     // Decode MFA token
@@ -600,7 +619,10 @@ export async function verifyMFAOTP(
         details: "No valid OTP found",
         status: "failure",
       });
-      return { success: false, message: "No valid OTP found. Request a new one." };
+      return {
+        success: false,
+        message: "No valid OTP found. Request a new one.",
+      };
     }
 
     // Check if OTP has expired
@@ -620,10 +642,7 @@ export async function verifyMFAOTP(
     // Check maximum attempts
     if ((otpRecord.attempts || 0) >= 5) {
       // Delete expired OTP
-      await supabase
-        .from("otp_logs")
-        .delete()
-        .eq("id", otpRecord.id);
+      await supabase.from("otp_logs").delete().eq("id", otpRecord.id);
 
       await logAction({
         userId: userId,
@@ -695,7 +714,11 @@ export async function verifyMFAOTP(
     });
 
     // Remove sensitive data
-    const { password_hash, password: _dbPassword, ...userWithoutPassword } = userData;
+    const {
+      password_hash,
+      password: _dbPassword,
+      ...userWithoutPassword
+    } = userData;
 
     return {
       success: true,
@@ -705,6 +728,9 @@ export async function verifyMFAOTP(
     };
   } catch (error) {
     console.error("OTP verification error:", error);
-    return { success: false, message: "Error verifying OTP. Please try again." };
+    return {
+      success: false,
+      message: "Error verifying OTP. Please try again.",
+    };
   }
 }
