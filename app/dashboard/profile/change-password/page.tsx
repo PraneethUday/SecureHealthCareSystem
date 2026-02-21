@@ -18,6 +18,13 @@ function ChangePasswordContent() {
             router.push("/login");
             return;
         }
+        
+        // Admin cannot change password - redirect to dashboard
+        if (currentSession.role === "admin") {
+            router.push("/dashboard/admin");
+            return;
+        }
+        
         setSession(currentSession);
     }, [router]);
 

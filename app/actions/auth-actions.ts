@@ -198,27 +198,29 @@ export async function login(
       };
     }
 
-    // Password is valid - check for expiry
-    const isExpired = isPasswordExpired(data.password_changed_at);
-    if (isExpired) {
-      await logAction({
-        userId: identifier,
-        userRole: role,
-        action: "password_expired_login",
-        details: "User login redirected to password change due to expiry",
-        status: "success",
-      });
+    // Password is valid - check for expiry (skip for admin)
+    if (role !== "admin") {
+      const isExpired = isPasswordExpired(data.password_changed_at);
+      if (isExpired) {
+        await logAction({
+          userId: identifier,
+          userRole: role,
+          action: "password_expired_login",
+          details: "User login redirected to password change due to expiry",
+          status: "success",
+        });
 
-      // Remove sensitive data
-      const { password_hash, password: _dbPassword, ...userSafeData } = data;
+        // Remove sensitive data
+        const { password_hash, password: _dbPassword, ...userSafeData } = data;
 
-      return {
-        success: true,
-        message: "Your password has expired. Please update it.",
-        requiresPasswordChange: true,
-        user: userSafeData,
-        role,
-      };
+        return {
+          success: true,
+          message: "Your password has expired. Please update it.",
+          requiresPasswordChange: true,
+          user: userSafeData,
+          role,
+        };
+      }
     }
 
     // Password is valid - record successful attempt and clear locks
@@ -372,6 +374,14 @@ export async function updatePassword(
   role: UserRole
 ): Promise<LoginResult> {
   try {
+    // Admin password cannot be changed - it must remain as "admin"
+    if (role === "admin") {
+      return { 
+        success: false, 
+        message: "Admin password cannot be changed for security reasons" 
+      };
+    }
+
     // 1. Determine table and fields
     let table: string;
     let idField: string;

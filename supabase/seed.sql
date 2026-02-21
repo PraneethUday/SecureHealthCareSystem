@@ -22,9 +22,9 @@ DELETE FROM admins;
 -- ==========================================
 
 -- Insert Admin (only one, hardcoded password: admin)
--- Password is hashed using bcrypt (this is a hash of "admin")
-INSERT INTO admins (id, password, full_name, email) 
-VALUES ('admin', '$2a$10$YQs8qF4V7lZ5K8wZ1qGXxO7KJXhM5YX8qF4V7lZ5K8wZ1qGXxO7KJ', 'System Administrator', 'admin@securehealthcare.com')
+-- Password is hashed using bcrypt with 12 salt rounds (this is a hash of "admin")
+INSERT INTO admins (id, password_hash, full_name, email) 
+VALUES ('admin', '$2b$12$lr/yTVCe0K4J6vfD7v9VpOPR7C.od.UWDOArDpDD968iQtbg2a5SG', 'System Administrator', 'admin@securehealthcare.com')
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert Sample Patients with Indian Names
