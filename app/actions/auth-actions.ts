@@ -671,7 +671,7 @@ export async function verifyMFAOTP(
 
     // Verify OTP (hash and compare) - trim whitespace from input
     const trimmedOTP = otpCode.trim();
-    
+
     // Debug logging in development
     if (process.env.NODE_ENV === "development") {
       console.log("=".repeat(50));
@@ -684,7 +684,7 @@ export async function verifyMFAOTP(
       console.log("Input Hash:", hashOTP(trimmedOTP));
       console.log("=".repeat(50));
     }
-    
+
     const otpMatches = verifyOTP(trimmedOTP, otpRecord.otp_hash);
 
     if (!otpMatches) {
