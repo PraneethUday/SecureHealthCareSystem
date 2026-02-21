@@ -8,6 +8,7 @@ import {
   generateOTP,
   generateOTPExpiry,
   hashOTP,
+  verifyOTP,
   isPasswordExpired,
   validatePasswordComplexity,
   hashPassword,
@@ -250,6 +251,17 @@ export async function login(
       const otp = generateOTP();
       const otpHash = hashOTP(otp);
       const expiryTime = generateOTPExpiry();
+
+      // Log OTP in development for testing (remove in production)
+      if (process.env.NODE_ENV === "development") {
+        console.log("=".repeat(50));
+        console.log("🔐 OTP GENERATED FOR", role.toUpperCase(), "LOGIN");
+        console.log("User ID:", data[userIdField]);
+        console.log("Email:", data.email);
+        console.log("OTP CODE:", otp);
+        console.log("Expires at:", expiryTime.toISOString());
+        console.log("=".repeat(50));
+      }
 
       // Store OTP in database
       const { error: otpError } = await supabase.from("otp_logs").insert({
@@ -657,9 +669,23 @@ export async function verifyMFAOTP(
       };
     }
 
-    // Verify OTP (hash and compare)
-    const otpHash = hashOTP(otpCode);
-    const otpMatches = otpHash === otpRecord.otp_hash;
+    // Verify OTP (hash and compare) - trim whitespace from input
+    const trimmedOTP = otpCode.trim();
+    
+    // Debug logging in development
+    if (process.env.NODE_ENV === "development") {
+      console.log("=".repeat(50));
+      console.log("🔍 OTP VERIFICATION ATTEMPT");
+      console.log("User ID:", userId);
+      console.log("Role:", role);
+      console.log("Input OTP:", trimmedOTP);
+      console.log("OTP Length:", trimmedOTP.length);
+      console.log("Stored Hash:", otpRecord.otp_hash);
+      console.log("Input Hash:", hashOTP(trimmedOTP));
+      console.log("=".repeat(50));
+    }
+    
+    const otpMatches = verifyOTP(trimmedOTP, otpRecord.otp_hash);
 
     if (!otpMatches) {
       // Increment attempts

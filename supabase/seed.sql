@@ -23,8 +23,9 @@ DELETE FROM admins;
 
 -- Insert Admin (only one, hardcoded password: admin)
 -- Password is hashed using bcrypt with 12 salt rounds (this is a hash of "admin")
-INSERT INTO admins (id, password_hash, full_name, email) 
-VALUES ('admin', '$2b$12$lr/yTVCe0K4J6vfD7v9VpOPR7C.od.UWDOArDpDD968iQtbg2a5SG', 'System Administrator', 'admin@securehealthcare.com')
+-- MFA is disabled for admin for simplified access
+INSERT INTO admins (id, password_hash, full_name, email, is_mfa_enabled) 
+VALUES ('admin', '$2b$12$lr/yTVCe0K4J6vfD7v9VpOPR7C.od.UWDOArDpDD968iQtbg2a5SG', 'System Administrator', 'admin@securehealthcare.com', false)
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert Sample Patients with Indian Names
