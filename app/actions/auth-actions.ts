@@ -413,11 +413,6 @@ export async function updatePassword(
     let userIdField: string;
 
     switch (role) {
-      case "admin":
-        table = "admins";
-        idField = "id";
-        userIdField = "id";
-        break;
       case "patient":
         table = "patients";
         idField = "patient_id";
