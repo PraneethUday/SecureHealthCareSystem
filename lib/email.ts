@@ -71,11 +71,6 @@ export async function sendOTPEmail(
     return true;
   } catch (error) {
     console.error(`Failed to send OTP email to ${email}:`, error);
-    // ⚡ DEV MODE: Log OTP to console so testing can continue without email
-    console.log(`\n==================================================`);
-    console.log(`📧 EMAIL FAILED - DEV MODE OTP FOR ${email}`);
-    console.log(`🔐 YOUR OTP CODE IS: ${otp}`);
-    console.log(`==================================================\n`);
     return false;
   }
 }
@@ -690,4 +685,3 @@ export async function sendAppointmentReminderEmail(data: {
     return false;
   }
 }
-
