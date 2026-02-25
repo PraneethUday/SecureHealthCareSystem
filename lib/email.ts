@@ -685,4 +685,3 @@ export async function sendAppointmentReminderEmail(data: {
     return false;
   }
 }
-

@@ -79,6 +79,7 @@ describe('Chatbot API Logic', () => {
         it('should handle very long messages', () => {
             const longMessage = 'a'.repeat(5000);
             expect(longMessage.length).toBe(5000);
+            // In real implementation, you might want to truncate or reject
         });
 
         it('should handle special characters', () => {
@@ -208,6 +209,7 @@ describe('Chatbot API Logic', () => {
                 { timestamp: now + 400 },
             ];
 
+            // Check if more than 5 requests in 1 second
             const recentRequests = requests.filter(
                 req => now - req.timestamp < 1000
             );

@@ -13,8 +13,10 @@ import {
   Video,
   Pill,
   Heart,
+  MessageSquare,
   Activity,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { AppointmentWithDetails } from "@/lib/database.types";
 import {
   completeAppointment,
@@ -47,6 +49,7 @@ export default function DoctorAppointmentCard({
   onPrescribe,
   onCreateMedicalRecord,
 }: DoctorAppointmentCardProps) {
+  const router = useRouter();
   const [updating, setUpdating] = useState(false);
   const [showMarkComplete, setShowMarkComplete] = useState(false);
   const [showMarkNoShow, setShowMarkNoShow] = useState(false);
@@ -149,6 +152,7 @@ export default function DoctorAppointmentCard({
   const showMedicalRecordButton =
     Boolean(onCreateMedicalRecord) && (isToday || isCompleted);
   const medicalRecordButtonDisabled = hasMedicalRecord;
+  const canChat = isScheduled || isCompleted;
 
   return (
     <div className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-blue-300 transition-all">
@@ -285,6 +289,21 @@ export default function DoctorAppointmentCard({
             </div>
           )}
 
+          {/* Chat with Patient Button */}
+          {canChat && (
+            <button
+              onClick={() =>
+                router.push(
+                  `/dashboard/doctor/appointments/${appointment.id}/chat`
+                )
+              }
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 mb-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition-all active:scale-95"
+            >
+              <MessageSquare className="w-4 h-4" />
+              Chat with Patient
+            </button>
+          )}
+
           {isScheduled && (
             <>
               {/* Video Call & Prescription buttons for telemedicine */}
@@ -301,11 +320,10 @@ export default function DoctorAppointmentCard({
                     </button>
                     <button
                       onClick={onPrescribe}
-                      className={`flex items-center justify-center gap-2 px-3 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold shadow-sm ${
-                        prescriptionCount > 0
+                      className={`flex items-center justify-center gap-2 px-3 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold shadow-sm ${prescriptionCount > 0
                           ? "text-white bg-green-600 hover:bg-green-700"
                           : "text-white bg-purple-600 hover:bg-purple-700"
-                      }`}
+                        }`}
                     >
                       {prescriptionCount > 0 ? (
                         <>
@@ -326,11 +344,10 @@ export default function DoctorAppointmentCard({
               {!appointment.is_telemedicine && isToday && onPrescribe && (
                 <button
                   onClick={onPrescribe}
-                  className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm ${
-                    prescriptionCount > 0
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm ${prescriptionCount > 0
                       ? "text-white bg-green-600 hover:bg-green-700"
                       : "text-white bg-purple-600 hover:bg-purple-700"
-                  }`}
+                    }`}
                 >
                   {prescriptionCount > 0 ? (
                     <>
@@ -386,11 +403,10 @@ export default function DoctorAppointmentCard({
                 medicalRecordButtonDisabled ? undefined : onCreateMedicalRecord
               }
               disabled={medicalRecordButtonDisabled}
-              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm border-2 ${
-                medicalRecordButtonDisabled
+              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm border-2 ${medicalRecordButtonDisabled
                   ? "text-green-600 bg-green-50 border-green-400 cursor-not-allowed opacity-70"
                   : "text-blue-600 bg-blue-50 border-blue-400 hover:bg-blue-100"
-              }`}
+                }`}
             >
               {hasMedicalRecord ? (
                 <>

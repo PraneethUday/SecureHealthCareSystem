@@ -9,6 +9,7 @@ import {
   X,
   CheckCircle,
   Pill,
+  MessageSquare,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AppointmentWithDetails } from "@/lib/database.types";
@@ -102,6 +103,7 @@ export default function AppointmentCard({
     appointment.is_telemedicine &&
     appointment.status === "scheduled" &&
     !isPast;
+  const canChat = ["scheduled", "completed"].includes(appointment.status);
 
   return (
     <div className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-red-300 dark:hover:border-red-800 transition-all shadow-sm dark:shadow-black/20">
@@ -218,6 +220,20 @@ export default function AppointmentCard({
               <path d="M15.5 1h-8C6.12 1 5 2.12 5 3.5v17C5 21.88 6.12 23 7.5 23h8c1.38 0 2.5-1.12 2.5-2.5v-17C18 2.12 16.88 1 15.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z" />
             </svg>
             Join Video Call (Zoom)
+          </button>
+        )}
+
+        {canChat && (
+          <button
+            onClick={() =>
+              router.push(
+                `/dashboard/patient/appointments/${appointment.id}/chat`
+              )
+            }
+            className="w-full px-4 py-3 mb-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
+          >
+            <MessageSquare className="w-4 h-4" />
+            Chat with Doctor
           </button>
         )}
 
