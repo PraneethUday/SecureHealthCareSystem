@@ -14,13 +14,12 @@ import {
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 // Dynamic import for Threads component (client-side only)
-// Temporarily disabled due to ogl dependency issue
-// const Threads = dynamic(() => import("@/components/Threads"), {
-//   ssr: false,
-//   loading: () => (
-//     <div className="absolute inset-0 bg-gradient-to-br from-red-900 to-black" />
-//   ),
-// });
+const Threads = dynamic(() => import("@/components/Threads"), {
+  ssr: false,
+  loading: () => (
+    <div className="absolute inset-0 bg-gradient-to-br from-red-900 to-black" />
+  ),
+});
 
 export default function Home() {
   return (
@@ -65,15 +64,12 @@ export default function Home() {
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         {/* Threads Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-red-900 via-red-800 to-black dark:from-black dark:via-red-950 dark:to-gray-950">
-          {/* Threads component temporarily disabled due to ogl dependency issue */}
-          {/* <Threads
+          <Threads
             color={[0.9, 0.2, 0.2]}
             amplitude={1.2}
             distance={0.3}
             enableMouseInteraction
-          /> */}
-          {/* Animated gradient overlay for visual interest */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-red-500/10 to-transparent animate-pulse" style={{ animationDuration: '4s' }}></div>
+          />
         </div>
 
         {/* Hero Content */}
