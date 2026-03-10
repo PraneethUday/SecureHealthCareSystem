@@ -22,7 +22,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("[Reset Password] Processing request for:", email, "role:", role);
+    console.log(
+      "[Reset Password] Processing request for:",
+      email,
+      "role:",
+      role,
+    );
 
     // Lazy initialization of Supabase client inside handler
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
