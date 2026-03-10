@@ -167,7 +167,8 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
             Patient Medical Reports
           </h2>
           <p className="text-sm text-gray-600">
-            View and download test results for patients who have booked appointments with you
+            View and download test results for patients who have booked
+            appointments with you
           </p>
         </div>
       </div>
@@ -242,12 +243,16 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
             <ShieldAlert className="w-6 h-6 text-amber-600 flex-shrink-0" />
           </div>
           <div>
-            <h3 className="font-semibold text-amber-900 text-lg">Access Restricted</h3>
+            <h3 className="font-semibold text-amber-900 text-lg">
+              Access Restricted
+            </h3>
             <p className="text-sm text-amber-700 mt-1">
-              You can only view medical reports for patients who have booked an appointment with you.
+              You can only view medical reports for patients who have booked an
+              appointment with you.
             </p>
             <p className="text-sm text-amber-600 mt-2">
-              The patient <span className="font-medium">{searchPatientId}</span> has not booked any appointments with you.
+              The patient <span className="font-medium">{searchPatientId}</span>{" "}
+              has not booked any appointments with you.
             </p>
           </div>
         </div>
@@ -285,14 +290,15 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
                         </h3>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium border ${REPORT_TYPE_COLORS[
-                              report.report_type as MedicalReportType
+                            className={`px-2 py-1 rounded-full text-xs font-medium border ${
+                              REPORT_TYPE_COLORS[
+                                report.report_type as MedicalReportType
                               ]
-                              }`}
+                            }`}
                           >
                             {
                               REPORT_TYPE_LABELS[
-                              report.report_type as MedicalReportType
+                                report.report_type as MedicalReportType
                               ]
                             }
                           </span>

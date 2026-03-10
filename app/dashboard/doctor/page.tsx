@@ -31,7 +31,7 @@ export default function DoctorDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [appointments, setAppointments] = useState<AppointmentWithDetails[]>(
-    []
+    [],
   );
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [activeTab, setActiveTab] = useState<
@@ -55,9 +55,8 @@ export default function DoctorDashboard() {
   const [pendingReportsCount, setPendingReportsCount] = useState<number>(0);
 
   // Calculate unique patients from appointments
-  const uniquePatients = new Set(
-    appointments.map((apt) => apt.patient_id)
-  ).size;
+  const uniquePatients = new Set(appointments.map((apt) => apt.patient_id))
+    .size;
 
   useEffect(() => {
     const checkSession = async () => {
@@ -88,21 +87,21 @@ export default function DoctorDashboard() {
   // Fetch pending reports for doctor's patients
   const fetchPendingReports = useCallback(async () => {
     if (appointments.length === 0) return;
-    
+
     // Get unique patient IDs from appointments
     const patientIds = [...new Set(appointments.map((apt) => apt.patient_id))];
-    
+
     try {
       // Count reports uploaded in last 7 days that haven't been viewed by doctor
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
+
       const { count, error } = await supabase
         .from("medical_reports")
         .select("*", { count: "exact", head: true })
         .in("patient_id", patientIds)
         .gte("uploaded_at", sevenDaysAgo.toISOString());
-      
+
       if (!error && count !== null) {
         setPendingReportsCount(count);
       }
@@ -131,22 +130,22 @@ export default function DoctorDashboard() {
   const todayAppointments = appointments.filter(
     (apt) =>
       new Date(apt.appointment_date).toDateString() === today &&
-      apt.status === "scheduled"
+      apt.status === "scheduled",
   );
   const upcomingAppointments = appointments.filter(
     (apt) =>
       new Date(apt.appointment_date).toDateString() !== today &&
       new Date(apt.appointment_date + "T" + apt.appointment_time) >=
-      new Date() &&
-      apt.status === "scheduled"
+        new Date() &&
+      apt.status === "scheduled",
   );
   const pastAppointments = appointments.filter(
     (apt) =>
       new Date(apt.appointment_date + "T" + apt.appointment_time) <
-      new Date() ||
+        new Date() ||
       apt.status === "completed" ||
       apt.status === "cancelled" ||
-      apt.status === "no_show"
+      apt.status === "no_show",
   );
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -183,7 +182,6 @@ export default function DoctorDashboard() {
 
   return (
     <div className="min-h-screen bg-[conic-gradient(at_top,_var(--tw-gradient-stops))] from-blue-100 via-indigo-100 to-sky-100 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950 pb-10 transition-colors duration-500">
-
       {/* Dynamic Background Mesh */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-60 dark:opacity-30">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-300 dark:bg-blue-900/40 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob"></div>
@@ -193,10 +191,18 @@ export default function DoctorDashboard() {
 
       <style jsx global>{`
         @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
+          0% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
         }
         .animate-blob {
           animation: blob 7s infinite;
@@ -246,7 +252,6 @@ export default function DoctorDashboard() {
 
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-
         {/* Quick Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Stat: Today's Appointments */}
@@ -259,7 +264,9 @@ export default function DoctorDashboard() {
                 Today
               </span>
             </div>
-            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Appointments</h3>
+            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">
+              Appointments
+            </h3>
             <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
               {todayAppointments.length}
             </p>
@@ -272,7 +279,9 @@ export default function DoctorDashboard() {
                 <Users className="w-6 h-6" />
               </div>
             </div>
-            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Total Patients</h3>
+            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">
+              Total Patients
+            </h3>
             <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
               {uniquePatients}
             </p>
@@ -290,7 +299,9 @@ export default function DoctorDashboard() {
                 </span>
               )}
             </div>
-            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Reports to Review</h3>
+            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">
+              Reports to Review
+            </h3>
             <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
               {pendingReportsCount}
             </p>
@@ -303,16 +314,20 @@ export default function DoctorDashboard() {
                 <Activity className="w-6 h-6" />
               </div>
             </div>
-            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Experience</h3>
+            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">
+              Experience
+            </h3>
             <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              {user.years_of_experience} <span className="text-sm font-normal text-gray-500 dark:text-gray-400">years</span>
+              {user.years_of_experience}{" "}
+              <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                years
+              </span>
             </p>
           </div>
         </div>
 
         {/* Main Content Area (Glass Card) */}
         <div className="bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 dark:border-white/10 overflow-hidden">
-
           {/* Navigation Tabs */}
           <div className="flex flex-col md:flex-row justify-between items-center p-6 border-b border-gray-100 dark:border-gray-800">
             <div className="flex gap-2 p-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl overflow-x-auto max-w-full">
@@ -320,27 +335,28 @@ export default function DoctorDashboard() {
                 { id: "today", label: "Today's Schedule", icon: Clock },
                 { id: "upcoming", label: "Upcoming", icon: Calendar },
                 { id: "past", label: "Past History", icon: Files },
-                { id: "reports", label: "Patient Reports", icon: FileText }
+                { id: "reports", label: "Patient Reports", icon: FileText },
               ].map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${activeTab === tab.id
-                      ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
-                      : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50"
-                      }`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50"
+                    }`}
                   >
                     <Icon className="w-4 h-4" />
                     {tab.label}
                   </button>
-                )
+                );
               })}
             </div>
 
             {/* Search Bar - Only show for appointment tabs */}
-            {activeTab !== 'reports' && (
+            {activeTab !== "reports" && (
               <div className="mt-4 md:mt-0 relative w-full md:w-64 group">
                 <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-blue-500 transition-colors" />
                 <input
@@ -356,7 +372,6 @@ export default function DoctorDashboard() {
 
           {/* Tab Content Staging Area */}
           <div className="p-6 md:p-8 min-h-[500px]">
-
             {activeTab === "reports" ? (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <MedicalReportsViewer doctorId={user.doctor_id} />
@@ -364,13 +379,15 @@ export default function DoctorDashboard() {
             ) : loadingAppointments ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
-                <p className="text-gray-400 font-medium">Fetching schedule...</p>
+                <p className="text-gray-400 font-medium">
+                  Fetching schedule...
+                </p>
               </div>
             ) : (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Today's Appointments */}
-                {activeTab === "today" && (
-                  filteredTodayAppointments.length === 0 ? (
+                {activeTab === "today" &&
+                  (filteredTodayAppointments.length === 0 ? (
                     <div className="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
                       <Calendar className="w-12 h-12 mb-3 opacity-20" />
                       <p>No appointments scheduled for today.</p>
@@ -384,23 +401,36 @@ export default function DoctorDashboard() {
                         onUpdate={() => loadAppointments(user.id)}
                         onStartVideoCall={() => {
                           if (apt.zoom_host_url) {
-                            window.open(apt.zoom_host_url, '_blank', 'noopener,noreferrer');
+                            window.open(
+                              apt.zoom_host_url,
+                              "_blank",
+                              "noopener,noreferrer",
+                            );
                           } else if (apt.video_call_link) {
-                            window.open(apt.video_call_link, '_blank', 'noopener,noreferrer');
+                            window.open(
+                              apt.video_call_link,
+                              "_blank",
+                              "noopener,noreferrer",
+                            );
                           } else {
-                            alert('Video call link not available yet. Please wait a moment and refresh.');
+                            alert(
+                              "Video call link not available yet. Please wait a moment and refresh.",
+                            );
                           }
                         }}
-                        onPrescribe={() => setSelectedAppointmentForPrescription(apt)}
-                        onCreateMedicalRecord={() => setSelectedAppointmentForMedicalRecord(apt)}
+                        onPrescribe={() =>
+                          setSelectedAppointmentForPrescription(apt)
+                        }
+                        onCreateMedicalRecord={() =>
+                          setSelectedAppointmentForMedicalRecord(apt)
+                        }
                       />
                     ))
-                  )
-                )}
+                  ))}
 
                 {/* Upcoming Appointments */}
-                {activeTab === "upcoming" && (
-                  filteredUpcomingAppointments.length === 0 ? (
+                {activeTab === "upcoming" &&
+                  (filteredUpcomingAppointments.length === 0 ? (
                     <div className="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
                       <Calendar className="w-12 h-12 mb-3 opacity-20" />
                       <p>No upcoming appointments found.</p>
@@ -414,23 +444,36 @@ export default function DoctorDashboard() {
                         onUpdate={() => loadAppointments(user.id)}
                         onStartVideoCall={() => {
                           if (apt.zoom_host_url) {
-                            window.open(apt.zoom_host_url, '_blank', 'noopener,noreferrer');
+                            window.open(
+                              apt.zoom_host_url,
+                              "_blank",
+                              "noopener,noreferrer",
+                            );
                           } else if (apt.video_call_link) {
-                            window.open(apt.video_call_link, '_blank', 'noopener,noreferrer');
+                            window.open(
+                              apt.video_call_link,
+                              "_blank",
+                              "noopener,noreferrer",
+                            );
                           } else {
-                            alert('Video call link not available yet. Please wait a moment and refresh.');
+                            alert(
+                              "Video call link not available yet. Please wait a moment and refresh.",
+                            );
                           }
                         }}
-                        onPrescribe={() => setSelectedAppointmentForPrescription(apt)}
-                        onCreateMedicalRecord={() => setSelectedAppointmentForMedicalRecord(apt)}
+                        onPrescribe={() =>
+                          setSelectedAppointmentForPrescription(apt)
+                        }
+                        onCreateMedicalRecord={() =>
+                          setSelectedAppointmentForMedicalRecord(apt)
+                        }
                       />
                     ))
-                  )
-                )}
+                  ))}
 
                 {/* Past Appointments */}
-                {activeTab === "past" && (
-                  filteredPastAppointments.length === 0 ? (
+                {activeTab === "past" &&
+                  (filteredPastAppointments.length === 0 ? (
                     <div className="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
                       <Files className="w-12 h-12 mb-3 opacity-20" />
                       <p>No past appointments found.</p>
@@ -443,17 +486,19 @@ export default function DoctorDashboard() {
                         doctorId={user.id}
                         onUpdate={() => loadAppointments(user.id)}
                         onStartVideoCall={() => alert("Session completed.")}
-                        onPrescribe={() => setSelectedAppointmentForPrescription(apt)}
-                        onCreateMedicalRecord={() => setSelectedAppointmentForMedicalRecord(apt)}
+                        onPrescribe={() =>
+                          setSelectedAppointmentForPrescription(apt)
+                        }
+                        onCreateMedicalRecord={() =>
+                          setSelectedAppointmentForMedicalRecord(apt)
+                        }
                       />
                     ))
-                  )
-                )}
+                  ))}
               </div>
             )}
           </div>
         </div>
-
       </main>
 
       {/* Incoming Call Modal - Only render when user is loaded */}
@@ -505,7 +550,6 @@ export default function DoctorDashboard() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
