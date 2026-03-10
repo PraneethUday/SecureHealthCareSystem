@@ -387,7 +387,11 @@ export default function AppointmentCard({
                   </div>
                   <div className="flex gap-2">
                     <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                    <p>I understand that this chat is meant for medical consultation regarding this specific appointment and should not be used for absolute emergencies.</p>
+                    <p>
+                      I understand that this chat is meant for medical
+                      consultation regarding this specific appointment and
+                      should not be used for absolute emergencies.
+                    </p>
                   </div>
                   <div className="flex gap-2">
                     <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
