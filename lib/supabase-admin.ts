@@ -17,7 +17,7 @@ function getSupabaseAdmin(): SupabaseClient {
 
   if (!supabaseUrl || !supabaseServiceRoleKey) {
     throw new Error(
-      "Missing Supabase configuration. Ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set."
+      "Missing Supabase configuration. Ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.",
     );
   }
 
