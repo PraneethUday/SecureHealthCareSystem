@@ -15,7 +15,7 @@ import { createClient } from "@supabase/supabase-js";
 
 function ResetPasswordForm() {
   const router = useRouter();
-  
+
   // Lazy initialization to prevent build errors when env vars are not available during prerendering
   const supabase = useMemo(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
