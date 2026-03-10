@@ -49,7 +49,7 @@ describe("Appointments Unit Tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset all mock implementations
-    Object.values(mockSupabaseChain).forEach((fn) => {
+    Object.values(mockSupabaseChain).forEach((fn: any) => {
       if (typeof fn === "function" && fn.mockReturnThis) {
         fn.mockReturnThis();
       }

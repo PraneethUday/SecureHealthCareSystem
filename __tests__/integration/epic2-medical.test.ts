@@ -96,7 +96,10 @@ describe("Epic 2: Patient Medical Record Management", () => {
                 patient_id: "P001",
                 doctor_id: "D001",
                 record_date: "2026-03-10",
-                diagnosis: "Fail Diagnosis"
+                diagnosis: "Fail Diagnosis",
+                chief_complaint: "Headache",
+                treatment_plan: "Unknown",
+                notes: ""
              }, "NURSE01"); // Attempting with wrong actor ID
 
              expect(result.success).toBe(false);
