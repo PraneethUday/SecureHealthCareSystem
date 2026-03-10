@@ -49,44 +49,15 @@ export async function POST(request: NextRequest) {
       .update(token)
       .digest("hex");
 
-    // Determine which table to search based on role, or search all tables
-    let user: any = null;
-    let userTable: string = "";
+    // Find user with matching token and email
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .select("id, email, reset_token, reset_token_expiry")
+      .eq("email", email)
+      .eq("reset_token", resetTokenHash)
+      .single();
 
-    if (role && ROLE_TABLES[role]) {
-      // If role is provided, search only that table
-      const table = ROLE_TABLES[role];
-      const { data, error } = await supabase
-        .from(table)
-        .select("id, email, reset_token, reset_token_expiry")
-        .eq("email", email.toLowerCase())
-        .eq("reset_token", resetTokenHash)
-        .single();
-
-      if (data && !error) {
-        user = data;
-        userTable = table;
-      }
-    } else {
-      // Search all tables if role is not provided
-      for (const [roleName, table] of Object.entries(ROLE_TABLES)) {
-        const { data, error } = await supabase
-          .from(table)
-          .select("id, email, reset_token, reset_token_expiry")
-          .eq("email", email.toLowerCase())
-          .eq("reset_token", resetTokenHash)
-          .single();
-
-        if (data && !error) {
-          user = data;
-          userTable = table;
-          console.log(`[Reset Password] User found in ${table}`);
-          break;
-        }
-      }
-    }
-
-    if (!user) {
+    if (userError || !user) {
       console.log("[Reset Password] Invalid token or email");
       return NextResponse.json(
         { error: "Invalid or expired reset link" },
@@ -95,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if token has expired
-    const tokenExpiry = new Date(user.reset_token_expiry);
+    const tokenExpiry = new Date(foundUser.password_reset_expires_at);
     if (tokenExpiry < new Date()) {
       console.log("[Reset Password] Token expired");
       return NextResponse.json(
@@ -113,18 +84,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Update user's password and clear reset token
+    // We update both password and password_hash for backward compatibility where plaintext was required
     const { error: updateError } = await supabase
-      .from(userTable)
+      .from("users")
       .update({
-        password: hashedPassword,
-        reset_token: null,
-        reset_token_expiry: null,
+        password: password, // The app still relies on this in auth-actions.ts for old users
+        password_hash: hashedPassword,
+        password_reset_token: null,
+        password_reset_expires_at: null,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", user.id);
+      .eq("id", foundUser.id);
 
     if (updateError) {
       console.error("[Reset Password] Error updating password:", updateError);

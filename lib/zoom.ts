@@ -78,7 +78,7 @@ export async function createZoomMeeting(options: CreateMeetingOptions): Promise<
                 auto_recording: 'cloud', // Record for medical records
                 approval_type: 0, // Automatically approve
                 encryption_type: 'enhanced_encryption', // HIPAA compliance
-                meeting_authentication: false, // No authentication required
+                meeting_authentication: false, // Set to false so patients can join directly without a Zoom account
             },
         };
 
