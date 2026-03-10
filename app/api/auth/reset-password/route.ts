@@ -3,10 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 export async function POST(request: NextRequest) {
     try {
         const { token, email, password } = await request.json();
@@ -19,6 +15,20 @@ export async function POST(request: NextRequest) {
         }
 
         console.log('[Reset Password] Processing request for:', email);
+
+        // Lazy initialization of Supabase client inside handler
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+        if (!supabaseUrl || !supabaseKey) {
+            console.error('[Reset Password] Missing Supabase configuration');
+            return NextResponse.json(
+                { error: 'Server configuration error' },
+                { status: 500 }
+            );
+        }
+
+        const supabase = createClient(supabaseUrl, supabaseKey);
 
         // Hash the token to compare with stored hash
         const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');

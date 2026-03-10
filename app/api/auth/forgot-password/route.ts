@@ -3,18 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-// Create email transporter using your Gmail
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
-
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
