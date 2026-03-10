@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
     Send,
     Paperclip,
@@ -60,38 +60,24 @@ export default function ChatWindow({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Initialize conversation
-    useEffect(() => {
-        initializeConversation();
-        return () => {
-            if (pollIntervalRef.current) {
-                clearInterval(pollIntervalRef.current);
+    const fetchMessagesForConversation = useCallback(async (convId: string) => {
+        try {
+            const response = await fetch(
+                `/api/chat/messages?conversationId=${convId}&userId=${currentUserId}`
+            );
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch messages");
             }
-        };
-    }, [appointmentId]);
 
-    // Poll for new messages
-    useEffect(() => {
-        if (conversationId) {
-            pollIntervalRef.current = setInterval(fetchMessages, 5000);
-            return () => {
-                if (pollIntervalRef.current) {
-                    clearInterval(pollIntervalRef.current);
-                }
-            };
+            const data = await response.json();
+            setMessages(data.messages || []);
+        } catch (err) {
+            console.error("Error fetching messages:", err);
         }
-    }, [conversationId]);
+    }, [currentUserId]);
 
-    // Scroll to bottom when messages change
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    const initializeConversation = async () => {
+    const initializeConversation = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
@@ -118,29 +104,46 @@ export default function ChatWindow({
         } finally {
             setLoading(false);
         }
-    };
+    }, [appointmentId, fetchMessagesForConversation]);
 
-    const fetchMessages = async () => {
+    const fetchMessages = useCallback(async () => {
         if (!conversationId) return;
         await fetchMessagesForConversation(conversationId);
-    };
+    }, [conversationId, fetchMessagesForConversation]);
 
-    const fetchMessagesForConversation = async (convId: string) => {
-        try {
-            const response = await fetch(
-                `/api/chat/messages?conversationId=${convId}&userId=${currentUserId}`
-            );
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch messages");
+    // Initialize conversation
+    useEffect(() => {
+        initializeConversation();
+        return () => {
+            if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
             }
+        };
+    }, [initializeConversation]);
 
-            const data = await response.json();
-            setMessages(data.messages || []);
-        } catch (err) {
-            console.error("Error fetching messages:", err);
+    // Poll for new messages
+    useEffect(() => {
+        if (conversationId) {
+            pollIntervalRef.current = setInterval(fetchMessages, 5000);
+            return () => {
+                if (pollIntervalRef.current) {
+                    clearInterval(pollIntervalRef.current);
+                }
+            };
         }
+    }, [conversationId, fetchMessages]);
+
+    // Scroll to bottom when messages change
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
+
+    // Note: initializeConversation, fetchMessages, and fetchMessagesForConversation
+    // are defined above as useCallback hooks
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();

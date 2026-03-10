@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
 import ChatWindow from "@/app/dashboard/components/ChatWindow";
@@ -26,11 +26,7 @@ export default function PatientChatPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        loadData();
-    }, [appointmentId]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
@@ -79,7 +75,11 @@ export default function PatientChatPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [appointmentId, router]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     if (loading) {
         return (
