@@ -458,7 +458,10 @@ export default function VitalsForm({
                 color="amber"
               />
               <div className="space-y-2">
-                <label htmlFor="blood_sugar_type" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="blood_sugar_type"
+                  className="text-sm font-semibold text-gray-700 dark:text-gray-300"
+                >
                   Type
                 </label>
                 <select
@@ -566,7 +569,10 @@ export default function VitalsForm({
             />
 
             <div className="space-y-2">
-              <label htmlFor="stress_level" className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="stress_level"
+                className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300"
+              >
                 <Brain className="w-5 h-5 text-purple-500" />
                 Stress Level (1-10)
               </label>

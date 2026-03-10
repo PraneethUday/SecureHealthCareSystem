@@ -1,7 +1,19 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Users, Calendar, Clock, MapPin, User, Phone, Mail, Stethoscope, Heart, Activity, Eye } from "lucide-react";
+import {
+  Users,
+  Calendar,
+  Clock,
+  MapPin,
+  User,
+  Phone,
+  Mail,
+  Stethoscope,
+  Heart,
+  Activity,
+  Eye,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import PatientProfileModal from "@/components/PatientProfileModal";
 import NurseVitalsForm from "./NurseVitalsForm";
@@ -37,10 +49,14 @@ export function PatientCare({ nurseId }: PatientCareProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "today" | "upcoming">("today");
   const [showProfileModal, setShowProfileModal] = useState<string | null>(null);
-  const [showVitalsForm, setShowVitalsForm] = useState<{ patientId: string; patientName: string } | null>(null);
-  const [showVitalsViewer, setShowVitalsViewer] = useState<{ patientId: string; patientName: string } | null>(null);
-
-
+  const [showVitalsForm, setShowVitalsForm] = useState<{
+    patientId: string;
+    patientName: string;
+  } | null>(null);
+  const [showVitalsViewer, setShowVitalsViewer] = useState<{
+    patientId: string;
+    patientName: string;
+  } | null>(null);
 
   const fetchAssignedPatients = useCallback(async () => {
     setIsLoading(true);
@@ -92,7 +108,7 @@ export function PatientCare({ nurseId }: PatientCareProps) {
           ),
           updated_at,
           share_health_profile
-        `
+        `,
         )
         .eq("nurse_id", nurseData.id)
         .order("appointment_date", { ascending: true })
@@ -101,7 +117,9 @@ export function PatientCare({ nurseId }: PatientCareProps) {
       if (filter === "today") {
         query = query.eq("appointment_date", today).in("status", ["scheduled"]);
       } else if (filter === "upcoming") {
-        query = query.gte("appointment_date", today).in("status", ["scheduled"]);
+        query = query
+          .gte("appointment_date", today)
+          .in("status", ["scheduled"]);
       }
 
       const { data, error } = await query;
@@ -113,7 +131,8 @@ export function PatientCare({ nurseId }: PatientCareProps) {
         const formattedPatients = (data || []).map((apt: any) => {
           const updatedAt = new Date(apt.updated_at);
           const now = new Date();
-          const isNew = (now.getTime() - updatedAt.getTime()) < (24 * 60 * 60 * 1000); // 24 hours
+          const isNew =
+            now.getTime() - updatedAt.getTime() < 24 * 60 * 60 * 1000; // 24 hours
 
           return {
             appointment_id: apt.id,
@@ -173,7 +192,10 @@ export function PatientCare({ nurseId }: PatientCareProps) {
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
       age--;
     }
     return age;
@@ -199,28 +221,31 @@ export function PatientCare({ nurseId }: PatientCareProps) {
         <div className="flex gap-2">
           <button
             onClick={() => setFilter("today")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === "today"
-              ? "bg-green-500 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              filter === "today"
+                ? "bg-green-500 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
           >
             Today
           </button>
           <button
             onClick={() => setFilter("upcoming")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === "upcoming"
-              ? "bg-green-500 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              filter === "upcoming"
+                ? "bg-green-500 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
           >
             Upcoming
           </button>
           <button
             onClick={() => setFilter("all")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === "all"
-              ? "bg-green-500 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              filter === "all"
+                ? "bg-green-500 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
           >
             All
           </button>
@@ -266,12 +291,15 @@ export function PatientCare({ nurseId }: PatientCareProps) {
                       {patient.patient_name}
                     </h3>
                     <p className="text-sm text-gray-500">
-                      ID: {patient.patient_id} • Age: {getAge(patient.patient_dob)}
+                      ID: {patient.patient_id} • Age:{" "}
+                      {getAge(patient.patient_dob)}
                     </p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <span className={`px-3 py-1 text-xs font-bold rounded-full border ${patient.status === 'scheduled' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                  <span
+                    className={`px-3 py-1 text-xs font-bold rounded-full border ${patient.status === "scheduled" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-green-50 text-green-700 border-green-200"}`}
+                  >
                     {patient.status.toUpperCase()}
                   </span>
                   {patient.isNew && (
@@ -286,7 +314,9 @@ export function PatientCare({ nurseId }: PatientCareProps) {
               <div className="space-y-3 mb-4">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Calendar className="w-4 h-4 text-green-500" />
-                  <span className="font-medium">{formatDate(patient.appointment_date)}</span>
+                  <span className="font-medium">
+                    {formatDate(patient.appointment_date)}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Clock className="w-4 h-4 text-green-500" />
@@ -297,9 +327,15 @@ export function PatientCare({ nurseId }: PatientCareProps) {
                     <Stethoscope className="w-5 h-5 text-indigo-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-indigo-500 font-bold uppercase tracking-wider">Assigned By</p>
-                    <p className="text-sm font-bold text-gray-800">{patient.doctor_name}</p>
-                    <p className="text-[10px] text-gray-500 font-medium">{patient.doctor_specialization}</p>
+                    <p className="text-xs text-indigo-500 font-bold uppercase tracking-wider">
+                      Assigned By
+                    </p>
+                    <p className="text-sm font-bold text-gray-800">
+                      {patient.doctor_name}
+                    </p>
+                    <p className="text-[10px] text-gray-500 font-medium">
+                      {patient.doctor_specialization}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -325,8 +361,12 @@ export function PatientCare({ nurseId }: PatientCareProps) {
                         <Heart className="w-5 h-5 text-rose-600" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-rose-900">Health Profile Shared</p>
-                        <p className="text-xs text-rose-700">Patient shared their medical history.</p>
+                        <p className="text-sm font-bold text-rose-900">
+                          Health Profile Shared
+                        </p>
+                        <p className="text-xs text-rose-700">
+                          Patient shared their medical history.
+                        </p>
                       </div>
                     </div>
                     <button
@@ -342,14 +382,24 @@ export function PatientCare({ nurseId }: PatientCareProps) {
               {/* Vitals Actions */}
               <div className="flex gap-3 mb-4">
                 <button
-                  onClick={() => setShowVitalsForm({ patientId: patient.patient_uuid, patientName: patient.patient_name })}
+                  onClick={() =>
+                    setShowVitalsForm({
+                      patientId: patient.patient_uuid,
+                      patientName: patient.patient_name,
+                    })
+                  }
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all shadow-md shadow-green-500/20 active:scale-95"
                 >
                   <Activity className="w-4 h-4" />
                   Record Vitals
                 </button>
                 <button
-                  onClick={() => setShowVitalsViewer({ patientId: patient.patient_uuid, patientName: patient.patient_name })}
+                  onClick={() =>
+                    setShowVitalsViewer({
+                      patientId: patient.patient_uuid,
+                      patientName: patient.patient_name,
+                    })
+                  }
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-green-200 text-green-700 text-sm font-bold rounded-xl hover:bg-green-50 transition-all active:scale-95"
                 >
                   <Eye className="w-4 h-4" />
@@ -365,7 +415,9 @@ export function PatientCare({ nurseId }: PatientCareProps) {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Mail className="w-4 h-4 text-green-500" />
-                  <span className="truncate max-w-[150px]">{patient.patient_email}</span>
+                  <span className="truncate max-w-[150px]">
+                    {patient.patient_email}
+                  </span>
                 </div>
               </div>
             </div>
@@ -380,9 +432,15 @@ export function PatientCare({ nurseId }: PatientCareProps) {
             <div className="flex items-center gap-3">
               <Users className="w-8 h-8 text-green-600" />
               <div>
-                <p className="text-2xl font-bold text-gray-900">{patients.length}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {patients.length}
+                </p>
                 <p className="text-sm text-gray-600">
-                  {filter === "today" ? "Today's Patients" : filter === "upcoming" ? "Upcoming Patients" : "Total Assigned Patients"}
+                  {filter === "today"
+                    ? "Today's Patients"
+                    : filter === "upcoming"
+                      ? "Upcoming Patients"
+                      : "Total Assigned Patients"}
                 </p>
               </div>
             </div>
@@ -399,7 +457,10 @@ export function PatientCare({ nurseId }: PatientCareProps) {
       {/* Patient Profile Modal */}
       {showProfileModal && (
         <PatientProfileModal
-          patientId={patients.find(p => p.patient_id === showProfileModal)?.patient_uuid || ""}
+          patientId={
+            patients.find((p) => p.patient_id === showProfileModal)
+              ?.patient_uuid || ""
+          }
           onClose={() => setShowProfileModal(null)}
         />
       )}

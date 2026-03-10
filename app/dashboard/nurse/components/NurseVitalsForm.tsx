@@ -224,7 +224,10 @@ export default function NurseVitalsForm({
       }, 1500);
     } catch (err: unknown) {
       console.error("Error saving vitals:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to save vitals. Please try again.";
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to save vitals. Please try again.";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -307,7 +310,11 @@ export default function NurseVitalsForm({
           return (
             <button
               key={section.id}
-              onClick={() => setActiveSection(section.id as "basic" | "cardio" | "metabolic" | "lifestyle")}
+              onClick={() =>
+                setActiveSection(
+                  section.id as "basic" | "cardio" | "metabolic" | "lifestyle",
+                )
+              }
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
                 activeSection === section.id
                   ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg"
@@ -466,7 +473,10 @@ export default function NurseVitalsForm({
                 color="amber"
               />
               <div className="space-y-2">
-                <label htmlFor="blood_sugar_type" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="blood_sugar_type"
+                  className="text-sm font-semibold text-gray-700 dark:text-gray-300"
+                >
                   Type
                 </label>
                 <select
@@ -574,7 +584,10 @@ export default function NurseVitalsForm({
             />
 
             <div className="space-y-2">
-              <label htmlFor="stress_level" className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="stress_level"
+                className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300"
+              >
                 <Brain className="w-5 h-5 text-purple-500" />
                 Stress Level (1-10)
               </label>
@@ -708,10 +721,12 @@ function VitalInput({
 
   return (
     <div className="space-y-2">
-      <label
-        className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300"
-      >
-        <div className={`p-1 rounded ${colorClasses[color] || colorClasses.gray}`}>{icon}</div>
+      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <div
+          className={`p-1 rounded ${colorClasses[color] || colorClasses.gray}`}
+        >
+          {icon}
+        </div>
         {label}
       </label>
       <input
