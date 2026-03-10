@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const reportId = searchParams.get("reportId");
     const fileName = searchParams.get("fileName");
+    const doctorId = searchParams.get("doctorId");
 
     if (!reportId && !fileName) {
       return NextResponse.json(
@@ -17,12 +18,13 @@ export async function GET(request: NextRequest) {
     }
 
     let filePath = fileName;
+    let patientUUID: string | null = null;
 
-    // If reportId is provided, fetch the file name from database
-    if (reportId && !fileName) {
+    // If reportId is provided, fetch the file name and patient info from database
+    if (reportId) {
       const { data: report, error } = await supabase
         .from("medical_reports")
-        .select("file_name, file_url")
+        .select("file_name, file_url, patient_id")
         .eq("id", reportId)
         .single();
 
@@ -34,9 +36,58 @@ export async function GET(request: NextRequest) {
         );
       }
 
+      patientUUID = report.patient_id;
+
       // Extract file path from URL
       const urlParts = report.file_url.split("/medical-reports/");
       filePath = urlParts[1] || report.file_name;
+    }
+
+    // If doctorId is provided, verify the doctor has an appointment with the patient
+    if (doctorId && patientUUID) {
+      // Get doctor UUID from doctor_id
+      const { data: doctorData, error: doctorError } = await supabase
+        .from("doctors")
+        .select("id")
+        .eq("doctor_id", doctorId)
+        .single();
+
+      if (doctorError || !doctorData) {
+        console.log("⚠️ [Download Report] Doctor not found:", doctorId);
+        return NextResponse.json(
+          { error: "Doctor not found" },
+          { status: 404 }
+        );
+      }
+
+      // Check if the doctor has any appointment with this patient
+      const { data: appointmentData, error: appointmentError } = await supabase
+        .from("appointments")
+        .select("id")
+        .eq("doctor_id", doctorData.id)
+        .eq("patient_id", patientUUID)
+        .limit(1);
+
+      if (appointmentError) {
+        console.error("❌ [Download Report] Error checking appointments:", appointmentError);
+        return NextResponse.json(
+          { error: "Failed to verify appointment" },
+          { status: 500 }
+        );
+      }
+
+      if (!appointmentData || appointmentData.length === 0) {
+        console.log("🚫 [Download Report] No appointment found between doctor and patient");
+        return NextResponse.json(
+          { 
+            error: "Access denied. You can only download reports for patients who have booked an appointment with you.",
+            accessDenied: true 
+          },
+          { status: 403 }
+        );
+      }
+
+      console.log("✅ [Download Report] Appointment verified, doctor can download report");
     }
 
     console.log("📄 [Download Report] Generating signed URL for:", filePath);

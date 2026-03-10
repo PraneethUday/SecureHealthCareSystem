@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getSession, clearSession } from "@/lib/auth";
 import { logAction } from "@/lib/logging";
 import { getDoctorAppointments } from "@/lib/appointments";
 import { AppointmentWithDetails } from "@/lib/database.types";
+import { supabase } from "@/lib/supabase";
 import {
   Stethoscope,
   Users,
@@ -51,6 +52,12 @@ export default function DoctorDashboard() {
   const [pastFilter, setPastFilter] = useState<
     "all" | "completed" | "cancelled" | "no_show"
   >("all");
+  const [pendingReportsCount, setPendingReportsCount] = useState<number>(0);
+
+  // Calculate unique patients from appointments
+  const uniquePatients = new Set(
+    appointments.map((apt) => apt.patient_id)
+  ).size;
 
   useEffect(() => {
     const checkSession = async () => {
@@ -77,6 +84,36 @@ export default function DoctorDashboard() {
     setAppointments(data);
     setLoadingAppointments(false);
   };
+
+  // Fetch pending reports for doctor's patients
+  const fetchPendingReports = useCallback(async () => {
+    if (appointments.length === 0) return;
+    
+    // Get unique patient IDs from appointments
+    const patientIds = [...new Set(appointments.map((apt) => apt.patient_id))];
+    
+    try {
+      // Count reports uploaded in last 7 days that haven't been viewed by doctor
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const { count, error } = await supabase
+        .from("medical_reports")
+        .select("*", { count: "exact", head: true })
+        .in("patient_id", patientIds)
+        .gte("uploaded_at", sevenDaysAgo.toISOString());
+      
+      if (!error && count !== null) {
+        setPendingReportsCount(count);
+      }
+    } catch (err) {
+      console.error("Error fetching pending reports:", err);
+    }
+  }, [appointments]);
+
+  useEffect(() => {
+    fetchPendingReports();
+  }, [fetchPendingReports]);
 
   const handleLogout = () => {
     if (user) {
@@ -228,7 +265,7 @@ export default function DoctorDashboard() {
             </p>
           </div>
 
-          {/* Stat: Total Patients (Placeholder) */}
+          {/* Stat: Total Patients */}
           <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-5 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
             <div className="flex justify-between items-start mb-4">
               <div className="bg-gradient-to-br from-emerald-400 to-teal-500 p-3 rounded-xl shadow-md shadow-emerald-500/20 text-white">
@@ -237,23 +274,25 @@ export default function DoctorDashboard() {
             </div>
             <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Total Patients</h3>
             <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              --
+              {uniquePatients}
             </p>
           </div>
 
-          {/* Stat: Pending Reports (Placeholder) */}
+          {/* Stat: Pending Reports */}
           <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-5 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
             <div className="flex justify-between items-start mb-4">
               <div className="bg-gradient-to-br from-amber-400 to-orange-500 p-3 rounded-xl shadow-md shadow-amber-500/20 text-white">
                 <Files className="w-6 h-6" />
               </div>
-              <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full border border-amber-100 dark:border-amber-800">
-                Pending
-              </span>
+              {pendingReportsCount > 0 && (
+                <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full border border-amber-100 dark:border-amber-800">
+                  Pending
+                </span>
+              )}
             </div>
             <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Reports to Review</h3>
             <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              --
+              {pendingReportsCount}
             </p>
           </div>
 

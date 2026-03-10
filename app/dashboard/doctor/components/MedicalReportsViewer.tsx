@@ -10,6 +10,7 @@ import {
   Calendar,
   User,
   AlertCircle,
+  ShieldAlert,
 } from "lucide-react";
 import { MedicalReportType } from "@/lib/database.types";
 
@@ -50,15 +51,19 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
   const [filteredReports, setFilteredReports] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [searchPatientId, setSearchPatientId] = useState("");
   const [reportTypeFilter, setReportTypeFilter] = useState<string>("all");
 
   const fetchReports = async () => {
     setIsLoading(true);
     setError(null);
+    setAccessDenied(false);
 
     try {
       const params = new URLSearchParams();
+      // Always include doctorId to enforce appointment-based access control
+      params.append("doctorId", doctorId);
       if (searchPatientId) {
         params.append("patientId", searchPatientId);
       }
@@ -70,6 +75,13 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
       const result = await response.json();
 
       if (!response.ok) {
+        if (result.accessDenied) {
+          setAccessDenied(true);
+          setError(result.error);
+          setReports([]);
+          setFilteredReports([]);
+          return;
+        }
         throw new Error(result.error || "Failed to fetch reports");
       }
 
@@ -155,7 +167,7 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
             Patient Medical Reports
           </h2>
           <p className="text-sm text-gray-600">
-            View and download patient test results and reports
+            View and download test results for patients who have booked appointments with you
           </p>
         </div>
       </div>
@@ -213,12 +225,30 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
       </div>
 
       {/* Error Message */}
-      {error && (
+      {error && !accessDenied && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <div>
             <h3 className="font-medium text-red-900">Error</h3>
             <p className="text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Access Denied Message */}
+      {accessDenied && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 flex items-start gap-4">
+          <div className="bg-amber-100 p-3 rounded-full">
+            <ShieldAlert className="w-6 h-6 text-amber-600 flex-shrink-0" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-amber-900 text-lg">Access Restricted</h3>
+            <p className="text-sm text-amber-700 mt-1">
+              You can only view medical reports for patients who have booked an appointment with you.
+            </p>
+            <p className="text-sm text-amber-600 mt-2">
+              The patient <span className="font-medium">{searchPatientId}</span> has not booked any appointments with you.
+            </p>
           </div>
         </div>
       )}
@@ -338,7 +368,7 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
             ))}
           </div>
         </div>
-      ) : (
+      ) : !accessDenied && filteredReports.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-8 text-center">
           <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -347,10 +377,10 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
           <p className="text-gray-600">
             {searchPatientId
               ? "No reports found for this patient. Try adjusting your search criteria."
-              : "Enter a patient ID to search for their medical reports."}
+              : "Enter a patient ID to search for their medical reports. You can only view reports for patients who have booked appointments with you."}
           </p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
