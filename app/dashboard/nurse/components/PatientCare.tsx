@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Users, Calendar, Clock, MapPin, User, Phone, Mail, Stethoscope, Heart } from "lucide-react";
+import { Users, Calendar, Clock, MapPin, User, Phone, Mail, Stethoscope, Heart, Activity, Eye } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import PatientProfileModal from "@/components/PatientProfileModal";
+import NurseVitalsForm from "./NurseVitalsForm";
+import VitalsViewer from "@/app/dashboard/doctor/components/VitalsViewer";
 
 interface AssignedPatient {
   appointment_id: string;
@@ -35,6 +37,8 @@ export function PatientCare({ nurseId }: PatientCareProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "today" | "upcoming">("today");
   const [showProfileModal, setShowProfileModal] = useState<string | null>(null);
+  const [showVitalsForm, setShowVitalsForm] = useState<{ patientId: string; patientName: string } | null>(null);
+  const [showVitalsViewer, setShowVitalsViewer] = useState<{ patientId: string; patientName: string } | null>(null);
 
 
 
@@ -335,6 +339,24 @@ export function PatientCare({ nurseId }: PatientCareProps) {
                 </div>
               )}
 
+              {/* Vitals Actions */}
+              <div className="flex gap-3 mb-4">
+                <button
+                  onClick={() => setShowVitalsForm({ patientId: patient.patient_uuid, patientName: patient.patient_name })}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all shadow-md shadow-green-500/20 active:scale-95"
+                >
+                  <Activity className="w-4 h-4" />
+                  Record Vitals
+                </button>
+                <button
+                  onClick={() => setShowVitalsViewer({ patientId: patient.patient_uuid, patientName: patient.patient_name })}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-green-200 text-green-700 text-sm font-bold rounded-xl hover:bg-green-50 transition-all active:scale-95"
+                >
+                  <Eye className="w-4 h-4" />
+                  View Vitals
+                </button>
+              </div>
+
               {/* Contact Info */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -380,6 +402,41 @@ export function PatientCare({ nurseId }: PatientCareProps) {
           patientId={patients.find(p => p.patient_id === showProfileModal)?.patient_uuid || ""}
           onClose={() => setShowProfileModal(null)}
         />
+      )}
+
+      {/* Nurse Vitals Form Modal */}
+      {showVitalsForm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-3xl rounded-3xl shadow-2xl p-6 md:p-10 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
+            <NurseVitalsForm
+              patientId={showVitalsForm.patientId}
+              patientName={showVitalsForm.patientName}
+              nurseId={nurseId}
+              onClose={() => setShowVitalsForm(null)}
+              onSuccess={() => setShowVitalsForm(null)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Vitals Viewer Modal */}
+      {showVitalsViewer && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-3xl rounded-3xl shadow-2xl p-6 md:p-10 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={() => setShowVitalsViewer(null)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <span className="text-gray-500 text-xl font-bold">&times;</span>
+              </button>
+            </div>
+            <VitalsViewer
+              patientId={showVitalsViewer.patientId}
+              patientName={showVitalsViewer.patientName}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
