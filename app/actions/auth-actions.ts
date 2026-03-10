@@ -385,15 +385,8 @@ export async function login(
       role,
     };
   } catch (error) {
-    console.error("Login error:", error);
-    await logAction({
-      userId: identifier,
-      userRole: role,
-      action: "login_error",
-      details: `Login error: ${error}`,
-      status: "failure",
-    });
-    return { success: false, message: "An error occurred during login" };
+    console.error("Login error stack trace:", error);
+    throw error;
   }
 }
 
