@@ -1,23 +1,36 @@
 /**
+ * @jest-environment node
+ */
+
+/**
  * API Route Tests for app/api/prescriptions/search/route.ts
  * Tests prescription search endpoint
  */
 
 import { NextRequest } from "next/server";
 
-// Mock supabase
-const mockSupabaseChain = {
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    or: jest.fn().mockReturnThis(),
-    in: jest.fn().mockReturnThis(),
-    order: jest.fn().mockReturnThis(),
-    single: jest.fn(),
+// Mock data state - can be modified by tests
+let mockQueryResult = { data: [], error: null };
+let mockSingleResult = { data: null, error: null };
+let mockOrResult = { data: [], error: null };
+
+// Create a chainable mock
+const createChainableMock = () => {
+    const chain: any = {
+        select: jest.fn(() => chain),
+        eq: jest.fn(() => chain),
+        or: jest.fn(() => Promise.resolve(mockOrResult)),
+        in: jest.fn(() => chain),
+        order: jest.fn(() => chain),
+        single: jest.fn(() => Promise.resolve(mockSingleResult)),
+        then: (resolve: any) => resolve(mockQueryResult),
+    };
+    return chain;
 };
 
 jest.mock("@/lib/supabase", () => ({
     supabase: {
-        from: jest.fn(() => mockSupabaseChain)
+        from: jest.fn(() => createChainableMock())
     }
 }));
 
@@ -27,16 +40,15 @@ import { GET } from "@/app/api/prescriptions/search/route";
 describe("Prescriptions Search API Route Tests", () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        Object.values(mockSupabaseChain).forEach(fn => {
-            if (typeof fn === 'function' && fn.mockReturnThis) {
-                fn.mockReturnThis();
-            }
-        });
+        // Reset mock data
+        mockQueryResult = { data: [], error: null };
+        mockSingleResult = { data: null, error: null };
+        mockOrResult = { data: [], error: null };
     });
 
     describe("GET /api/prescriptions/search", () => {
         it("should return empty array when no prescriptions found", async () => {
-            mockSupabaseChain.order.mockResolvedValueOnce({ data: [], error: null });
+            mockQueryResult = { data: [], error: null };
 
             const request = new NextRequest(
                 "http://localhost:3000/api/prescriptions/search"
@@ -50,11 +62,8 @@ describe("Prescriptions Search API Route Tests", () => {
         });
 
         it("should search by patient ID", async () => {
-            mockSupabaseChain.single.mockResolvedValueOnce({
-                data: { id: "uuid-123" },
-                error: null
-            });
-            mockSupabaseChain.order.mockResolvedValueOnce({
+            mockSingleResult = { data: { id: "uuid-123" }, error: null };
+            mockQueryResult = {
                 data: [
                     {
                         id: "rx1",
@@ -64,7 +73,7 @@ describe("Prescriptions Search API Route Tests", () => {
                     }
                 ],
                 error: null
-            });
+            };
 
             const request = new NextRequest(
                 "http://localhost:3000/api/prescriptions/search?patientId=P001"
@@ -78,10 +87,7 @@ describe("Prescriptions Search API Route Tests", () => {
         });
 
         it("should return empty array for non-existent patient ID", async () => {
-            mockSupabaseChain.single.mockResolvedValueOnce({
-                data: null,
-                error: { message: "Not found" }
-            });
+            mockSingleResult = { data: null, error: { message: "Not found" } };
 
             const request = new NextRequest(
                 "http://localhost:3000/api/prescriptions/search?patientId=INVALID"
@@ -95,14 +101,8 @@ describe("Prescriptions Search API Route Tests", () => {
         });
 
         it("should search by patient name", async () => {
-            mockSupabaseChain.or.mockResolvedValueOnce({
-                data: [{ id: "uuid-123" }],
-                error: null
-            });
-            mockSupabaseChain.order.mockResolvedValueOnce({
-                data: [],
-                error: null
-            });
+            mockOrResult = { data: [{ id: "uuid-123" }], error: null };
+            mockQueryResult = { data: [], error: null };
 
             const request = new NextRequest(
                 "http://localhost:3000/api/prescriptions/search?patientName=John"
@@ -116,10 +116,7 @@ describe("Prescriptions Search API Route Tests", () => {
         });
 
         it("should return empty for no matching patient names", async () => {
-            mockSupabaseChain.or.mockResolvedValueOnce({
-                data: [],
-                error: null
-            });
+            mockOrResult = { data: [], error: null };
 
             const request = new NextRequest(
                 "http://localhost:3000/api/prescriptions/search?patientName=NonExistent"
@@ -133,12 +130,10 @@ describe("Prescriptions Search API Route Tests", () => {
         });
 
         it("should filter by status", async () => {
-            mockSupabaseChain.order.mockResolvedValueOnce({
-                data: [
-                    { id: "rx1", status: "active", patients: {}, doctors: {} }
-                ],
+            mockQueryResult = {
+                data: [{ id: "rx1", status: "active", patients: {}, doctors: {} }],
                 error: null
-            });
+            };
 
             const request = new NextRequest(
                 "http://localhost:3000/api/prescriptions/search?status=active"
@@ -151,10 +146,7 @@ describe("Prescriptions Search API Route Tests", () => {
         });
 
         it("should not filter when status is 'all'", async () => {
-            mockSupabaseChain.order.mockResolvedValueOnce({
-                data: [],
-                error: null
-            });
+            mockQueryResult = { data: [], error: null };
 
             const request = new NextRequest(
                 "http://localhost:3000/api/prescriptions/search?status=all"
@@ -166,14 +158,8 @@ describe("Prescriptions Search API Route Tests", () => {
         });
 
         it("should combine patientId and status filters", async () => {
-            mockSupabaseChain.single.mockResolvedValueOnce({
-                data: { id: "uuid-123" },
-                error: null
-            });
-            mockSupabaseChain.order.mockResolvedValueOnce({
-                data: [],
-                error: null
-            });
+            mockSingleResult = { data: { id: "uuid-123" }, error: null };
+            mockQueryResult = { data: [], error: null };
 
             const request = new NextRequest(
                 "http://localhost:3000/api/prescriptions/search?patientId=P001&status=active"
@@ -185,10 +171,7 @@ describe("Prescriptions Search API Route Tests", () => {
         });
 
         it("should handle database errors", async () => {
-            mockSupabaseChain.order.mockResolvedValueOnce({
-                data: null,
-                error: { message: "Database error" }
-            });
+            mockQueryResult = { data: null, error: { message: "Database error" } };
 
             const request = new NextRequest(
                 "http://localhost:3000/api/prescriptions/search"
@@ -202,7 +185,7 @@ describe("Prescriptions Search API Route Tests", () => {
         });
 
         it("should transform prescription data correctly", async () => {
-            mockSupabaseChain.order.mockResolvedValueOnce({
+            mockQueryResult = {
                 data: [
                     {
                         id: "rx1",
@@ -223,7 +206,7 @@ describe("Prescriptions Search API Route Tests", () => {
                     }
                 ],
                 error: null
-            });
+            };
 
             const request = new NextRequest(
                 "http://localhost:3000/api/prescriptions/search"

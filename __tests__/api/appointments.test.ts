@@ -1,18 +1,11 @@
 /**
+ * @jest-environment node
+ */
+
+/**
  * API Route Tests for app/api/appointments/[appointmentId]/details/route.ts
  * Tests appointment details endpoint
  */
-
-// Polyfill for Next.js API routes in Jest
-if (typeof globalThis.Request === "undefined") {
-  globalThis.Request = class Request {} as any;
-}
-if (typeof globalThis.Response === "undefined") {
-  globalThis.Response = class Response {} as any;
-}
-if (typeof globalThis.Headers === "undefined") {
-  globalThis.Headers = class Headers {} as any;
-}
 
 import { NextRequest } from "next/server";
 

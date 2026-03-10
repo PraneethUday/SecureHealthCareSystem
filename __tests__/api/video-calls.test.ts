@@ -1,4 +1,8 @@
 /**
+ * @jest-environment node
+ */
+
+/**
  * API Route Tests for app/api/video-calls/initiate/route.ts
  * Tests video call initiation endpoint
  */

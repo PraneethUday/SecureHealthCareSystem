@@ -2,6 +2,8 @@
  * Unit tests for chat utility functions
  */
 
+// Note: CHAT_ENCRYPTION_KEY is set in jest.setup.js before modules are loaded
+
 // Mock crypto module for Node.js environment
 jest.mock('crypto', () => {
     const actual = jest.requireActual('crypto');
@@ -46,9 +48,6 @@ jest.mock('@supabase/supabase-js', () => ({
         },
     })),
 }));
-
-// Set environment variable for encryption key
-process.env.CHAT_ENCRYPTION_KEY = 'a'.repeat(64);
 
 import {
     encryptMessage,

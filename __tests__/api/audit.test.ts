@@ -1,4 +1,8 @@
 /**
+ * @jest-environment node
+ */
+
+/**
  * API Route Tests for app/api/audit/route.ts and app/api/audit/logs/route.ts
  * Tests audit logging API endpoints
  */
@@ -16,6 +20,21 @@ const mockIn = jest.fn();
 const mockOr = jest.fn();
 const mockMaybeSingle = jest.fn();
 
+// Create a chainable mock that supports all methods
+const createChainableMock = (resolveValue = { data: [], error: null }) => {
+    const chainable: any = {
+        select: jest.fn(() => chainable),
+        order: jest.fn(() => chainable),
+        limit: jest.fn(() => chainable),
+        eq: jest.fn(() => chainable),
+        in: jest.fn(() => chainable),
+        or: jest.fn(() => Promise.resolve({ data: [], error: null })),
+        maybeSingle: jest.fn(() => Promise.resolve({ data: null, error: null })),
+        then: (resolve: any) => resolve(resolveValue),
+    };
+    return chainable;
+};
+
 jest.mock("@/lib/supabase", () => ({
     supabase: {
         from: jest.fn((table: string) => {
@@ -25,16 +44,7 @@ jest.mock("@/lib/supabase", () => ({
                     mockInsert(data);
                     return Promise.resolve({ error: null });
                 }),
-                select: jest.fn(() => ({
-                    order: jest.fn(() => ({
-                        limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
-                    })),
-                    eq: jest.fn(() => ({
-                        maybeSingle: jest.fn(() => Promise.resolve({ data: null, error: null }))
-                    })),
-                    or: jest.fn(() => Promise.resolve({ data: [], error: null })),
-                    in: jest.fn(() => Promise.resolve({ data: [], error: null }))
-                }))
+                select: jest.fn(() => createChainableMock())
             };
         })
     }
