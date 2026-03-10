@@ -15,6 +15,7 @@ import {
   Briefcase,
   Mail,
   Phone,
+  Hospital,
 } from "lucide-react";
 import { PharmacyManager } from "./components/PharmacyManager";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -22,8 +23,9 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 export default function StaffDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [hospitalName, setHospitalName] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "pharmacy">(
-    "pharmacy"
+    "pharmacy",
   );
 
   useEffect(() => {
@@ -32,6 +34,8 @@ export default function StaffDashboard() {
       router.push("/login");
     } else {
       setUser(session.user);
+      // Fetch assigned hospital name
+      fetchHospitalName(session.user.staff_id);
       // Log dashboard access
       logAction({
         userId: session.user.staff_id,
@@ -40,6 +44,27 @@ export default function StaffDashboard() {
       });
     }
   }, [router]);
+
+  const fetchHospitalName = async (staffId: string) => {
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      );
+      const { data } = await supabase
+        .from("staff_hospitals")
+        .select("hospitals(name)")
+        .eq("staff_id", staffId)
+        .limit(1)
+        .single();
+      if (data && (data as any).hospitals?.name) {
+        setHospitalName((data as any).hospitals.name);
+      }
+    } catch {
+      // Hospital info not available yet (table may not exist)
+    }
+  };
 
   const handleLogout = () => {
     if (user) {
@@ -57,7 +82,6 @@ export default function StaffDashboard() {
 
   return (
     <div className="min-h-screen bg-[conic-gradient(at_top,_var(--tw-gradient-stops))] from-purple-50 via-violet-50 to-indigo-50 dark:from-purple-950 dark:via-violet-950 dark:to-indigo-950 pb-10 transition-colors duration-500">
-
       {/* Dynamic Background Mesh */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-60 dark:opacity-30">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-200 dark:bg-purple-900/40 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob"></div>
@@ -67,10 +91,18 @@ export default function StaffDashboard() {
 
       <style jsx global>{`
         @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
+          0% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
         }
         .animate-blob {
           animation: blob 7s infinite;
@@ -120,28 +152,33 @@ export default function StaffDashboard() {
 
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-
         {/* Navigation Tabs */}
         <div className="flex justify-center">
           <div className="inline-flex bg-white/40 dark:bg-gray-800/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm">
             <button
               onClick={() => setActiveTab("pharmacy")}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${activeTab === "pharmacy"
-                ? "bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-md shadow-purple-900/5 transform scale-105"
-                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/50"
-                }`}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === "pharmacy"
+                  ? "bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-md shadow-purple-900/5 transform scale-105"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/50"
+              }`}
             >
-              <Pill className={`w-4 h-4 ${activeTab === "pharmacy" ? "text-purple-500 dark:text-purple-400" : ""}`} />
+              <Pill
+                className={`w-4 h-4 ${activeTab === "pharmacy" ? "text-purple-500 dark:text-purple-400" : ""}`}
+              />
               Pharmacy Management
             </button>
             <button
               onClick={() => setActiveTab("overview")}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${activeTab === "overview"
-                ? "bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-md shadow-purple-900/5 transform scale-105"
-                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/50"
-                }`}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                activeTab === "overview"
+                  ? "bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-md shadow-purple-900/5 transform scale-105"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/50"
+              }`}
             >
-              <UserCog className={`w-4 h-4 ${activeTab === "overview" ? "text-purple-500 dark:text-purple-400" : ""}`} />
+              <UserCog
+                className={`w-4 h-4 ${activeTab === "overview" ? "text-purple-500 dark:text-purple-400" : ""}`}
+              />
               Overview
             </button>
           </div>
@@ -157,14 +194,41 @@ export default function StaffDashboard() {
             <div className="space-y-8">
               {/* Profile Stats Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Stat: Hospital */}
+                {hospitalName && (
+                  <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-4">
+                    <div className="bg-gradient-to-br from-indigo-400 to-blue-500 p-3 rounded-2xl shadow-lg shadow-indigo-500/20 text-white">
+                      <Hospital className="w-6 h-6" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Hospital
+                      </p>
+                      <p
+                        className="text-lg font-bold text-gray-800 dark:text-gray-100 truncate"
+                        title={hospitalName}
+                      >
+                        {hospitalName}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Stat: Role */}
                 <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-4">
                   <div className="bg-gradient-to-br from-purple-400 to-violet-500 p-3 rounded-2xl shadow-lg shadow-purple-500/20 text-white">
                     <Briefcase className="w-6 h-6" />
                   </div>
                   <div className="overflow-hidden">
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Role</p>
-                    <p className="text-lg font-bold text-gray-800 dark:text-gray-100 truncate" title={user.role}>{user.role}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Role
+                    </p>
+                    <p
+                      className="text-lg font-bold text-gray-800 dark:text-gray-100 truncate"
+                      title={user.role}
+                    >
+                      {user.role}
+                    </p>
                   </div>
                 </div>
 
@@ -174,8 +238,15 @@ export default function StaffDashboard() {
                     <Users className="w-6 h-6" />
                   </div>
                   <div className="overflow-hidden">
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Department</p>
-                    <p className="text-lg font-bold text-gray-800 dark:text-gray-100 truncate" title={user.department}>{user.department}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Department
+                    </p>
+                    <p
+                      className="text-lg font-bold text-gray-800 dark:text-gray-100 truncate"
+                      title={user.department}
+                    >
+                      {user.department}
+                    </p>
                   </div>
                 </div>
 
@@ -185,24 +256,33 @@ export default function StaffDashboard() {
                     <Mail className="w-6 h-6" />
                   </div>
                   <div className="overflow-hidden">
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Contact</p>
-                    <p className="text-lg font-bold text-gray-800 dark:text-gray-100 truncate">{user.email}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Contact
+                    </p>
+                    <p className="text-lg font-bold text-gray-800 dark:text-gray-100 truncate">
+                      {user.email}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Quick Actions Grid */}
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 pl-2 border-l-4 border-purple-500">Staff Tools</h2>
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 pl-2 border-l-4 border-purple-500">
+                Staff Tools
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
                 <div className="group bg-white/70 dark:bg-gray-800/60 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
                   <div className="flex justify-between items-start mb-4">
                     <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-xl group-hover:bg-purple-500 group-hover:text-white transition-colors text-purple-600 dark:text-purple-400">
                       <FileText className="w-8 h-8" />
                     </div>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">Records Management</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">Manage medical records and documentation efficiently.</p>
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+                    Records Management
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                    Manage medical records and documentation efficiently.
+                  </p>
                   <span className="text-purple-600 dark:text-purple-400 font-semibold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                     View Records →
                   </span>
@@ -214,8 +294,12 @@ export default function StaffDashboard() {
                       <Calendar className="w-8 h-8" />
                     </div>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">Appointments</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">Schedule and manage clinic appointments.</p>
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+                    Appointments
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                    Schedule and manage clinic appointments.
+                  </p>
                   <span className="text-violet-600 dark:text-violet-400 font-semibold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                     Open Calendar →
                   </span>
@@ -227,13 +311,16 @@ export default function StaffDashboard() {
                       <Users className="w-8 h-8" />
                     </div>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">Patient Directory</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">Access detailed patient information and contacts.</p>
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+                    Patient Directory
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                    Access detailed patient information and contacts.
+                  </p>
                   <span className="text-indigo-600 dark:text-indigo-400 font-semibold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                     Search Patients →
                   </span>
                 </div>
-
               </div>
             </div>
           )}

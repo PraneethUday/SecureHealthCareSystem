@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   X,
   User,
@@ -11,7 +11,13 @@ import {
   Award,
   Calendar,
   Shield,
+  Hospital,
 } from "lucide-react";
+
+interface HospitalOption {
+  id: string;
+  name: string;
+}
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -28,6 +34,7 @@ interface FormData {
   password: string;
   phone: string;
   department: string;
+  hospitalId: string;
   // Doctor-specific
   specialization: string;
   licenseNumber: string;
@@ -47,6 +54,7 @@ export default function CreateUserModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
   const [formData, setFormData] = useState<FormData>({
     role: "doctor",
     firstName: "",
@@ -55,12 +63,40 @@ export default function CreateUserModal({
     password: "",
     phone: "",
     department: "",
+    hospitalId: "",
     specialization: "",
     licenseNumber: "",
     yearsOfExperience: "",
     shift: "",
     staffRole: "",
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchHospitals();
+    }
+  }, [isOpen]);
+
+  const fetchHospitals = async () => {
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      );
+      const { data, error } = await supabase
+        .from("hospitals")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("name");
+
+      if (!error && data) {
+        setHospitals(data);
+      }
+    } catch (err) {
+      console.error("Error fetching hospitals:", err);
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -89,6 +125,7 @@ export default function CreateUserModal({
           password: formData.password,
           phone: formData.phone,
           department: formData.department,
+          hospitalId: formData.hospitalId,
           specialization: formData.specialization,
           licenseNumber: formData.licenseNumber,
           yearsOfExperience: formData.yearsOfExperience
@@ -118,6 +155,7 @@ export default function CreateUserModal({
           password: "",
           phone: "",
           department: "",
+          hospitalId: "",
           specialization: "",
           licenseNumber: "",
           yearsOfExperience: "",
@@ -284,6 +322,33 @@ export default function CreateUserModal({
               onChange={handleChange}
               className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
             />
+          </div>
+
+          {/* Hospital Assignment */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+              <Hospital className="w-4 h-4" />
+              Assign to Hospital <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="hospitalId"
+              value={formData.hospitalId}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+              required
+            >
+              <option value="">Select a Hospital</option>
+              {hospitals.map((hospital) => (
+                <option key={hospital.id} value={hospital.id}>
+                  {hospital.name}
+                </option>
+              ))}
+            </select>
+            {hospitals.length === 0 && (
+              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                No hospitals found. Please add hospitals to the system first.
+              </p>
+            )}
           </div>
 
           {/* Role-specific fields */}
