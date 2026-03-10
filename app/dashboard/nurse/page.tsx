@@ -26,7 +26,9 @@ export default function NurseDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [hospitalName, setHospitalName] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "upload" | "patientCare">("overview");
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "upload" | "patientCare"
+  >("overview");
 
   useEffect(() => {
     const session = getSession();
@@ -50,7 +52,7 @@ export default function NurseDashboard() {
       const { createClient } = await import("@supabase/supabase-js");
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       );
       const { data } = await supabase
         .from("nurse_hospitals")
@@ -82,7 +84,6 @@ export default function NurseDashboard() {
 
   return (
     <div className="min-h-screen bg-[conic-gradient(at_top,_var(--tw-gradient-stops))] from-green-50 via-emerald-50 to-teal-50 dark:from-green-950 dark:via-emerald-950 dark:to-teal-950 pb-10 transition-colors duration-500">
-
       {/* Dynamic Background Mesh */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-60 dark:opacity-30">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-200 dark:bg-green-900/40 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob"></div>
@@ -92,10 +93,18 @@ export default function NurseDashboard() {
 
       <style jsx global>{`
         @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
+          0% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
         }
         .animate-blob {
           animation: blob 7s infinite;
@@ -145,7 +154,6 @@ export default function NurseDashboard() {
 
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-
         {/* Navigation Tabs */}
         <div className="flex justify-center">
           <div className="inline-flex bg-white/40 dark:bg-gray-800/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm">
@@ -159,15 +167,18 @@ export default function NurseDashboard() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${activeTab === tab.id
-                    ? "bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-md shadow-green-900/5 transform scale-105"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/50"
-                    }`}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                    activeTab === tab.id
+                      ? "bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-md shadow-green-900/5 transform scale-105"
+                      : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/50"
+                  }`}
                 >
-                  <Icon className={`w-4 h-4 ${activeTab === tab.id ? "text-green-500 dark:text-green-400" : ""}`} />
+                  <Icon
+                    className={`w-4 h-4 ${activeTab === tab.id ? "text-green-500 dark:text-green-400" : ""}`}
+                  />
                   {tab.label}
                 </button>
-              )
+              );
             })}
           </div>
         </div>
@@ -193,8 +204,12 @@ export default function NurseDashboard() {
                       <Hospital className="w-8 h-8" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Hospital</p>
-                      <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{hospitalName}</p>
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Hospital
+                      </p>
+                      <p className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                        {hospitalName}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -205,8 +220,12 @@ export default function NurseDashboard() {
                     <Stethoscope className="w-8 h-8" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Department</p>
-                    <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{user.department}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Department
+                    </p>
+                    <p className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                      {user.department}
+                    </p>
                   </div>
                 </div>
 
@@ -216,8 +235,12 @@ export default function NurseDashboard() {
                     <Clock className="w-8 h-8" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Current Shift</p>
-                    <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{user.shift}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Current Shift
+                    </p>
+                    <p className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                      {user.shift}
+                    </p>
                   </div>
                 </div>
 
@@ -227,16 +250,21 @@ export default function NurseDashboard() {
                     <Users className="w-8 h-8" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Nurse ID</p>
-                    <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{user.nurse_id}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Nurse ID
+                    </p>
+                    <p className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                      {user.nurse_id}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Quick Actions Grid */}
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 pl-2 border-l-4 border-green-500">Quick Actions</h2>
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 pl-2 border-l-4 border-green-500">
+                Quick Actions
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
                 <div
                   onClick={() => setActiveTab("patientCare")}
                   className="group bg-white/70 dark:bg-gray-800/60 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:shadow-green-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
@@ -245,26 +273,38 @@ export default function NurseDashboard() {
                     <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-xl group-hover:bg-green-500 group-hover:text-white transition-colors text-green-600 dark:text-green-400">
                       <Users className="w-8 h-8" />
                     </div>
-                    <span className="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs px-2 py-1 rounded-full group-hover:bg-green-100 dark:group-hover:bg-green-900/30 group-hover:text-green-700 dark:group-hover:text-green-300 transition-colors">Manage</span>
+                    <span className="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs px-2 py-1 rounded-full group-hover:bg-green-100 dark:group-hover:bg-green-900/30 group-hover:text-green-700 dark:group-hover:text-green-300 transition-colors">
+                      Manage
+                    </span>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">Patient Care</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2">View assigned patients, check vitals, and update care plans efficiently.</p>
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+                    Patient Care
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2">
+                    View assigned patients, check vitals, and update care plans
+                    efficiently.
+                  </p>
                   <span className="text-green-600 dark:text-green-400 font-semibold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                     Open Dashboard →
                   </span>
                 </div>
 
-                <div
-                  className="group bg-white/70 dark:bg-gray-800/60 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:shadow-green-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-                >
+                <div className="group bg-white/70 dark:bg-gray-800/60 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:shadow-green-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
                   <div className="flex justify-between items-start mb-4">
                     <div className="bg-teal-100 dark:bg-teal-900/30 p-3 rounded-xl group-hover:bg-teal-500 group-hover:text-white transition-colors text-teal-600 dark:text-teal-400">
                       <Calendar className="w-8 h-8" />
                     </div>
-                    <span className="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs px-2 py-1 rounded-full group-hover:bg-teal-100 dark:group-hover:bg-teal-900/30 group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">Schedule</span>
+                    <span className="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs px-2 py-1 rounded-full group-hover:bg-teal-100 dark:group-hover:bg-teal-900/30 group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
+                      Schedule
+                    </span>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">Shift Schedule</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2">Check your upcoming shifts, roster changes, and break timings.</p>
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+                    Shift Schedule
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2">
+                    Check your upcoming shifts, roster changes, and break
+                    timings.
+                  </p>
                   <span className="text-teal-600 dark:text-teal-400 font-semibold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                     View Schedule →
                   </span>
@@ -280,10 +320,17 @@ export default function NurseDashboard() {
                     <div className="bg-white p-3 rounded-xl shadow-sm text-green-600 group-hover:scale-110 transition-transform">
                       <Upload className="w-8 h-8" />
                     </div>
-                    <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">New</span>
+                    <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
+                      New
+                    </span>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2 relative z-10">Upload Medical Reports</h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 relative z-10">Securely upload patient lab results, imaging, and other documents.</p>
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2 relative z-10">
+                    Upload Medical Reports
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 relative z-10">
+                    Securely upload patient lab results, imaging, and other
+                    documents.
+                  </p>
                   <span className="text-green-700 dark:text-green-400 font-bold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform relative z-10">
                     Start Upload →
                   </span>

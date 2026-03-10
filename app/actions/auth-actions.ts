@@ -648,7 +648,10 @@ export async function resendOTP(
 
     if (otpError) {
       console.error("Error storing OTP:", otpError);
-      return { success: false, message: "Error generating OTP. Please try again." };
+      return {
+        success: false,
+        message: "Error generating OTP. Please try again.",
+      };
     }
 
     // Send OTP email
@@ -659,7 +662,10 @@ export async function resendOTP(
     );
 
     if (!emailSent) {
-      return { success: false, message: "Failed to send OTP. Please try again." };
+      return {
+        success: false,
+        message: "Failed to send OTP. Please try again.",
+      };
     }
 
     return {
@@ -668,7 +674,10 @@ export async function resendOTP(
     };
   } catch (error) {
     console.error("Resend OTP error:", error);
-    return { success: false, message: "Error resending OTP. Please try again." };
+    return {
+      success: false,
+      message: "Error resending OTP. Please try again.",
+    };
   }
 }
 
@@ -883,9 +892,13 @@ export async function verifyMFAOTP(
 /**
  * Synchronizes a password reset from Supabase Auth to the custom role tables
  */
-export async function syncForgottenPassword(userId: string, newPasswordPlain: string): Promise<boolean> {
+export async function syncForgottenPassword(
+  userId: string,
+  newPasswordPlain: string,
+): Promise<boolean> {
   try {
-    const { data: authData, error: authError } = await supabase.auth.admin.getUserById(userId);
+    const { data: authData, error: authError } =
+      await supabase.auth.admin.getUserById(userId);
     if (authError || !authData.user?.email) {
       console.error("Could not find auth user for password sync", authError);
       return false;
@@ -901,14 +914,21 @@ export async function syncForgottenPassword(userId: string, newPasswordPlain: st
     ] as const;
 
     for (const config of rolesConfig) {
-      const { data } = await supabase.from(config.table).select("*").eq("email", userEmail).single();
+      const { data } = await supabase
+        .from(config.table)
+        .select("*")
+        .eq("email", userEmail)
+        .single();
 
       if (data) {
-        await supabase.from(config.table).update({
-          password_hash: newHash,
-          password: null, // Clear plaintext if any
-          password_changed_at: new Date().toISOString()
-        }).eq("email", userEmail);
+        await supabase
+          .from(config.table)
+          .update({
+            password_hash: newHash,
+            password: null, // Clear plaintext if any
+            password_changed_at: new Date().toISOString(),
+          })
+          .eq("email", userEmail);
 
         // Record in history
         await supabase.from("password_history").insert({

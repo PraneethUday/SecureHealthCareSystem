@@ -6,7 +6,9 @@ function createTransporter() {
   const emailPass = process.env.EMAIL_PASSWORD;
 
   if (!emailUser || !emailPass) {
-    console.error("❌ Missing email credentials: EMAIL_USER or EMAIL_PASSWORD not set");
+    console.error(
+      "❌ Missing email credentials: EMAIL_USER or EMAIL_PASSWORD not set",
+    );
     return null;
   }
 
@@ -31,7 +33,7 @@ function createTransporter() {
 export async function sendOTPEmail(
   email: string,
   otp: string,
-  userName: string = "User"
+  userName: string = "User",
 ): Promise<boolean> {
   try {
     const transporter = createTransporter();
@@ -100,7 +102,7 @@ export async function sendOTPEmail(
  */
 export async function sendRegistrationConfirmationEmail(
   email: string,
-  userName: string
+  userName: string,
 ): Promise<boolean> {
   try {
     const transporter = createTransporter();
@@ -165,7 +167,7 @@ export async function sendRegistrationConfirmationEmail(
 export async function sendPasswordResetEmail(
   email: string,
   resetToken: string,
-  userName: string
+  userName: string,
 ): Promise<boolean> {
   try {
     const transporter = createTransporter();
@@ -255,12 +257,15 @@ export async function sendAppointmentConfirmationEmail(data: {
     } = data;
 
     const mode = isTelemedicine ? "Video Consultation" : "In-Person";
-    const formattedDate = new Date(appointmentDate).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    const formattedDate = new Date(appointmentDate).toLocaleDateString(
+      "en-US",
+      {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      },
+    );
 
     const mailOptions = {
       from: `"SecureHealthCare" <${process.env.EMAIL_USER}>`,
@@ -307,7 +312,7 @@ export async function sendAppointmentConfirmationEmail(data: {
                 <tr>
                   <td style="padding: 8px 0; color: #666; font-size: 14px;">📋 <strong>Mode:</strong></td>
                   <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right;">
-                    <span style="background-color: ${isTelemedicine ? '#e3f2fd' : '#f3e5f5'}; color: ${isTelemedicine ? '#1976d2' : '#7b1fa2'}; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+                    <span style="background-color: ${isTelemedicine ? "#e3f2fd" : "#f3e5f5"}; color: ${isTelemedicine ? "#1976d2" : "#7b1fa2"}; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">
                       ${mode}
                     </span>
                   </td>
@@ -315,7 +320,9 @@ export async function sendAppointmentConfirmationEmail(data: {
               </table>
             </div>
             
-            ${isTelemedicine && zoomJoinUrl ? `
+            ${
+              isTelemedicine && zoomJoinUrl
+                ? `
               <!-- Video Call Section -->
               <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center;">
                 <p style="color: white; font-size: 16px; margin: 0 0 15px 0;">🎥 <strong>Join Your Video Consultation</strong></p>
@@ -326,7 +333,9 @@ export async function sendAppointmentConfirmationEmail(data: {
                   Click the button above at your appointment time to join the video consultation.
                 </p>
               </div>
-            ` : ''}
+            `
+                : ""
+            }
             
             <!-- Appointment ID -->
             <div style="background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0;">
@@ -337,7 +346,7 @@ export async function sendAppointmentConfirmationEmail(data: {
             
             <!-- Action Buttons -->
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/patient" style="background-color: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 5px;">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard/patient" style="background-color: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 5px;">
                 View Dashboard
               </a>
             </div>
@@ -387,7 +396,7 @@ Your appointment has been successfully booked with SecureHealthCare.
 📍 Hospital: ${hospitalName}
 📋 Mode: ${mode}
 
-${isTelemedicine && zoomJoinUrl ? `🔗 Join Video Call: ${zoomJoinUrl}\n` : ''}
+${isTelemedicine && zoomJoinUrl ? `🔗 Join Video Call: ${zoomJoinUrl}\n` : ""}
 📝 Appointment ID: ${appointmentId}
 
 If you need to cancel or reschedule, please log in to your SecureHealthCare account.
@@ -444,12 +453,15 @@ export async function sendDoctorAppointmentNotification(data: {
     } = data;
 
     const mode = isTelemedicine ? "Video Consultation" : "In-Person";
-    const formattedDate = new Date(appointmentDate).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    const formattedDate = new Date(appointmentDate).toLocaleDateString(
+      "en-US",
+      {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      },
+    );
 
     const mailOptions = {
       from: `"SecureHealthCare" <${process.env.EMAIL_USER}>`,
@@ -496,21 +508,27 @@ export async function sendDoctorAppointmentNotification(data: {
                 <tr>
                   <td style="padding: 8px 0; color: #666; font-size: 14px;">📋 <strong>Mode:</strong></td>
                   <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right;">
-                    <span style="background-color: ${isTelemedicine ? '#e3f2fd' : '#f3e5f5'}; color: ${isTelemedicine ? '#1976d2' : '#7b1fa2'}; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+                    <span style="background-color: ${isTelemedicine ? "#e3f2fd" : "#f3e5f5"}; color: ${isTelemedicine ? "#1976d2" : "#7b1fa2"}; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">
                       ${mode}
                     </span>
                   </td>
                 </tr>
-                ${reason ? `
+                ${
+                  reason
+                    ? `
                 <tr>
                   <td style="padding: 8px 0; color: #666; font-size: 14px; vertical-align: top;">📝 <strong>Reason:</strong></td>
                   <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right;">${reason}</td>
                 </tr>
-                ` : ''}
+                `
+                    : ""
+                }
               </table>
             </div>
             
-            ${isTelemedicine && zoomHostUrl ? `
+            ${
+              isTelemedicine && zoomHostUrl
+                ? `
               <!-- Video Call Section -->
               <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center;">
                 <p style="color: white; font-size: 16px; margin: 0 0 15px 0;">🎥 <strong>Start Video Consultation</strong></p>
@@ -521,7 +539,9 @@ export async function sendDoctorAppointmentNotification(data: {
                   As the host, you can start the meeting before the patient joins.
                 </p>
               </div>
-            ` : ''}
+            `
+                : ""
+            }
             
             <!-- Appointment ID -->
             <div style="background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0;">
@@ -532,7 +552,7 @@ export async function sendDoctorAppointmentNotification(data: {
             
             <!-- Action Buttons -->
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/doctor" style="background-color: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 5px;">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard/doctor" style="background-color: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 5px;">
                 View Dashboard
               </a>
             </div>
@@ -580,14 +600,24 @@ export async function sendAppointmentCancellationEmail(data: {
     const transporter = createTransporter();
     if (!transporter) return false;
 
-    const { recipientEmail, recipientName, appointmentDate, appointmentTime, doctorName, reason } = data;
+    const {
+      recipientEmail,
+      recipientName,
+      appointmentDate,
+      appointmentTime,
+      doctorName,
+      reason,
+    } = data;
 
-    const formattedDate = new Date(appointmentDate).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    const formattedDate = new Date(appointmentDate).toLocaleDateString(
+      "en-US",
+      {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      },
+    );
 
     const mailOptions = {
       from: `"SecureHealthCare" <${process.env.EMAIL_USER}>`,
@@ -610,11 +640,11 @@ export async function sendAppointmentCancellationEmail(data: {
               <p style="margin: 5px 0; color: #333;"><strong>Date:</strong> ${formattedDate}</p>
               <p style="margin: 5px 0; color: #333;"><strong>Time:</strong> ${appointmentTime}</p>
               <p style="margin: 5px 0; color: #333;"><strong>Doctor:</strong> Dr. ${doctorName}</p>
-              ${reason ? `<p style="margin: 5px 0; color: #333;"><strong>Reason:</strong> ${reason}</p>` : ''}
+              ${reason ? `<p style="margin: 5px 0; color: #333;"><strong>Reason:</strong> ${reason}</p>` : ""}
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/patient" style="background-color: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard/patient" style="background-color: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
                 Book New Appointment
               </a>
             </div>
@@ -657,14 +687,25 @@ export async function sendAppointmentReminderEmail(data: {
     const transporter = createTransporter();
     if (!transporter) return false;
 
-    const { patientEmail, patientName, doctorName, appointmentDate, appointmentTime, isTelemedicine, zoomJoinUrl } = data;
+    const {
+      patientEmail,
+      patientName,
+      doctorName,
+      appointmentDate,
+      appointmentTime,
+      isTelemedicine,
+      zoomJoinUrl,
+    } = data;
 
-    const formattedDate = new Date(appointmentDate).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    const formattedDate = new Date(appointmentDate).toLocaleDateString(
+      "en-US",
+      {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      },
+    );
 
     const mailOptions = {
       from: `"SecureHealthCare" <${process.env.EMAIL_USER}>`,
@@ -687,17 +728,21 @@ export async function sendAppointmentReminderEmail(data: {
               <p style="margin: 5px 0; color: #333;"><strong>📅 Date:</strong> ${formattedDate}</p>
               <p style="margin: 5px 0; color: #333;"><strong>⏰ Time:</strong> ${appointmentTime}</p>
               <p style="margin: 5px 0; color: #333;"><strong>👨‍⚕️ Doctor:</strong> Dr. ${doctorName}</p>
-              <p style="margin: 5px 0; color: #333;"><strong>📋 Mode:</strong> ${isTelemedicine ? 'Video Consultation' : 'In-Person'}</p>
+              <p style="margin: 5px 0; color: #333;"><strong>📋 Mode:</strong> ${isTelemedicine ? "Video Consultation" : "In-Person"}</p>
             </div>
             
-            ${isTelemedicine && zoomJoinUrl ? `
+            ${
+              isTelemedicine && zoomJoinUrl
+                ? `
               <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center;">
                 <p style="color: white; font-size: 16px; margin: 0 0 15px 0;">🎥 <strong>Ready for your video consultation?</strong></p>
                 <a href="${zoomJoinUrl}" style="background-color: white; color: #667eea; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                   Join Video Call
                 </a>
               </div>
-            ` : ''}
+            `
+                : ""
+            }
             
             <p style="color: #555; font-size: 14px;">
               See you soon!<br>

@@ -177,7 +177,9 @@ export default function OTPForm({
           suppressHydrationWarning
         >
           <RefreshCw className="w-3 h-3" />
-          {resendCooldown > 0 ? `Resend OTP (${resendCooldown}s)` : "Resend OTP"}
+          {resendCooldown > 0
+            ? `Resend OTP (${resendCooldown}s)`
+            : "Resend OTP"}
         </button>
       </div>
     </div>
