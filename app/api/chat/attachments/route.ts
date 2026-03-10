@@ -144,6 +144,7 @@ export async function POST(request: NextRequest) {
             message: messageResult.message,
             attachment: attachmentResult.attachment,
         });
+
     } catch (error) {
         console.error("Error uploading attachment:", error);
         return NextResponse.json(
