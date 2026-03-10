@@ -12,7 +12,7 @@ import { NextRequest } from "next/server";
 // Mock data state
 let mockSingleResults: any[] = [];
 let mockSingleIndex = 0;
-let mockQueryResult = { data: [], error: null };
+let mockQueryResult: any = { data: [], error: null };
 
 // Create a chainable mock
 const createChainableMock = () => {

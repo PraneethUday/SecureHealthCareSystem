@@ -10,9 +10,9 @@
 import { NextRequest } from "next/server";
 
 // Mock data state - can be modified by tests
-let mockQueryResult = { data: [], error: null };
-let mockSingleResult = { data: null, error: null };
-let mockOrResult = { data: [], error: null };
+let mockQueryResult: any = { data: [], error: null };
+let mockSingleResult: any = { data: null, error: null };
+let mockOrResult: any = { data: [], error: null };
 
 // Create a chainable mock
 const createChainableMock = () => {

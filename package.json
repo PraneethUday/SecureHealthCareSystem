@@ -11,7 +11,7 @@
     "check-schema": "ts-node scripts/check-schema.ts",
     "test-db": "ts-node scripts/test-database.ts",
     "test-appointments": "ts-node scripts/test-appointments.ts",
-    "test": "jest",
+    "test": "jest --silent",
     "test:watch": "jest --watch"
   },
   "dependencies": {
