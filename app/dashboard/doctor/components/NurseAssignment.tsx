@@ -20,6 +20,7 @@ interface NurseAssignmentProps {
   currentNurseId?: string;
   currentNurseName?: string;
   department: string;
+  hospitalId?: string;
   onUpdate: () => void;
 }
 
@@ -28,6 +29,7 @@ export function NurseAssignment({
   currentNurseId,
   currentNurseName,
   department,
+  hospitalId,
   onUpdate,
 }: NurseAssignmentProps) {
   const [nurses, setNurses] = useState<Nurse[]>([]);
@@ -41,35 +43,68 @@ export function NurseAssignment({
   const fetchNurses = useCallback(async () => {
     setIsLoading(true);
     try {
-      // First try to fetch by department
-      const { data, error } = await supabase
-        .from("nurses")
-        .select("id, nurse_id, first_name, last_name, department, license_number, shift, phone")
-        .eq("department", department)
-        .order("first_name");
+      if (hospitalId) {
+        // Fetch nurses assigned to the same hospital via junction table
+        const { data: hospitalNurses, error: hnError } = await supabase
+          .from("nurse_hospitals")
+          .select(`
+            nurses (
+              id, nurse_id, first_name, last_name, department, license_number, shift, phone
+            )
+          `)
+          .eq("hospital_id", hospitalId);
 
-      if (error) throw error;
+        if (hnError) throw hnError;
 
-      if (!data || data.length === 0) {
-        // If no nurses in department, fetch all
-        const { data: allData, error: allError } = await supabase
+        const nursesFromHospital = (hospitalNurses || [])
+          .filter((hn: any) => hn.nurses)
+          .map((hn: any) => hn.nurses);
+
+        // Filter by department first
+        const deptNurses = nursesFromHospital.filter(
+          (n: Nurse) => n.department === department
+        );
+
+        if (deptNurses.length > 0) {
+          setNurses(deptNurses);
+          setIsShowingAll(false);
+        } else if (nursesFromHospital.length > 0) {
+          setNurses(nursesFromHospital);
+          setIsShowingAll(true);
+        } else {
+          setNurses([]);
+          setIsShowingAll(false);
+        }
+      } else {
+        // Fallback: fetch by department if no hospitalId
+        const { data, error } = await supabase
           .from("nurses")
           .select("id, nurse_id, first_name, last_name, department, license_number, shift, phone")
+          .eq("department", department)
           .order("first_name");
 
-        if (allError) throw allError;
-        setNurses(allData || []);
-        setIsShowingAll(true);
-      } else {
-        setNurses(data);
-        setIsShowingAll(false);
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          const { data: allData, error: allError } = await supabase
+            .from("nurses")
+            .select("id, nurse_id, first_name, last_name, department, license_number, shift, phone")
+            .order("first_name");
+
+          if (allError) throw allError;
+          setNurses(allData || []);
+          setIsShowingAll(true);
+        } else {
+          setNurses(data);
+          setIsShowingAll(false);
+        }
       }
     } catch (error) {
       console.error("Error fetching nurses:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [department]);
+  }, [department, hospitalId]);
 
   useEffect(() => {
     if (isOpen && nurses.length === 0) {

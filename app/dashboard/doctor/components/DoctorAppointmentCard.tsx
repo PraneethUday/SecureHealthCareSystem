@@ -222,6 +222,7 @@ export default function DoctorAppointmentCard({
           currentNurseId={appointment.nurse_id}
           currentNurseName={appointment.nurse_name}
           department={appointment.specialization || "General"}
+          hospitalId={appointment.hospital_id}
           onUpdate={onUpdate}
         />
       </div>

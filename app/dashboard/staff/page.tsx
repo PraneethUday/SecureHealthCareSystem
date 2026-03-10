@@ -15,6 +15,7 @@ import {
   Briefcase,
   Mail,
   Phone,
+  Hospital,
 } from "lucide-react";
 import { PharmacyManager } from "./components/PharmacyManager";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -22,6 +23,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 export default function StaffDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [hospitalName, setHospitalName] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "pharmacy">(
     "pharmacy"
   );
@@ -32,6 +34,8 @@ export default function StaffDashboard() {
       router.push("/login");
     } else {
       setUser(session.user);
+      // Fetch assigned hospital name
+      fetchHospitalName(session.user.staff_id);
       // Log dashboard access
       logAction({
         userId: session.user.staff_id,
@@ -40,6 +44,27 @@ export default function StaffDashboard() {
       });
     }
   }, [router]);
+
+  const fetchHospitalName = async (staffId: string) => {
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      const { data } = await supabase
+        .from("staff_hospitals")
+        .select("hospitals(name)")
+        .eq("staff_id", staffId)
+        .limit(1)
+        .single();
+      if (data && (data as any).hospitals?.name) {
+        setHospitalName((data as any).hospitals.name);
+      }
+    } catch {
+      // Hospital info not available yet (table may not exist)
+    }
+  };
 
   const handleLogout = () => {
     if (user) {
@@ -157,6 +182,19 @@ export default function StaffDashboard() {
             <div className="space-y-8">
               {/* Profile Stats Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Stat: Hospital */}
+                {hospitalName && (
+                  <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-4">
+                    <div className="bg-gradient-to-br from-indigo-400 to-blue-500 p-3 rounded-2xl shadow-lg shadow-indigo-500/20 text-white">
+                      <Hospital className="w-6 h-6" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Hospital</p>
+                      <p className="text-lg font-bold text-gray-800 dark:text-gray-100 truncate" title={hospitalName}>{hospitalName}</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Stat: Role */}
                 <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-4">
                   <div className="bg-gradient-to-br from-purple-400 to-violet-500 p-3 rounded-2xl shadow-lg shadow-purple-500/20 text-white">

@@ -50,6 +50,41 @@ export async function GET(request: NextRequest) {
       }
 
       if (data) {
+        // Fetch hospital assignments from junction tables
+        const junctionTable =
+          userRole === "doctor"
+            ? "doctor_hospitals"
+            : userRole === "nurse"
+              ? "nurse_hospitals"
+              : "staff_hospitals";
+        const junctionIdField =
+          userRole === "doctor"
+            ? "doctor_id"
+            : userRole === "nurse"
+              ? "nurse_id"
+              : "staff_id";
+
+        // Get all junction entries for these users
+        const userIds = data.map((u: any) => u[idField]);
+        let hospitalMap: Record<string, string> = {};
+
+        if (userIds.length > 0) {
+          const { data: junctionData } = await supabaseAdmin
+            .from(junctionTable)
+            .select(`${junctionIdField}, hospital_id, hospitals(name)`)
+            .in(junctionIdField, userIds);
+
+          if (junctionData) {
+            for (const entry of junctionData as any[]) {
+              const uid = entry[junctionIdField];
+              const hospitalName = entry.hospitals?.name;
+              if (hospitalName) {
+                hospitalMap[uid] = hospitalName;
+              }
+            }
+          }
+        }
+
         // Transform data to consistent format and exclude sensitive fields
         const transformedData = data.map((user: any) => ({
           id: user.id,
@@ -66,6 +101,7 @@ export async function GET(request: NextRequest) {
           yearsOfExperience: user.years_of_experience, // Doctor only
           shift: user.shift, // Nurse only
           staffRole: user.role, // Staff only
+          hospitalName: hospitalMap[user[idField]] || null,
           createdAt: user.created_at,
           updatedAt: user.updated_at,
           isMfaEnabled: user.is_mfa_enabled,

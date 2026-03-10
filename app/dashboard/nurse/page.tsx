@@ -15,7 +15,8 @@ import {
   FileHeart,
   Upload,
   Stethoscope,
-  ClipboardList
+  ClipboardList,
+  Hospital,
 } from "lucide-react";
 import { MedicalReportUpload } from "./components/MedicalReportUpload";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -24,6 +25,7 @@ import { PatientCare } from "./components/PatientCare";
 export default function NurseDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [hospitalName, setHospitalName] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "upload" | "patientCare">("overview");
 
   useEffect(() => {
@@ -32,6 +34,8 @@ export default function NurseDashboard() {
       router.push("/login");
     } else {
       setUser(session.user);
+      // Fetch assigned hospital name
+      fetchHospitalName(session.user.nurse_id);
       // Log dashboard access
       logAction({
         userId: session.user.nurse_id,
@@ -40,6 +44,27 @@ export default function NurseDashboard() {
       });
     }
   }, [router]);
+
+  const fetchHospitalName = async (nurseId: string) => {
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      const { data } = await supabase
+        .from("nurse_hospitals")
+        .select("hospitals(name)")
+        .eq("nurse_id", nurseId)
+        .limit(1)
+        .single();
+      if (data && (data as any).hospitals?.name) {
+        setHospitalName((data as any).hospitals.name);
+      }
+    } catch {
+      // Hospital info not available yet (table may not exist)
+    }
+  };
 
   const handleLogout = () => {
     if (user) {
@@ -160,7 +185,20 @@ export default function NurseDashboard() {
           ) : (
             <div className="space-y-8">
               {/* Profile Stats Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Stat: Hospital */}
+                {hospitalName && (
+                  <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-4">
+                    <div className="bg-gradient-to-br from-cyan-400 to-teal-500 p-4 rounded-2xl shadow-lg shadow-cyan-500/20 text-white">
+                      <Hospital className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Hospital</p>
+                      <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{hospitalName}</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Stat: Department */}
                 <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-4">
                   <div className="bg-gradient-to-br from-green-400 to-emerald-500 p-4 rounded-2xl shadow-lg shadow-green-500/20 text-white">

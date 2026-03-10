@@ -11,7 +11,7 @@ import OTPForm from "./components/OTPForm";
 import Footer from "./components/Footer";
 import InfoBanner from "./components/InfoBanner";
 import { saveSession } from "@/lib/auth";
-import { login, verifyMFAOTP } from "@/app/actions/auth-actions";
+import { login, verifyMFAOTP, resendOTP } from "@/app/actions/auth-actions";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function LoginPage() {
@@ -112,6 +112,24 @@ export default function LoginPage() {
     setError("");
   };
 
+  const handleResendOTP = async () => {
+    setError("");
+    setIsLoading(true);
+    try {
+      const result = await resendOTP(mfaToken, selectedRole);
+      if (result.success) {
+        setError("");
+        setOtpAttempts(0);
+      } else {
+        setError(result.message || "Failed to resend OTP.");
+      }
+    } catch (err) {
+      setError("An error occurred while resending OTP.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="h-screen overflow-hidden relative bg-[conic-gradient(at_top,_var(--tw-gradient-stops))] from-blue-50 via-indigo-50 to-slate-50 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950 selection:bg-rose-500 selection:text-white transition-colors duration-500">
       {/* Theme Toggle Button */}
@@ -196,6 +214,7 @@ export default function LoginPage() {
                 email={identifier}
                 themeClasses={themeClasses}
                 onBackClick={handleBackToLogin}
+                onResendOTP={handleResendOTP}
                 attemptsRemaining={5 - otpAttempts}
               />
             ) : (

@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
       shift,
       // Staff-specific fields
       staffRole,
+      // Hospital assignment (required for doctor, nurse, staff)
+      hospitalId,
       // Admin authentication
       adminId,
     } = body;
@@ -102,6 +104,28 @@ export async function POST(request: NextRequest) {
           { status: 400 },
         );
       }
+    }
+
+    // Hospital assignment is required for all roles
+    if (!hospitalId) {
+      return NextResponse.json(
+        { error: "Hospital assignment is required" },
+        { status: 400 },
+      );
+    }
+
+    // Validate hospital exists
+    const { data: hospitalData, error: hospitalError } = await supabaseAdmin
+      .from("hospitals")
+      .select("id, name")
+      .eq("id", hospitalId)
+      .maybeSingle();
+
+    if (hospitalError || !hospitalData) {
+      return NextResponse.json(
+        { error: "Invalid hospital selected" },
+        { status: 400 },
+      );
     }
 
     const table =
@@ -206,6 +230,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Create hospital association in junction table
+    const junctionTable =
+      role === "doctor"
+        ? "doctor_hospitals"
+        : role === "nurse"
+          ? "nurse_hospitals"
+          : "staff_hospitals";
+    const junctionFkField =
+      role === "doctor"
+        ? "doctor_id"
+        : role === "nurse"
+          ? "nurse_id"
+          : "staff_id";
+
+    const { error: junctionError } = await supabaseAdmin
+      .from(junctionTable)
+      .insert({
+        [junctionFkField]: data.id,
+        hospital_id: hospitalId,
+        is_primary: true,
+      });
+
+    if (junctionError) {
+      console.error(`${role}-hospital association error:`, junctionError);
+      // Clean up the user if hospital association fails
+      await supabaseAdmin.from(table).delete().eq("id", data.id);
+      return NextResponse.json(
+        { error: `Failed to assign ${role} to hospital` },
+        { status: 500 },
+      );
+    }
+
     // Log successful user creation
     await logAction({
       userId: adminId,
@@ -213,7 +269,7 @@ export async function POST(request: NextRequest) {
       action: `${role}_created`,
       resourceType: "user",
       resourceId: newUserId,
-      details: `Created ${role}: ${firstName} ${lastName} (${email})`,
+      details: `Created ${role}: ${firstName} ${lastName} (${email}) at hospital ${hospitalData.name}`,
       status: "success",
     });
 

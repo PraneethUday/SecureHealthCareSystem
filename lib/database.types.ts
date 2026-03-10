@@ -60,6 +60,14 @@ export interface Nurse {
   updated_at?: string;
 }
 
+export interface NurseHospital {
+  id: string;
+  nurse_id: string;
+  hospital_id: string;
+  is_primary: boolean;
+  created_at?: string;
+}
+
 export interface Staff {
   id?: string;
   staff_id: string;
@@ -72,6 +80,14 @@ export interface Staff {
   department?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface StaffHospital {
+  id: string;
+  staff_id: string;
+  hospital_id: string;
+  is_primary: boolean;
+  created_at?: string;
 }
 
 export interface AccessLog {

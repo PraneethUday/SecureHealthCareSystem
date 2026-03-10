@@ -16,6 +16,7 @@ import {
   Stethoscope,
   Activity,
   UserPlus,
+  Hospital,
 } from "lucide-react";
 
 interface User {
@@ -33,6 +34,7 @@ interface User {
   yearsOfExperience?: number;
   shift?: string;
   staffRole?: string;
+  hospitalName?: string;
   createdAt: string;
 }
 
@@ -316,6 +318,12 @@ export default function ViewUsersModal({
                       <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                         <Building2 className="w-4 h-4" />
                         <span>{user.department}</span>
+                      </div>
+                    )}
+                    {user.hospitalName && (
+                      <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                        <Hospital className="w-4 h-4" />
+                        <span>{user.hospitalName}</span>
                       </div>
                     )}
 

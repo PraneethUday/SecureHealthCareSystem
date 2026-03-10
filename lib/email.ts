@@ -1,14 +1,25 @@
 import nodemailer from "nodemailer";
 
-// Email service configuration
-// In production, use environment variables for credentials
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER || "your-email@gmail.com",
-    pass: process.env.EMAIL_PASSWORD || "your-app-password", // Use App Password for Gmail
-  },
-});
+// Create a fresh transporter per call to ensure env vars are read at runtime
+function createTransporter() {
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASSWORD;
+
+  if (!emailUser || !emailPass) {
+    console.error("❌ Missing email credentials: EMAIL_USER or EMAIL_PASSWORD not set");
+    return null;
+  }
+
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: emailUser,
+      pass: emailPass,
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+  });
+}
 
 /**
  * Send OTP code to user's email
@@ -23,8 +34,14 @@ export async function sendOTPEmail(
   userName: string = "User"
 ): Promise<boolean> {
   try {
+    const transporter = createTransporter();
+    if (!transporter) return false;
+
+    await transporter.verify();
+    console.log("✅ SMTP connection verified for OTP email");
+
     const mailOptions = {
-      from: process.env.EMAIL_USER || "noreply@securehealthcare.com",
+      from: `"SecureHealthCare" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Your Secure Healthcare System OTP Code",
       html: `
@@ -86,8 +103,11 @@ export async function sendRegistrationConfirmationEmail(
   userName: string
 ): Promise<boolean> {
   try {
+    const transporter = createTransporter();
+    if (!transporter) return false;
+
     const mailOptions = {
-      from: process.env.EMAIL_USER || "noreply@securehealthcare.com",
+      from: `"SecureHealthCare" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Welcome to Secure Healthcare System",
       html: `
@@ -148,10 +168,13 @@ export async function sendPasswordResetEmail(
   userName: string
 ): Promise<boolean> {
   try {
+    const transporter = createTransporter();
+    if (!transporter) return false;
+
     const resetLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://localhost:3000"}/reset-password?token=${resetToken}`;
 
     const mailOptions = {
-      from: process.env.EMAIL_USER || "noreply@securehealthcare.com",
+      from: `"SecureHealthCare" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Reset Your Secure Healthcare System Password",
       html: `
@@ -215,6 +238,9 @@ export async function sendAppointmentConfirmationEmail(data: {
   appointmentId: string;
 }): Promise<boolean> {
   try {
+    const transporter = createTransporter();
+    if (!transporter) return false;
+
     const {
       patientEmail,
       patientName,
@@ -237,7 +263,7 @@ export async function sendAppointmentConfirmationEmail(data: {
     });
 
     const mailOptions = {
-      from: process.env.EMAIL_USER || "noreply@securehealthcare.com",
+      from: `"SecureHealthCare" <${process.env.EMAIL_USER}>`,
       to: patientEmail,
       subject: "✅ Appointment Confirmed - SecureHealthCare",
       html: `
@@ -400,6 +426,9 @@ export async function sendDoctorAppointmentNotification(data: {
   reason?: string;
 }): Promise<boolean> {
   try {
+    const transporter = createTransporter();
+    if (!transporter) return false;
+
     const {
       doctorEmail,
       doctorName,
@@ -423,7 +452,7 @@ export async function sendDoctorAppointmentNotification(data: {
     });
 
     const mailOptions = {
-      from: process.env.EMAIL_USER || "noreply@securehealthcare.com",
+      from: `"SecureHealthCare" <${process.env.EMAIL_USER}>`,
       to: doctorEmail,
       subject: "📅 New Appointment Scheduled - SecureHealthCare",
       html: `
@@ -548,6 +577,9 @@ export async function sendAppointmentCancellationEmail(data: {
   reason?: string;
 }): Promise<boolean> {
   try {
+    const transporter = createTransporter();
+    if (!transporter) return false;
+
     const { recipientEmail, recipientName, appointmentDate, appointmentTime, doctorName, reason } = data;
 
     const formattedDate = new Date(appointmentDate).toLocaleDateString('en-US', {
@@ -558,7 +590,7 @@ export async function sendAppointmentCancellationEmail(data: {
     });
 
     const mailOptions = {
-      from: process.env.EMAIL_USER || "noreply@securehealthcare.com",
+      from: `"SecureHealthCare" <${process.env.EMAIL_USER}>`,
       to: recipientEmail,
       subject: "❌ Appointment Cancelled - SecureHealthCare",
       html: `
@@ -622,6 +654,9 @@ export async function sendAppointmentReminderEmail(data: {
   zoomJoinUrl?: string;
 }): Promise<boolean> {
   try {
+    const transporter = createTransporter();
+    if (!transporter) return false;
+
     const { patientEmail, patientName, doctorName, appointmentDate, appointmentTime, isTelemedicine, zoomJoinUrl } = data;
 
     const formattedDate = new Date(appointmentDate).toLocaleDateString('en-US', {
@@ -632,7 +667,7 @@ export async function sendAppointmentReminderEmail(data: {
     });
 
     const mailOptions = {
-      from: process.env.EMAIL_USER || "noreply@securehealthcare.com",
+      from: `"SecureHealthCare" <${process.env.EMAIL_USER}>`,
       to: patientEmail,
       subject: "⏰ Appointment Reminder - Tomorrow - SecureHealthCare",
       html: `

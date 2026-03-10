@@ -263,6 +263,14 @@ export async function login(
         console.log("=".repeat(50));
       }
 
+      // Delete any old unverified OTPs for this user to prevent stale codes
+      await supabase
+        .from("otp_logs")
+        .delete()
+        .eq("user_id", data[userIdField])
+        .eq("user_role", role)
+        .eq("is_verified", false);
+
       // Store OTP in database
       const { error: otpError } = await supabase.from("otp_logs").insert({
         user_id: data[userIdField],
@@ -545,6 +553,122 @@ export async function updatePassword(
       success: false,
       message: "Failed to update password. Please try again.",
     };
+  }
+}
+
+/**
+ * Resend OTP code for MFA
+ */
+export async function resendOTP(
+  mfaToken: string,
+  role: UserRole,
+): Promise<LoginResult> {
+  try {
+    // Decode MFA token
+    let tokenData: any;
+    try {
+      tokenData = JSON.parse(Buffer.from(mfaToken, "base64").toString());
+    } catch (e) {
+      return { success: false, message: "Invalid verification token" };
+    }
+
+    const { userId } = tokenData;
+
+    // Determine the table based on role
+    let table: string;
+    let idField: string;
+
+    switch (role) {
+      case "admin":
+        table = "admins";
+        idField = "id";
+        break;
+      case "patient":
+        table = "patients";
+        idField = "patient_id";
+        break;
+      case "doctor":
+        table = "doctors";
+        idField = "doctor_id";
+        break;
+      case "nurse":
+        table = "nurses";
+        idField = "nurse_id";
+        break;
+      case "staff":
+        table = "staff";
+        idField = "staff_id";
+        break;
+      default:
+        return { success: false, message: "Invalid role" };
+    }
+
+    // Get user data
+    const { data: userData, error: userError } = await supabase
+      .from(table)
+      .select("*")
+      .eq(idField, userId)
+      .single();
+
+    if (userError || !userData) {
+      return { success: false, message: "User not found" };
+    }
+
+    // Delete all old unverified OTPs for this user
+    await supabase
+      .from("otp_logs")
+      .delete()
+      .eq("user_id", userId)
+      .eq("user_role", role)
+      .eq("is_verified", false);
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const otpHash = hashOTP(otp);
+    const expiryTime = generateOTPExpiry();
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("=".repeat(50));
+      console.log("🔄 OTP RESENT FOR", role.toUpperCase());
+      console.log("User ID:", userId);
+      console.log("Email:", userData.email);
+      console.log("OTP CODE:", otp);
+      console.log("Expires at:", expiryTime.toISOString());
+      console.log("=".repeat(50));
+    }
+
+    // Store new OTP in database
+    const { error: otpError } = await supabase.from("otp_logs").insert({
+      user_id: userId,
+      user_role: role,
+      otp_hash: otpHash,
+      expires_at: expiryTime.toISOString(),
+      attempts: 0,
+    });
+
+    if (otpError) {
+      console.error("Error storing OTP:", otpError);
+      return { success: false, message: "Error generating OTP. Please try again." };
+    }
+
+    // Send OTP email
+    const emailSent = await sendOTPEmail(
+      userData.email,
+      otp,
+      `${userData.first_name || userData.firstName} ${userData.last_name || userData.lastName}`,
+    );
+
+    if (!emailSent) {
+      return { success: false, message: "Failed to send OTP. Please try again." };
+    }
+
+    return {
+      success: true,
+      message: "A new OTP has been sent to your email.",
+    };
+  } catch (error) {
+    console.error("Resend OTP error:", error);
+    return { success: false, message: "Error resending OTP. Please try again." };
   }
 }
 

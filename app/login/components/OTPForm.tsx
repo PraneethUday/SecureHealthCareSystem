@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, ArrowLeft } from "lucide-react";
+import { Lock, ArrowLeft, RefreshCw } from "lucide-react";
 
 interface OTPFormProps {
   onSubmit: (e: React.FormEvent, otp: string) => void;
@@ -10,6 +10,7 @@ interface OTPFormProps {
   email: string;
   themeClasses: any;
   onBackClick: () => void;
+  onResendOTP: () => void;
   attemptsRemaining: number;
 }
 
@@ -20,9 +21,12 @@ export default function OTPForm({
   email,
   themeClasses,
   onBackClick,
+  onResendOTP,
   attemptsRemaining,
 }: OTPFormProps) {
   const [otp, setOtp] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendMessage, setResendMessage] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 6);
@@ -34,6 +38,25 @@ export default function OTPForm({
       return;
     }
     onSubmit(e, otp);
+  };
+
+  const handleResendClick = () => {
+    if (resendCooldown > 0 || isLoading) return;
+    setOtp("");
+    setResendMessage("");
+    onResendOTP();
+    setResendMessage("A new OTP has been sent to your email.");
+    // Start 30 second cooldown
+    setResendCooldown(30);
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   return (
@@ -136,17 +159,25 @@ export default function OTPForm({
         </button>
       </form>
 
+      {/* Resend Message */}
+      {resendMessage && !error && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm text-center">
+          {resendMessage}
+        </div>
+      )}
+
       {/* Help Text */}
       <div className="text-center text-xs text-gray-600 space-y-2">
-        <p>Didn&apos;t receive the code?</p>
+        <p>Didn&apos;t receive the code? Check your spam folder.</p>
         <button
           type="button"
-          disabled={isLoading}
-          onClick={onBackClick}
-          className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+          disabled={isLoading || resendCooldown > 0}
+          onClick={handleResendClick}
+          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
           suppressHydrationWarning
         >
-          Try a different email
+          <RefreshCw className="w-3 h-3" />
+          {resendCooldown > 0 ? `Resend OTP (${resendCooldown}s)` : "Resend OTP"}
         </button>
       </div>
     </div>
