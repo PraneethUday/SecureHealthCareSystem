@@ -36,15 +36,35 @@ export async function POST(request: NextRequest) {
       .update(token)
       .digest("hex");
 
-    // Find user with matching token and email
-    const { data: user, error: userError } = await supabase
-      .from("users")
-      .select("id, email, reset_token, reset_token_expiry")
-      .eq("email", email)
-      .eq("reset_token", resetTokenHash)
-      .single();
+    // The tables and their corresponding ID fields for the query fallback
+    const tables = [
+      { name: "patients", idField: "id" },
+      { name: "doctors", idField: "id" },
+      { name: "nurses", idField: "id" },
+      { name: "staff", idField: "id" },
+      { name: "admins", idField: "id" }
+    ];
 
-    if (userError || !user) {
+    let foundUser = null;
+    let foundTable = null;
+
+    // Find user with matching token and email across all tables
+    for (const table of tables) {
+      const { data, error } = await supabase
+        .from(table.name)
+        .select(`id, email, password_reset_token, password_reset_expires_at`)
+        .eq("email", email)
+        .eq("password_reset_token", resetTokenHash)
+        .single();
+
+      if (data && !error) {
+        foundUser = data;
+        foundTable = table.name;
+        break;
+      }
+    }
+
+    if (!foundUser || !foundTable) {
       console.log("[Reset Password] Invalid token or email");
       return NextResponse.json(
         { error: "Invalid or expired reset link" },
@@ -53,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if token has expired
-    const tokenExpiry = new Date(user.reset_token_expiry);
+    const tokenExpiry = new Date(foundUser.password_reset_expires_at);
     if (tokenExpiry < new Date()) {
       console.log("[Reset Password] Token expired");
       return NextResponse.json(
@@ -70,19 +90,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash the new password using the legacy salt logic to match existing system behavior 
+    // or bcrypt as done natively.
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Update user's password and clear reset token
+    // We update both password and password_hash for backward compatibility where plaintext was required
     const { error: updateError } = await supabase
-      .from("users")
+      .from(foundTable as string)
       .update({
-        password: hashedPassword,
-        reset_token: null,
-        reset_token_expiry: null,
+        password: password, // The app still relies on this in auth-actions.ts for old users
+        password_hash: hashedPassword,
+        password_reset_token: null,
+        password_reset_expires_at: null,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", user.id);
+      .eq("id", foundUser.id);
 
     if (updateError) {
       console.error("[Reset Password] Error updating password:", updateError);

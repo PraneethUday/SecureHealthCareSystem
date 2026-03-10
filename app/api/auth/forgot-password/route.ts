@@ -37,52 +37,76 @@ export async function POST(request: NextRequest) {
     console.log("[Forgot Password API] 2. Creating Supabase client...");
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log(
-      "[Forgot Password API] 3. Attempting to generate reset link...",
-    );
-    // Generate password reset link using Supabase Auth
-    // We skip the listUsers check and go straight to link generation
-    const { data, error } = await supabase.auth.admin.generateLink({
-      type: "recovery",
-      email: email,
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reset-password`,
-      },
-    });
+    console.log("[Forgot Password API] 3. Searching for user across role tables...");
 
-    if (error) {
-      console.error("[Forgot Password API] ❌ ERROR generating link:", error);
-      const errorMsg = error.message?.toLowerCase() || "";
+    // The tables and their corresponding ID fields for the query fallback
+    const tables = [
+      { name: "patients", idField: "id" },
+      { name: "doctors", idField: "id" },
+      { name: "nurses", idField: "id" },
+      { name: "staff", idField: "id" },
+      { name: "admins", idField: "id" }
+    ];
 
-      // If user not found, Supabase returns error. Return success for security (prevent enumeration)
-      if (errorMsg.includes("user") && errorMsg.includes("not found")) {
-        console.log(
-          "[Forgot Password API] Status: User not found matching triggered, returning success for security",
-        );
-        return NextResponse.json({
-          success: true,
-          message:
-            "If an account exists with this email, you will receive a password reset link.",
-        });
+    let foundUser = null;
+    let foundTable = null;
+
+    // Search all role tables for the email
+    for (const table of tables) {
+      const { data, error } = await supabase
+        .from(table.name)
+        .select(`id, email, first_name`) // Admins has full_name instead of first_name, but that's ok to be undefined
+        .eq("email", email)
+        .single();
+
+      if (data && !error) {
+        foundUser = data;
+        foundTable = table.name;
+        break; // Stop searching once found
       }
+    }
+
+    if (!foundUser) {
+      console.log(
+        "[Forgot Password API] Status: User not found matching triggered, returning success for security",
+      );
+      // Return success to prevent email enumeration attacks
+      return NextResponse.json({
+        success: true,
+        message:
+          "If an account exists with this email, you will receive a password reset link.",
+      });
+    }
+
+    console.log(`[Forgot Password API] 4. User found in ${foundTable} table! Generating secure token...`);
+
+    // Generate a secure random token and hash it for storage
+    // We send the raw token to the user, but only store the hash
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+    // Expiry time (1 hour from now)
+    const expiryTime = new Date();
+    expiryTime.setHours(expiryTime.getHours() + 1);
+
+    // Save the hashed token to the database
+    const { error: updateError } = await supabase
+      .from(foundTable as string)
+      .update({
+        password_reset_token: hashedToken,
+        password_reset_expires_at: expiryTime.toISOString(),
+      })
+      .eq("id", foundUser.id);
+
+    if (updateError) {
+      console.error("[Forgot Password API] ❌ ERROR saving reset token to database:", updateError);
       return NextResponse.json(
-        { error: `Failed to generate reset link: ${error.message}` },
+        { error: "Internal server error: Failed to prepare reset link" },
         { status: 500 },
       );
     }
 
-    console.log("[Forgot Password API] 4. Link generated successfully!");
-    const resetLink = data.properties?.action_link;
-
-    if (!resetLink) {
-      console.error(
-        "[Forgot Password API] ❌ ERROR: No reset link in response properties",
-      );
-      return NextResponse.json(
-        { error: "Internal server error: Link generation failed" },
-        { status: 500 },
-      );
-    }
+    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reset-password?token=${rawToken}&email=${encodeURIComponent(email)}`;
 
     console.log("[Forgot Password API] 5. Sending email with Nodemailer...");
 
@@ -113,7 +137,7 @@ export async function POST(request: NextRequest) {
                 <tr>
                   <td style="padding: 40px 30px;">
                     <p style="font-size: 16px; color: #333; margin: 0 0 20px 0;">
-                      Hello,
+                      Hello ${foundUser.first_name || 'SecureHealthcare User'},
                     </p>
                     
                     <p style="font-size: 16px; color: #333; margin: 0 0 20px 0;">
@@ -183,7 +207,7 @@ export async function POST(request: NextRequest) {
     const emailText = `
 Password Reset Request
 
-Hello,
+Hello ${foundUser.first_name || 'SecureHealthcare User'},
 
 We received a request to reset your password for your SecureHealthCare account.
 
@@ -259,3 +283,4 @@ SecureHealthCare Team
     );
   }
 }
+

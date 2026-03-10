@@ -328,13 +328,15 @@ export async function createAppointment(appointmentData: {
           const { meeting } = await response.json();
           zoomMeetingData = meeting;
         } else {
-          console.warn("[Appointments] Zoom API call failed, using mock meeting link due to missing credentials");
+          console.warn("[Appointments] Zoom API call failed, using shared Jitsi Meet fallback link due to missing credentials");
+
+          const sharedVideoLink = `https://meet.jit.si/SecureHealthcare-${data.id.replace(/-/g, '')}`;
 
           zoomMeetingData = {
-            id: 'test',
-            start_url: 'https://zoom.us/test',
-            join_url: 'https://zoom.us/test',
-            password: "demo",
+            id: `fallback-${data.id}`,
+            start_url: sharedVideoLink,
+            join_url: sharedVideoLink,
+            password: "",
           };
         }
 
