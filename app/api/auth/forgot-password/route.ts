@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import nodemailer from 'nodemailer';
-import crypto from 'crypto';
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import nodemailer from "nodemailer";
+import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
 
     if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -16,57 +16,75 @@ export async function POST(request: NextRequest) {
     const emailUser = process.env.EMAIL_USER;
     const emailPass = process.env.EMAIL_PASSWORD;
 
-    console.log('[Forgot Password API] 1. Processing request for:', email);
-    console.log('[Forgot Password API] Config check:', {
+    console.log("[Forgot Password API] 1. Processing request for:", email);
+    console.log("[Forgot Password API] Config check:", {
       hasUrl: !!supabaseUrl,
       hasKey: !!supabaseKey,
       hasEmail: !!emailUser,
-      hasPass: !!emailPass
+      hasPass: !!emailPass,
     });
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error('[Forgot Password API] ❌ ERROR: Missing Supabase configuration');
-      return NextResponse.json({ error: 'Server configuration error: Missing Supabase keys' }, { status: 500 });
+      console.error(
+        "[Forgot Password API] ❌ ERROR: Missing Supabase configuration",
+      );
+      return NextResponse.json(
+        { error: "Server configuration error: Missing Supabase keys" },
+        { status: 500 },
+      );
     }
 
-    console.log('[Forgot Password API] 2. Creating Supabase client...');
+    console.log("[Forgot Password API] 2. Creating Supabase client...");
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('[Forgot Password API] 3. Attempting to generate reset link...');
+    console.log(
+      "[Forgot Password API] 3. Attempting to generate reset link...",
+    );
     // Generate password reset link using Supabase Auth
     // We skip the listUsers check and go straight to link generation
     const { data, error } = await supabase.auth.admin.generateLink({
-      type: 'recovery',
+      type: "recovery",
       email: email,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password`,
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reset-password`,
       },
     });
 
     if (error) {
-      console.error('[Forgot Password API] ❌ ERROR generating link:', error);
-      const errorMsg = error.message?.toLowerCase() || '';
+      console.error("[Forgot Password API] ❌ ERROR generating link:", error);
+      const errorMsg = error.message?.toLowerCase() || "";
 
       // If user not found, Supabase returns error. Return success for security (prevent enumeration)
-      if (errorMsg.includes('user') && errorMsg.includes('not found')) {
-        console.log('[Forgot Password API] Status: User not found matching triggered, returning success for security');
+      if (errorMsg.includes("user") && errorMsg.includes("not found")) {
+        console.log(
+          "[Forgot Password API] Status: User not found matching triggered, returning success for security",
+        );
         return NextResponse.json({
           success: true,
-          message: 'If an account exists with this email, you will receive a password reset link.',
+          message:
+            "If an account exists with this email, you will receive a password reset link.",
         });
       }
-      return NextResponse.json({ error: `Failed to generate reset link: ${error.message}` }, { status: 500 });
+      return NextResponse.json(
+        { error: `Failed to generate reset link: ${error.message}` },
+        { status: 500 },
+      );
     }
 
-    console.log('[Forgot Password API] 4. Link generated successfully!');
+    console.log("[Forgot Password API] 4. Link generated successfully!");
     const resetLink = data.properties?.action_link;
 
     if (!resetLink) {
-      console.error('[Forgot Password API] ❌ ERROR: No reset link in response properties');
-      return NextResponse.json({ error: 'Internal server error: Link generation failed' }, { status: 500 });
+      console.error(
+        "[Forgot Password API] ❌ ERROR: No reset link in response properties",
+      );
+      return NextResponse.json(
+        { error: "Internal server error: Link generation failed" },
+        { status: 500 },
+      );
     }
 
-    console.log('[Forgot Password API] 5. Sending email with Nodemailer...');
+    console.log("[Forgot Password API] 5. Sending email with Nodemailer...");
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -181,12 +199,17 @@ SecureHealthCare Team
     `;
 
     if (!emailUser || !emailPass) {
-      console.error('[Forgot Password API] ❌ ERROR: Missing email credentials');
-      return NextResponse.json({ error: 'Server configuration error: Missing email credentials' }, { status: 500 });
+      console.error(
+        "[Forgot Password API] ❌ ERROR: Missing email credentials",
+      );
+      return NextResponse.json(
+        { error: "Server configuration error: Missing email credentials" },
+        { status: 500 },
+      );
     }
 
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
         user: emailUser,
         pass: emailPass,
@@ -199,34 +222,40 @@ SecureHealthCare Team
     try {
       // Verify transporter first
       await transporter.verify();
-      console.log('[Forgot Password API] Transporter verified');
+      console.log("[Forgot Password API] Transporter verified");
 
       await transporter.sendMail({
         from: `"SecureHealthCare" <${emailUser}>`,
         to: email,
-        subject: '🔐 Password Reset Request - SecureHealthCare',
+        subject: "🔐 Password Reset Request - SecureHealthCare",
         text: emailText,
         html: emailHtml,
       });
 
-      console.log('[Forgot Password] ✅ Reset email sent successfully to:', email);
+      console.log(
+        "[Forgot Password] ✅ Reset email sent successfully to:",
+        email,
+      );
 
       return NextResponse.json({
         success: true,
-        message: 'Password reset link sent to your email',
+        message: "Password reset link sent to your email",
       });
     } catch (emailError: any) {
-      console.error('[Forgot Password API] ❌ ERROR sending email:', emailError);
+      console.error(
+        "[Forgot Password API] ❌ ERROR sending email:",
+        emailError,
+      );
       return NextResponse.json(
         { error: `Failed to send reset email: ${emailError.message}` },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } catch (error: any) {
-    console.error('[Forgot Password API] ❌ UNEXPECTED ERROR:', error);
+    console.error("[Forgot Password API] ❌ UNEXPECTED ERROR:", error);
     return NextResponse.json(
       { error: `Internal server error: ${error.message}` },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
