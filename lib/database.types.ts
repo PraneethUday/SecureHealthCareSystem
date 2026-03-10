@@ -354,3 +354,46 @@ export interface MedicalReportLog {
   metadata?: Record<string, any>;
   timestamp: string;
 }
+
+// Notification Types
+export type NotificationType =
+  | "appointment_booked"
+  | "appointment_cancelled"
+  | "appointment_reminder"
+  | "appointment_updated"
+  | "access_granted"
+  | "access_revoked"
+  | "report_uploaded"
+  | "prescription_created"
+  | "system"
+  | "general";
+
+export interface Notification {
+  id: string;
+  recipient_id: string;
+  recipient_role: UserRole;
+  title: string;
+  message: string;
+  type: NotificationType;
+  related_entity_type?: string;
+  related_entity_id?: string;
+  is_read: boolean;
+  read_at?: string;
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+  expires_at?: string;
+}
+
+// Data Access Types
+export interface DataAccessRecord {
+  id: string;
+  patient_id: string;
+  accessor_id: string;
+  accessor_role: UserRole;
+  accessor_name: string;
+  access_type: "view" | "edit" | "full";
+  granted_at: string;
+  expires_at?: string;
+  is_active: boolean;
+  appointment_id?: string;
+}

@@ -1,11 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const SYSTEM_PROMPT = `You are a friendly and professional healthcare assistant named "MedBot" inside the SecureHealthCare hospital management system.
+
+Rules you MUST follow:
+- Do NOT diagnose diseases or medical conditions
+- Do NOT prescribe medication or recommend dosages
+- Do NOT give specific treatment plans
+- Provide general health education and wellness tips only
+- If symptoms sound serious or urgent, strongly advise the user to see a doctor immediately
+- Help users navigate the healthcare system (booking appointments, understanding reports, using the app)
+- Be empathetic, calm, clear, and concise
+- Use simple language that patients can understand
+- If you don't know something, say so honestly
+- Keep responses focused and under 200 words unless the user asks for detail
+- Format responses with bullet points or numbered lists when helpful`;
+
 export async function POST(req: NextRequest) {
   try {
-    console.log("✅ /api/chatbot HIT");
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error("GEMINI_API_KEY not configured");
+      return NextResponse.json(
+        { reply: "AI service is not configured. Please contact support." },
+        { status: 500 },
+      );
+    }
 
     const body = await req.json();
     const message = body?.message;
@@ -14,78 +37,40 @@ export async function POST(req: NextRequest) {
     if (!message || typeof message !== "string") {
       return NextResponse.json(
         { reply: "No message provided." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const prompt = `
-You are a healthcare system assistant inside a hospital app.
+    // Limit message length to prevent abuse
+    const trimmedMessage = message.slice(0, 2000);
 
-Rules:
-- Do NOT diagnose diseases
-- Do NOT prescribe medication
-- Do NOT give treatment plans
-- Provide general health education only
-- If symptoms sound serious, advise seeing a doctor
-- Help users with system usage and navigation
-- Be calm, clear, and step-by-step
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-Context:
-User role: ${context.role ?? "unknown"}
-Page: ${context.page ?? "unknown"}
+    const userContext = `\nUser role: ${context.role ?? "unknown"}\nCurrent page: ${context.page ?? "unknown"}`;
+    const fullPrompt = `${SYSTEM_PROMPT}\n${userContext}\n\nUser: ${trimmedMessage}\nAssistant:`;
 
-User: ${message}
-Assistant:
-`;
-
-    console.log("➡️ Calling Ollama at http://127.0.0.1:11434/api/generate");
-
-    const response = await fetch("http://127.0.0.1:11434/api/generate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      // ⬇️ VERY IMPORTANT: no AbortController, no timeout
-      body: JSON.stringify({
-        model: "llama3.2:3b",
-        prompt,
-        stream: false,
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text().catch(() => "Unable to read error body");
-      console.error("❌ Ollama HTTP error:", response.status, errText);
-
-      return NextResponse.json(
-        { reply: "The AI service is currently unavailable. Please try again." },
-        { status: 500 }
-      );
-    }
-
-    const data = await response.json();
-
-    console.log("⬅️ Ollama responded successfully");
+    const result = await model.generateContent(fullPrompt);
+    const response = result.response;
+    const reply = response.text();
 
     return NextResponse.json({
-      reply: data?.response ?? "No response from model.",
+      reply: reply || "I couldn't generate a response. Please try again.",
     });
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("Chatbot API error:", err?.message ?? error);
 
-  } catch (error: any) {
-    // 👇 Handle aborts gracefully
-    if (error?.name === "AbortError") {
-      console.error("⚠️ Ollama request aborted (timeout or reload)");
+    if (err?.message?.includes("API key")) {
       return NextResponse.json(
-        { reply: "The AI took too long to respond. Please try again." },
-        { status: 504 }
+        { reply: "AI service authentication failed. Please contact support." },
+        { status: 500 },
       );
     }
-
-    console.error("❌ Chatbot API error:", error?.message ?? error);
 
     return NextResponse.json(
       { reply: "Something went wrong. Please try again later." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

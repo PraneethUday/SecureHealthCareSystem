@@ -151,7 +151,9 @@ export async function createAppointment(appointmentData: {
     console.log("Creating appointment with data:", appointmentData);
 
     // === SERVER-SIDE DATE & TIME VALIDATION ===
-    const appointmentDate = new Date(appointmentData.appointmentDate + "T00:00:00");
+    const appointmentDate = new Date(
+      appointmentData.appointmentDate + "T00:00:00",
+    );
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -159,7 +161,8 @@ export async function createAppointment(appointmentData: {
     if (appointmentDate < today) {
       return {
         success: false,
-        error: "Cannot book an appointment in the past. Please select a future date.",
+        error:
+          "Cannot book an appointment in the past. Please select a future date.",
       };
     }
 
@@ -175,15 +178,21 @@ export async function createAppointment(appointmentData: {
 
     // If booking for today, reject time slots that have already passed
     const todayStr = today.toISOString().split("T")[0];
-    if (appointmentData.appointmentDate === todayStr && appointmentData.appointmentTime) {
+    if (
+      appointmentData.appointmentDate === todayStr &&
+      appointmentData.appointmentTime
+    ) {
       const now = new Date();
-      const [slotHour, slotMinute] = appointmentData.appointmentTime.split(":").map(Number);
+      const [slotHour, slotMinute] = appointmentData.appointmentTime
+        .split(":")
+        .map(Number);
       const slotTotalMinutes = slotHour * 60 + slotMinute;
       const currentTotalMinutes = now.getHours() * 60 + now.getMinutes() + 30; // 30-min buffer
       if (slotTotalMinutes < currentTotalMinutes) {
         return {
           success: false,
-          error: "This time slot has already passed. Please select a later time.",
+          error:
+            "This time slot has already passed. Please select a later time.",
         };
       }
     }
@@ -207,7 +216,8 @@ export async function createAppointment(appointmentData: {
     if (count !== null && count >= 3) {
       return {
         success: false,
-        error: "You have reached the maximum limit of 3 active scheduled appointments.",
+        error:
+          "You have reached the maximum limit of 3 active scheduled appointments.",
       };
     }
     // === END VALIDATION ===
@@ -328,9 +338,11 @@ export async function createAppointment(appointmentData: {
           const { meeting } = await response.json();
           zoomMeetingData = meeting;
         } else {
-          console.warn("[Appointments] Zoom API call failed, using shared Jitsi Meet fallback link due to missing credentials");
+          console.warn(
+            "[Appointments] Zoom API call failed, using shared Jitsi Meet fallback link due to missing credentials",
+          );
 
-          const sharedVideoLink = `https://meet.jit.si/SecureHealthcare-${data.id.replace(/-/g, '')}`;
+          const sharedVideoLink = `https://meet.jit.si/SecureHealthcare-${data.id.replace(/-/g, "")}`;
 
           zoomMeetingData = {
             id: `fallback-${data.id}`,
@@ -487,29 +499,26 @@ export async function createAppointment(appointmentData: {
 
         // Send notification email to doctor via API
         try {
-          const doctorEmailResponse = await fetch(
-            `${baseUrl}/api/email/send`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                type: "doctor_notification",
-                data: {
-                  doctorEmail: doctorData.email,
-                  doctorName,
-                  patientName,
-                  appointmentDate: appointmentData.appointmentDate,
-                  appointmentTime: appointmentData.appointmentTime,
-                  department: doctorData.specialization || "General",
-                  hospitalName: hospitalData.name,
-                  isTelemedicine: appointmentData.isTelemedicine || false,
-                  zoomHostUrl: zoomMeetingData?.start_url,
-                  appointmentId: data.id,
-                  reason: appointmentData.reason,
-                },
-              }),
-            },
-          );
+          const doctorEmailResponse = await fetch(`${baseUrl}/api/email/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "doctor_notification",
+              data: {
+                doctorEmail: doctorData.email,
+                doctorName,
+                patientName,
+                appointmentDate: appointmentData.appointmentDate,
+                appointmentTime: appointmentData.appointmentTime,
+                department: doctorData.specialization || "General",
+                hospitalName: hospitalData.name,
+                isTelemedicine: appointmentData.isTelemedicine || false,
+                zoomHostUrl: zoomMeetingData?.start_url,
+                appointmentId: data.id,
+                reason: appointmentData.reason,
+              },
+            }),
+          });
 
           if (doctorEmailResponse.ok) {
             console.log("[Appointments] ✅ Doctor notification email sent");
@@ -524,6 +533,79 @@ export async function createAppointment(appointmentData: {
         emailError,
       );
       // Don't fail the appointment creation if email fails
+    }
+
+    // Create in-app notifications for patient and doctor
+    try {
+      console.log("[Appointments] Creating in-app notifications...");
+
+      // Format date and time for display
+      const formattedDate = new Date(
+        appointmentData.appointmentDate,
+      ).toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+      });
+      const formattedTime = appointmentData.appointmentTime;
+
+      // Get patient and doctor names if not already fetched
+      const { data: patientInfo } = await supabase
+        .from("patients")
+        .select("first_name, last_name")
+        .eq("id", appointmentData.patientId)
+        .single();
+
+      const { data: doctorInfo } = await supabase
+        .from("doctors")
+        .select("first_name, last_name")
+        .eq("doctor_id", appointmentData.doctorId)
+        .single();
+
+      const patientFullName = patientInfo
+        ? `${patientInfo.first_name} ${patientInfo.last_name}`
+        : "Patient";
+      const doctorFullName = doctorInfo
+        ? `${doctorInfo.first_name} ${doctorInfo.last_name}`
+        : "Doctor";
+
+      // Create notification for patient
+      await supabase.from("notifications").insert({
+        recipient_id: appointmentData.patientId,
+        recipient_role: "patient",
+        title: "Appointment Confirmed",
+        message: `Your appointment with Dr. ${doctorFullName} is confirmed for ${formattedDate} at ${formattedTime}.`,
+        type: "appointment_booked",
+        related_entity_type: "appointment",
+        related_entity_id: data.id,
+        metadata: {
+          doctorId: appointmentData.doctorId,
+          doctorName: doctorFullName,
+        },
+      });
+
+      // Create notification for doctor
+      await supabase.from("notifications").insert({
+        recipient_id: appointmentData.doctorId,
+        recipient_role: "doctor",
+        title: "New Appointment",
+        message: `New appointment booked with ${patientFullName} for ${formattedDate} at ${formattedTime}.`,
+        type: "appointment_booked",
+        related_entity_type: "appointment",
+        related_entity_id: data.id,
+        metadata: {
+          patientId: appointmentData.patientId,
+          patientName: patientFullName,
+        },
+      });
+
+      console.log("[Appointments] ✅ In-app notifications created");
+    } catch (notificationError) {
+      console.error(
+        "[Appointments] Error creating in-app notifications:",
+        notificationError,
+      );
+      // Don't fail the appointment creation if notifications fail
     }
 
     return { success: true, appointment: data };
@@ -684,8 +766,9 @@ export async function updateAppointmentStatus(
       console.error("Error fetching appointment:", fetchError);
       return {
         success: false,
-        error: `Failed to fetch appointment: ${fetchError.message || JSON.stringify(fetchError)
-          }`,
+        error: `Failed to fetch appointment: ${
+          fetchError.message || JSON.stringify(fetchError)
+        }`,
       };
     }
 

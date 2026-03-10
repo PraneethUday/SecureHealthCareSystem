@@ -16,16 +16,17 @@ import {
   Loader2,
   Search,
   Files,
-  Activity,
   Clock,
   CheckCircle,
 } from "lucide-react";
 import DoctorAppointmentCard from "./components/DoctorAppointmentCard";
 import { IncomingCallModal } from "./components/IncomingCallModal";
 import PrescriptionForm from "./components/PrescriptionForm";
+import AppointmentsCalendar from "./components/AppointmentsCalendar";
 import MedicalRecordForm from "./components/MedicalRecordForm";
 import { MedicalReportsViewer } from "./components/MedicalReportsViewer";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import NotificationBell from "@/app/dashboard/components/NotificationBell";
 
 export default function DoctorDashboard() {
   const router = useRouter();
@@ -237,6 +238,7 @@ export default function DoctorDashboard() {
               <div className="bg-white/80 dark:bg-gray-800/80 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900 text-xs text-blue-600 dark:text-blue-400 font-semibold shadow-sm">
                 ID: {user.doctor_id}
               </div>
+              <NotificationBell userId={user.id} userRole="doctor" />
               <ThemeToggle />
               <button
                 onClick={handleLogout}
@@ -307,23 +309,8 @@ export default function DoctorDashboard() {
             </p>
           </div>
 
-          {/* Stat: Experience */}
-          <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-5 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-            <div className="flex justify-between items-start mb-4">
-              <div className="bg-gradient-to-br from-purple-400 to-pink-500 p-3 rounded-xl shadow-md shadow-purple-500/20 text-white">
-                <Activity className="w-6 h-6" />
-              </div>
-            </div>
-            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">
-              Experience
-            </h3>
-            <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              {user.years_of_experience}{" "}
-              <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                years
-              </span>
-            </p>
-          </div>
+          {/* Appointments Calendar Widget */}
+          <AppointmentsCalendar appointments={appointments} />
         </div>
 
         {/* Main Content Area (Glass Card) */}
@@ -371,7 +358,7 @@ export default function DoctorDashboard() {
           </div>
 
           {/* Tab Content Staging Area */}
-          <div className="p-6 md:p-8 min-h-[500px]">
+          <div className="p-6 md:p-8">
             {activeTab === "reports" ? (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <MedicalReportsViewer doctorId={user.doctor_id} />
@@ -384,7 +371,7 @@ export default function DoctorDashboard() {
                 </p>
               </div>
             ) : (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-h-[600px] overflow-y-auto pr-2 space-y-4">
                 {/* Today's Appointments */}
                 {activeTab === "today" &&
                   (filteredTodayAppointments.length === 0 ? (

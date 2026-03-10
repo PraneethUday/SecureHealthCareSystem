@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
 
         // Get all junction entries for these users
         const userIds = data.map((u: any) => u[idField]);
-        let hospitalMap: Record<string, string> = {};
+        let hospitalMap: Record<string, { name: string; id: string }> = {};
 
         if (userIds.length > 0) {
           const { data: junctionData } = await supabaseAdmin
@@ -78,8 +78,9 @@ export async function GET(request: NextRequest) {
             for (const entry of junctionData as any[]) {
               const uid = entry[junctionIdField];
               const hospitalName = entry.hospitals?.name;
-              if (hospitalName) {
-                hospitalMap[uid] = hospitalName;
+              const hospitalId = entry.hospital_id;
+              if (hospitalName && hospitalId) {
+                hospitalMap[uid] = { name: hospitalName, id: hospitalId };
               }
             }
           }
@@ -101,7 +102,8 @@ export async function GET(request: NextRequest) {
           yearsOfExperience: user.years_of_experience, // Doctor only
           shift: user.shift, // Nurse only
           staffRole: user.role, // Staff only
-          hospitalName: hospitalMap[user[idField]] || null,
+          hospitalName: hospitalMap[user[idField]]?.name || null,
+          hospitalId: hospitalMap[user[idField]]?.id || null,
           createdAt: user.created_at,
           updatedAt: user.updated_at,
           isMfaEnabled: user.is_mfa_enabled,

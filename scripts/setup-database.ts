@@ -35,7 +35,7 @@ async function setupDatabase() {
     });
     if (schemaError) {
       console.log(
-        "Note: Direct SQL execution may require service role key. Creating tables via data insertion...\n"
+        "Note: Direct SQL execution may require service role key. Creating tables via data insertion...\n",
       );
     }
 
@@ -243,14 +243,14 @@ async function setupDatabase() {
     }
 
     console.log("\n✨ Database setup completed!\n");
-    console.log('📝 Sample Login Credentials (all passwords are "admin"):\n');
+    console.log("📝 Sample Login Credentials:\n");
     console.log("Admin:");
-    console.log("  ID: admin | Password: admin\n");
+    console.log("  ID: admin | Password: admin123\n");
     console.log("Patients (use EMAIL to login):");
     console.log("  Email: john.doe@email.com | Password: admin (John Doe)");
     console.log("  Email: jane.smith@email.com | Password: admin (Jane Smith)");
     console.log(
-      "  Email: michael.j@email.com | Password: admin (Michael Johnson)\n"
+      "  Email: michael.j@email.com | Password: admin (Michael Johnson)\n",
     );
     console.log("Doctors:");
     console.log("  ID: D001 | Password: admin (Dr. Sarah Williams)");

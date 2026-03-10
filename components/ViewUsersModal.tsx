@@ -17,6 +17,8 @@ import {
   Activity,
   UserPlus,
   Hospital,
+  Pencil,
+  Check,
 } from "lucide-react";
 
 interface User {
@@ -35,7 +37,15 @@ interface User {
   shift?: string;
   staffRole?: string;
   hospitalName?: string;
+  hospitalId?: string;
   createdAt: string;
+}
+
+interface HospitalOption {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
 }
 
 interface ViewUsersModalProps {
@@ -51,14 +61,21 @@ export default function ViewUsersModal({
 }: ViewUsersModalProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
 
+  // Edit modal state
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [selectedHospitalId, setSelectedHospitalId] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     if (isOpen) {
       fetchUsers();
+      fetchHospitals();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -67,6 +84,18 @@ export default function ViewUsersModal({
     filterUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [users, searchQuery, roleFilter]);
+
+  const fetchHospitals = async () => {
+    try {
+      const response = await fetch(`/api/admin/hospitals?adminId=${adminId}`);
+      const data = await response.json();
+      if (response.ok && data.hospitals) {
+        setHospitals(data.hospitals);
+      }
+    } catch (err) {
+      console.error("Failed to fetch hospitals:", err);
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -139,6 +168,47 @@ export default function ViewUsersModal({
       fetchUsers();
     } catch (err: any) {
       alert(err.message || "Failed to delete user");
+    }
+  };
+
+  const handleEdit = (user: User) => {
+    setEditingUser(user);
+    setSelectedHospitalId(user.hospitalId || "");
+  };
+
+  const handleSaveHospital = async () => {
+    if (!editingUser || !selectedHospitalId) {
+      alert("Please select a hospital");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch("/api/admin/assign-hospital", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminId,
+          userId: editingUser.userId,
+          userRole: editingUser.role,
+          hospitalId: selectedHospitalId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to assign hospital");
+      }
+
+      // Refresh users and close edit modal
+      await fetchUsers();
+      setEditingUser(null);
+      setSelectedHospitalId("");
+    } catch (err: any) {
+      alert(err.message || "Failed to assign hospital");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -295,6 +365,13 @@ export default function ViewUsersModal({
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
+                    <button
+                      onClick={() => handleEdit(user)}
+                      className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                      title="Edit user"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
                   </div>
 
                   {/* User Details */}
@@ -399,6 +476,118 @@ export default function ViewUsersModal({
           </button>
         </div>
       </div>
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md">
+            {/* Edit Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
+                  <Pencil className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                    Edit User
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {editingUser.fullName}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setEditingUser(null);
+                  setSelectedHospitalId("");
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              </button>
+            </div>
+
+            {/* Edit Modal Body */}
+            <div className="p-6 space-y-4">
+              {/* User Info */}
+              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">ID:</span>
+                  <span className="font-mono font-medium text-gray-900 dark:text-white">
+                    {editingUser.userId}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">
+                    Role:
+                  </span>
+                  <span className="capitalize font-medium text-gray-900 dark:text-white">
+                    {editingUser.role}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">
+                    Current Hospital:
+                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {editingUser.hospitalName || "Not assigned"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Hospital Assignment */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <Hospital className="w-4 h-4 inline mr-2" />
+                  Assign Hospital
+                </label>
+                <select
+                  value={selectedHospitalId}
+                  onChange={(e) => setSelectedHospitalId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+                >
+                  <option value="">Select a hospital...</option>
+                  {hospitals.map((hospital) => (
+                    <option key={hospital.id} value={hospital.id}>
+                      {hospital.name} - {hospital.city}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Edit Modal Footer */}
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
+              <button
+                onClick={() => {
+                  setEditingUser(null);
+                  setSelectedHospitalId("");
+                }}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveHospital}
+                disabled={saving || !selectedHospitalId}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors font-medium"
+              >
+                {saving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Save Changes
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

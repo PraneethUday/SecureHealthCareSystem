@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { MedicalReportUpload } from "./components/MedicalReportUpload";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import NotificationBell from "@/app/dashboard/components/NotificationBell";
 import { PatientCare } from "./components/PatientCare";
 
 export default function NurseDashboard() {
@@ -139,6 +140,7 @@ export default function NurseDashboard() {
               <div className="bg-white/80 dark:bg-gray-800/80 px-3 py-1.5 rounded-lg border border-green-100 dark:border-green-900 text-xs text-green-700 dark:text-green-400 font-semibold shadow-sm">
                 Shift: {user.shift}
               </div>
+              <NotificationBell userId={user.id} userRole="nurse" />
               <ThemeToggle />
               <button
                 onClick={handleLogout}

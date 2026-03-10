@@ -6,7 +6,10 @@ import { getSession, clearSession } from "@/lib/auth";
 import { logAction } from "@/lib/logging";
 import { getPatientAppointments } from "@/lib/appointments";
 import { getPatientPrescriptions } from "@/lib/prescriptions";
-import { AppointmentWithDetails, PrescriptionWithDetails } from "@/lib/database.types";
+import {
+  AppointmentWithDetails,
+  PrescriptionWithDetails,
+} from "@/lib/database.types";
 import {
   Heart,
   Calendar,
@@ -28,18 +31,24 @@ import PrescriptionsList from "./components/PrescriptionsList";
 import MedicalRecordsList from "./components/MedicalRecordsList";
 import HealthProfileForm from "./components/HealthProfileForm";
 import PatientVitalsViewer from "./components/PatientVitalsViewer";
+import AccessManagement from "./components/AccessManagement";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import NotificationBell from "@/app/dashboard/components/NotificationBell";
 import { supabase } from "@/lib/supabase";
 
 export default function PatientDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
-  const [activePrescriptionsCount, setActivePrescriptionsCount] = useState<number | null>(null);
+  const [appointments, setAppointments] = useState<AppointmentWithDetails[]>(
+    [],
+  );
+  const [activePrescriptionsCount, setActivePrescriptionsCount] = useState<
+    number | null
+  >(null);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [showNewAppointment, setShowNewAppointment] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "appointments" | "prescriptions" | "records"
+    "appointments" | "prescriptions" | "records" | "access"
   >("appointments");
   const [showHealthProfileModal, setShowHealthProfileModal] = useState(false);
   const [showVitalsModal, setShowVitalsModal] = useState(false);
@@ -105,7 +114,9 @@ export default function PatientDashboard() {
   const loadPrescriptionCount = async (patientId: string) => {
     try {
       const prescriptions = await getPatientPrescriptions(patientId);
-      const activeCount = prescriptions.filter(p => p.status === 'active').length;
+      const activeCount = prescriptions.filter(
+        (p) => p.status === "active",
+      ).length;
       setActivePrescriptionsCount(activeCount);
     } catch (error) {
       console.error("Error loading prescription count:", error);
@@ -129,13 +140,13 @@ export default function PatientDashboard() {
   const upcomingAppointments = appointments.filter(
     (apt) =>
       new Date(apt.appointment_date + "T" + apt.appointment_time) >=
-      new Date() && apt.status === "scheduled",
+        new Date() && apt.status === "scheduled",
   );
 
   const pastAppointments = appointments.filter(
     (apt) =>
       new Date(apt.appointment_date + "T" + apt.appointment_time) <
-      new Date() ||
+        new Date() ||
       apt.status === "completed" ||
       apt.status === "cancelled" ||
       apt.status === "no_show",
@@ -222,6 +233,7 @@ export default function PatientDashboard() {
               <div className="bg-white/80 dark:bg-gray-800/80 px-3 py-1.5 rounded-lg border border-red-100 dark:border-red-900 text-xs text-red-600 dark:text-red-400 font-semibold shadow-sm">
                 ID: {user.patient_id}
               </div>
+              <NotificationBell userId={user.id} userRole="patient" />
               <ThemeToggle />
               <button
                 onClick={handleLogout}
@@ -285,7 +297,11 @@ export default function PatientDashboard() {
               Prescriptions
             </h3>
             <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              {activePrescriptionsCount !== null ? activePrescriptionsCount : <Loader2 className="w-5 h-5 animate-spin mt-1 text-gray-400" />}
+              {activePrescriptionsCount !== null ? (
+                activePrescriptionsCount
+              ) : (
+                <Loader2 className="w-5 h-5 animate-spin mt-1 text-gray-400" />
+              )}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Current active medications
@@ -322,20 +338,21 @@ export default function PatientDashboard() {
           {/* Navigation Tabs */}
           <div className="flex flex-col md:flex-row justify-between items-center p-6 border-b border-gray-100 dark:border-gray-800">
             <div className="flex gap-2 p-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl">
-              {(["appointments", "prescriptions", "records"] as const).map(
-                (tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab
-                        ? "bg-white dark:bg-gray-700 text-rose-600 dark:text-rose-400 shadow-sm"
-                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50"
-                      }`}
-                  >
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                  </button>
-                ),
-              )}
+              {(
+                ["appointments", "prescriptions", "records", "access"] as const
+              ).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === tab
+                      ? "bg-white dark:bg-gray-700 text-rose-600 dark:text-rose-400 shadow-sm"
+                      : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50"
+                  }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
             </div>
 
             {activeTab === "appointments" && (
@@ -451,6 +468,13 @@ export default function PatientDashboard() {
             {activeTab === "records" && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <MedicalRecordsList patientId={user.id} />
+              </div>
+            )}
+
+            {/* Access Management Tab */}
+            {activeTab === "access" && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <AccessManagement patientId={user.id} />
               </div>
             )}
           </div>
