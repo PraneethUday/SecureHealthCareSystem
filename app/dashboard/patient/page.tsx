@@ -26,7 +26,7 @@ import NewAppointmentForm from "./components/NewAppointmentForm";
 import PrescriptionsList from "./components/PrescriptionsList";
 import MedicalRecordsList from "./components/MedicalRecordsList";
 import HealthProfileForm from "./components/HealthProfileForm";
-import VitalsForm from "./components/VitalsForm";
+import PatientVitalsViewer from "./components/PatientVitalsViewer";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { supabase } from "@/lib/supabase";
 
@@ -428,7 +428,7 @@ export default function PatientDashboard() {
           <ActionCard
             icon={<Heart className="w-8 h-8 text-white" />}
             title="Vitals"
-            desc="Update your health metrics"
+            desc="View your health metrics"
             color="from-pink-500 to-purple-600"
             onClick={() => setShowVitalsModal(true)}
           />
@@ -473,13 +473,9 @@ export default function PatientDashboard() {
       {showVitalsModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white dark:bg-gray-900 w-full max-w-3xl rounded-3xl shadow-2xl p-6 md:p-10 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
-            <VitalsForm
+            <PatientVitalsViewer
               patientId={user.id}
               onClose={() => setShowVitalsModal(false)}
-              onSuccess={() => {
-                setShowVitalsModal(false);
-                // Optionally refresh data here
-              }}
             />
           </div>
         </div>

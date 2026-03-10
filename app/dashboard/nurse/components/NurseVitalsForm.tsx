@@ -20,10 +20,13 @@ import {
   TrendingUp,
   X,
   Loader2,
+  User,
 } from "lucide-react";
 
-interface VitalsFormProps {
+interface NurseVitalsFormProps {
   patientId: string;
+  patientName: string;
+  nurseId: string;
   onClose: () => void;
   onSuccess?: () => void;
 }
@@ -64,11 +67,13 @@ interface VitalsData {
   symptoms: string;
 }
 
-export default function VitalsForm({
+export default function NurseVitalsForm({
   patientId,
+  patientName,
+  nurseId,
   onClose,
   onSuccess,
-}: VitalsFormProps) {
+}: NurseVitalsFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -154,9 +159,10 @@ export default function VitalsForm({
 
     try {
       // Convert string values to appropriate types
-      const vitalsData: any = {
+      const vitalsData: Record<string, unknown> = {
         patient_id: patientId,
-        recorded_by: "patient",
+        recorded_by: "nurse",
+        nurse_id: nurseId,
       };
 
       // Only include non-empty fields
@@ -216,9 +222,10 @@ export default function VitalsForm({
         onSuccess?.();
         onClose();
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error saving vitals:", err);
-      setError(err.message || "Failed to save vitals. Please try again.");
+      const errorMessage = err instanceof Error ? err.message : "Failed to save vitals. Please try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -253,7 +260,7 @@ export default function VitalsForm({
           Vitals Saved!
         </h2>
         <p className="text-gray-500 dark:text-gray-400">
-          Your health metrics have been recorded successfully.
+          Vitals for {patientName} have been recorded successfully.
         </p>
       </div>
     );
@@ -266,15 +273,16 @@ export default function VitalsForm({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-br from-pink-500 to-purple-600 p-3 rounded-xl shadow-lg">
+          <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 rounded-xl shadow-lg">
             <Activity className="w-6 h-6 text-white" />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Update Vitals
+              Record Vitals
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Track your health metrics
+            <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <User className="w-3 h-3" />
+              {patientName}
             </p>
           </div>
         </div>
@@ -299,10 +307,10 @@ export default function VitalsForm({
           return (
             <button
               key={section.id}
-              onClick={() => setActiveSection(section.id as any)}
+              onClick={() => setActiveSection(section.id as "basic" | "cardio" | "metabolic" | "lifestyle")}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
                 activeSection === section.id
-                  ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg"
+                  ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg"
                   : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
               }`}
             >
@@ -343,14 +351,14 @@ export default function VitalsForm({
             </div>
 
             {bmi && (
-              <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+              <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-800">
                 <div className="flex items-center gap-2 mb-1">
-                  <TrendingUp className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
                   <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                     BMI (Auto-calculated)
                   </span>
                 </div>
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {bmi}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -466,7 +474,7 @@ export default function VitalsForm({
                   name="blood_sugar_type"
                   value={formData.blood_sugar_type}
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
                 >
                   <option value="fasting">Fasting</option>
                   <option value="random">Random</option>
@@ -579,11 +587,11 @@ export default function VitalsForm({
                 value={formData.stress_level}
                 onChange={handleChange}
                 title="Stress Level"
-                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-green-500"
               />
               <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
                 <span>Low (1)</span>
-                <span className="font-bold text-purple-600 dark:text-purple-400">
+                <span className="font-bold text-green-600 dark:text-green-400">
                   {formData.stress_level}
                 </span>
                 <span>High (10)</span>
@@ -600,7 +608,7 @@ export default function VitalsForm({
                 onChange={handleChange}
                 placeholder="Any current symptoms or concerns..."
                 rows={3}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all resize-none"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500/20 outline-none transition-all resize-none"
               />
             </div>
 
@@ -612,9 +620,9 @@ export default function VitalsForm({
                 name="notes"
                 value={formData.notes}
                 onChange={handleChange}
-                placeholder="Additional notes about your health..."
+                placeholder="Additional notes about the patient's health..."
                 rows={2}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all resize-none"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500/20 outline-none transition-all resize-none"
               />
             </div>
           </div>
@@ -639,7 +647,7 @@ export default function VitalsForm({
           <button
             type="submit"
             disabled={loading}
-            className="flex-[2] flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl font-bold shadow-lg shadow-purple-500/20 hover:shadow-xl hover:from-pink-600 hover:to-purple-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-[2] flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-green-500/20 hover:shadow-xl hover:from-green-600 hover:to-emerald-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -665,8 +673,18 @@ function VitalInput({
   step,
   placeholder,
   color = "gray",
-}: any) {
-  const colorClasses: any = {
+}: {
+  icon: React.ReactNode;
+  label: string;
+  name: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+  step?: string;
+  placeholder?: string;
+  color?: string;
+}) {
+  const colorClasses: Record<string, string> = {
     blue: "text-blue-500 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800",
     purple:
       "text-purple-500 bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800",
@@ -691,9 +709,9 @@ function VitalInput({
   return (
     <div className="space-y-2">
       <label
-        className={`flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300`}
+        className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300"
       >
-        <div className={`p-1 rounded ${colorClasses[color]}`}>{icon}</div>
+        <div className={`p-1 rounded ${colorClasses[color] || colorClasses.gray}`}>{icon}</div>
         {label}
       </label>
       <input
@@ -703,7 +721,7 @@ function VitalInput({
         onChange={onChange}
         step={step}
         placeholder={placeholder}
-        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
       />
     </div>
   );
