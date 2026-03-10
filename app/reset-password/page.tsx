@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Lock,
@@ -15,9 +15,16 @@ import { createClient } from "@supabase/supabase-js";
 
 function ResetPasswordForm() {
   const router = useRouter();
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  
+  // Lazy initialization to prevent build errors when env vars are not available during prerendering
+  const supabase = useMemo(() => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return null;
+    }
+    return createClient(supabaseUrl, supabaseAnonKey);
+  }, []);
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -31,6 +38,10 @@ function ResetPasswordForm() {
   useEffect(() => {
     // Check if user has a valid session (came from reset link)
     const checkSession = async () => {
+      if (!supabase) {
+        setError("Configuration error. Please try again later.");
+        return;
+      }
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -42,8 +53,7 @@ function ResetPasswordForm() {
     };
 
     checkSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [supabase]);
 
   const validatePassword = (pwd: string) => {
     if (pwd.length < 8) {
@@ -64,6 +74,11 @@ function ResetPasswordForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!supabase) {
+      setError("Configuration error. Please try again later.");
+      return;
+    }
 
     // Validate password
     const passwordError = validatePassword(password);
