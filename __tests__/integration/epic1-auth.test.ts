@@ -50,7 +50,11 @@ describe("Epic 1: Secure User Authentication & Role-Based Access Control", () =>
     
     // Setup chaining mocks
     mockSingle = jest.fn();
-    mockEq = jest.fn(() => ({ single: mockSingle, order: jest.fn(() => ({ limit: jest.fn(() => ({ single: mockSingle })) })) }));
+    mockEq = jest.fn(() => ({ 
+        single: mockSingle, 
+        order: jest.fn(() => ({ limit: jest.fn(() => ({ single: mockSingle })) })),
+        eq: mockEq // Allow endless .eq() chaining for deletes and updates
+    }));
     mockSelect = jest.fn(() => ({ eq: mockEq }));
     mockUpdate = jest.fn(() => ({ eq: mockEq }));
     
@@ -58,7 +62,7 @@ describe("Epic 1: Secure User Authentication & Role-Based Access Control", () =>
       select: mockSelect,
       update: mockUpdate,
       insert: jest.fn().mockReturnValue(Promise.resolve({ error: null })),
-      delete: jest.fn(() => ({ neq: jest.fn() }))
+      delete: jest.fn(() => ({ eq: mockEq, neq: jest.fn() }))
     }));
 
     // Default valid password mock setup
