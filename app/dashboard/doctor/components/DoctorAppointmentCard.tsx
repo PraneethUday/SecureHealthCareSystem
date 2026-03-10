@@ -159,10 +159,17 @@ export default function DoctorAppointmentCard({
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <User className="w-5 h-5 text-blue-500" />
-            {appointment.patient_name}
-          </h3>
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <User className="w-5 h-5 text-blue-500" />
+              {appointment.patient_name}
+            </h3>
+            {appointment.patient_id_string && (
+              <span className="px-2 py-0.5 max-h-5 flex items-center bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs font-mono font-medium rounded">
+                {appointment.patient_id_string}
+              </span>
+            )}
+          </div>
           {isToday && isScheduled && (
             <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
               Today
@@ -321,8 +328,8 @@ export default function DoctorAppointmentCard({
                     <button
                       onClick={onPrescribe}
                       className={`flex items-center justify-center gap-2 px-3 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold shadow-sm ${prescriptionCount > 0
-                          ? "text-white bg-green-600 hover:bg-green-700"
-                          : "text-white bg-purple-600 hover:bg-purple-700"
+                        ? "text-white bg-green-600 hover:bg-green-700"
+                        : "text-white bg-purple-600 hover:bg-purple-700"
                         }`}
                     >
                       {prescriptionCount > 0 ? (
@@ -345,8 +352,8 @@ export default function DoctorAppointmentCard({
                 <button
                   onClick={onPrescribe}
                   className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm ${prescriptionCount > 0
-                      ? "text-white bg-green-600 hover:bg-green-700"
-                      : "text-white bg-purple-600 hover:bg-purple-700"
+                    ? "text-white bg-green-600 hover:bg-green-700"
+                    : "text-white bg-purple-600 hover:bg-purple-700"
                     }`}
                 >
                   {prescriptionCount > 0 ? (
@@ -404,8 +411,8 @@ export default function DoctorAppointmentCard({
               }
               disabled={medicalRecordButtonDisabled}
               className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all active:scale-95 text-sm font-semibold mb-4 shadow-sm border-2 ${medicalRecordButtonDisabled
-                  ? "text-green-600 bg-green-50 border-green-400 cursor-not-allowed opacity-70"
-                  : "text-blue-600 bg-blue-50 border-blue-400 hover:bg-blue-100"
+                ? "text-green-600 bg-green-50 border-green-400 cursor-not-allowed opacity-70"
+                : "text-blue-600 bg-blue-50 border-blue-400 hover:bg-blue-100"
                 }`}
             >
               {hasMedicalRecord ? (

@@ -15,7 +15,7 @@ export function ThemeToggle() {
 
     if (!mounted) {
         return (
-            <button className="p-2 rounded-full bg-gray-100 text-gray-500">
+            <button className="p-2 rounded-full bg-gray-100 text-gray-500" suppressHydrationWarning>
                 <div className="w-5 h-5" />
             </button>
         );

@@ -132,7 +132,7 @@ export default function NewAppointmentForm({
   };
 
   const minDate = new Date().toISOString().split("T")[0];
-  const maxDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+  const maxDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split("T")[0];
 
@@ -164,19 +164,17 @@ export default function NewAppointmentForm({
             {[1, 2, 3, 4].map((s) => (
               <div key={s} className="flex items-center flex-1">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    s <= step
-                      ? "bg-red-500 text-white"
-                      : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
-                  }`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${s <= step
+                    ? "bg-red-500 text-white"
+                    : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                    }`}
                 >
                   {s}
                 </div>
                 {s < 4 && (
                   <div
-                    className={`flex-1 h-1 mx-2 ${
-                      s < step ? "bg-red-500" : "bg-gray-200"
-                    }`}
+                    className={`flex-1 h-1 mx-2 ${s < step ? "bg-red-500" : "bg-gray-200"
+                      }`}
                   />
                 )}
               </div>
@@ -215,11 +213,10 @@ export default function NewAppointmentForm({
                     <button
                       key={hospital.id}
                       onClick={() => setSelectedHospital(hospital.id)}
-                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                        selectedHospital === hospital.id
-                          ? "border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-500"
-                          : "border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 bg-white dark:bg-gray-800"
-                      }`}
+                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${selectedHospital === hospital.id
+                        ? "border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-500"
+                        : "border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 bg-white dark:bg-gray-800"
+                        }`}
                     >
                       <h4 className="font-semibold text-gray-800 dark:text-gray-100">
                         {hospital.name}
@@ -259,11 +256,10 @@ export default function NewAppointmentForm({
                       <button
                         key={doctor.id}
                         onClick={() => setSelectedDoctor(doctor.id)}
-                        className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                          selectedDoctor === doctor.id
-                            ? "border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-500"
-                            : "border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 bg-white dark:bg-gray-800"
-                        }`}
+                        className={`w-full text-left p-4 rounded-lg border-2 transition-all ${selectedDoctor === doctor.id
+                          ? "border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-500"
+                          : "border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 bg-white dark:bg-gray-800"
+                          }`}
                       >
                         <div className="flex justify-between items-start">
                           <div>
@@ -338,11 +334,10 @@ export default function NewAppointmentForm({
                         <button
                           key={slot}
                           onClick={() => setSelectedTime(slot)}
-                          className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
-                            selectedTime === slot
-                              ? "border-red-500 bg-red-500 text-white"
-                              : "border-gray-300 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800"
-                          }`}
+                          className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${selectedTime === slot
+                            ? "border-red-500 bg-red-500 text-white"
+                            : "border-gray-300 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800"
+                            }`}
                         >
                           {slot}
                         </button>

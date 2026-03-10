@@ -147,6 +147,7 @@ export interface Appointment {
 
 export interface AppointmentWithDetails extends Appointment {
   patient_name?: string;
+  patient_id_string?: string; // The patient's readable ID (e.g., PT-123)
   patient_email?: string;
   doctor_name?: string;
   specialization?: string;

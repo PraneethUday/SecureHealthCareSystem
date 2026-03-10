@@ -150,6 +150,7 @@ export default function ForgotPasswordPage() {
                 required
                 placeholder="your.email@example.com"
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                suppressHydrationWarning
               />
             </div>
           </div>
@@ -158,6 +159,7 @@ export default function ForgotPasswordPage() {
             type="submit"
             disabled={loading}
             className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+            suppressHydrationWarning
           >
             {loading ? (
               <>

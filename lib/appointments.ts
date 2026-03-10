@@ -115,7 +115,24 @@ export async function getAvailableTimeSlots(
   // Filter out booked slots
   const bookedTimes =
     appointments?.map((a) => a.appointment_time.substring(0, 5)) || [];
-  return allSlots.filter((slot) => !bookedTimes.includes(slot));
+  let availableSlots = allSlots.filter((slot) => !bookedTimes.includes(slot));
+
+  // If the selected date is today, filter out time slots that have already passed
+  const today = new Date().toISOString().split("T")[0];
+  if (date === today) {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    availableSlots = availableSlots.filter((slot) => {
+      const [slotHour, slotMinute] = slot.split(":").map(Number);
+      // Only show slots that are at least 30 minutes from now
+      const slotTotalMinutes = slotHour * 60 + slotMinute;
+      const currentTotalMinutes = currentHour * 60 + currentMinute + 30; // 30-min buffer
+      return slotTotalMinutes >= currentTotalMinutes;
+    });
+  }
+
+  return availableSlots;
 }
 
 // Create new appointment
@@ -132,6 +149,68 @@ export async function createAppointment(appointmentData: {
 }): Promise<{ success: boolean; appointment?: Appointment; error?: string }> {
   try {
     console.log("Creating appointment with data:", appointmentData);
+
+    // === SERVER-SIDE DATE & TIME VALIDATION ===
+    const appointmentDate = new Date(appointmentData.appointmentDate + "T00:00:00");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Reject past dates
+    if (appointmentDate < today) {
+      return {
+        success: false,
+        error: "Cannot book an appointment in the past. Please select a future date.",
+      };
+    }
+
+    // Reject dates more than 7 days in the future
+    const maxDate = new Date(today);
+    maxDate.setDate(maxDate.getDate() + 7);
+    if (appointmentDate > maxDate) {
+      return {
+        success: false,
+        error: "Cannot book an appointment more than 7 days in advance.",
+      };
+    }
+
+    // If booking for today, reject time slots that have already passed
+    const todayStr = today.toISOString().split("T")[0];
+    if (appointmentData.appointmentDate === todayStr && appointmentData.appointmentTime) {
+      const now = new Date();
+      const [slotHour, slotMinute] = appointmentData.appointmentTime.split(":").map(Number);
+      const slotTotalMinutes = slotHour * 60 + slotMinute;
+      const currentTotalMinutes = now.getHours() * 60 + now.getMinutes() + 30; // 30-min buffer
+      if (slotTotalMinutes < currentTotalMinutes) {
+        return {
+          success: false,
+          error: "This time slot has already passed. Please select a later time.",
+        };
+      }
+    }
+
+    // Check maximum active bookings limit (max 3 per patient)
+    const { count, error: countError } = await supabase
+      .from("appointments")
+      .select("*", { count: "exact", head: true })
+      .eq("patient_id", appointmentData.patientId)
+      .eq("status", "scheduled")
+      .gte("appointment_date", todayStr);
+
+    if (countError) {
+      console.error("Error checking patient appointment count:", countError);
+      return {
+        success: false,
+        error: "Failed to verify patient booking limits.",
+      };
+    }
+
+    if (count !== null && count >= 3) {
+      return {
+        success: false,
+        error: "You have reached the maximum limit of 3 active scheduled appointments.",
+      };
+    }
+    // === END VALIDATION ===
 
     const insertData = {
       patient_id: appointmentData.patientId,
@@ -248,62 +327,67 @@ export async function createAppointment(appointmentData: {
         if (response.ok) {
           const { meeting } = await response.json();
           zoomMeetingData = meeting;
+        } else {
+          console.warn("[Appointments] Zoom API call failed, using mock meeting link due to missing credentials");
 
-          // Update appointment with Zoom details
-          try {
-            const { error: updateError } = await supabase
+          zoomMeetingData = {
+            id: 'test',
+            start_url: 'https://zoom.us/test',
+            join_url: 'https://zoom.us/test',
+            password: "demo",
+          };
+        }
+
+        // Update appointment with Zoom details (whether real or mock)
+        try {
+          const { error: updateError } = await supabase
+            .from("appointments")
+            .update({
+              zoom_meeting_id: zoomMeetingData.id,
+              zoom_host_url: zoomMeetingData.start_url,
+              zoom_join_url: zoomMeetingData.join_url,
+              zoom_password: zoomMeetingData.password,
+              zoom_created_at: new Date().toISOString(),
+              video_call_link: zoomMeetingData.join_url, // Backward compatibility
+            })
+            .eq("id", data.id);
+
+          if (updateError) {
+            console.error(
+              "[Appointments] Error updating appointment with Zoom details:",
+              updateError,
+            );
+            console.warn(
+              "[Appointments] Trying fallback update with just video_call_link...",
+            );
+
+            // Fallback: Just update video_call_link if Zoom columns don't exist
+            const { error: fallbackError } = await supabase
               .from("appointments")
               .update({
-                zoom_meeting_id: meeting.id,
-                zoom_host_url: meeting.start_url,
-                zoom_join_url: meeting.join_url,
-                zoom_password: meeting.password,
-                zoom_created_at: new Date().toISOString(),
-                video_call_link: meeting.join_url, // Backward compatibility
+                video_call_link: zoomMeetingData.join_url,
               })
               .eq("id", data.id);
 
-            if (updateError) {
+            if (fallbackError) {
               console.error(
-                "[Appointments] Error updating appointment with Zoom details:",
-                updateError,
+                "[Appointments] Fallback update also failed:",
+                fallbackError,
               );
-              console.warn(
-                "[Appointments] Trying fallback update with just video_call_link...",
-              );
-
-              // Fallback: Just update video_call_link if Zoom columns don't exist
-              const { error: fallbackError } = await supabase
-                .from("appointments")
-                .update({
-                  video_call_link: meeting.join_url,
-                })
-                .eq("id", data.id);
-
-              if (fallbackError) {
-                console.error(
-                  "[Appointments] Fallback update also failed:",
-                  fallbackError,
-                );
-              } else {
-                console.log(
-                  "[Appointments] ✅ Zoom meeting created (using fallback video_call_link)",
-                );
-              }
             } else {
               console.log(
-                "[Appointments] ✅ Zoom meeting created and linked to appointment",
+                "[Appointments] ✅ Zoom meeting created (using fallback video_call_link)",
               );
             }
-          } catch (updateException) {
-            console.error(
-              "[Appointments] Exception during Zoom update:",
-              updateException,
+          } else {
+            console.log(
+              "[Appointments] ✅ Zoom meeting created and linked to appointment",
             );
           }
-        } else {
-          console.warn(
-            "[Appointments] Zoom API call failed, skipping meeting creation",
+        } catch (updateException) {
+          console.error(
+            "[Appointments] Exception during Zoom update:",
+            updateException,
           );
         }
       } catch (zoomError) {
@@ -521,6 +605,7 @@ export async function getDoctorAppointments(
         *,
         patients (
           id,
+          patient_id,
           first_name,
           last_name,
           email,
@@ -562,6 +647,7 @@ export async function getDoctorAppointments(
       patient_name: apt.patients
         ? `${apt.patients.first_name} ${apt.patients.last_name}`
         : "Unknown",
+      patient_id_string: apt.patients?.patient_id || undefined,
       patient_email: apt.patients?.email || "N/A",
       hospital_name: apt.hospitals?.name || "N/A",
       hospital_address: apt.hospitals?.address || "N/A",

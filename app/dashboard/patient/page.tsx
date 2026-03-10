@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { getSession, clearSession } from "@/lib/auth";
 import { logAction } from "@/lib/logging";
 import { getPatientAppointments } from "@/lib/appointments";
-import { AppointmentWithDetails } from "@/lib/database.types";
+import { getPatientPrescriptions } from "@/lib/prescriptions";
+import { AppointmentWithDetails, PrescriptionWithDetails } from "@/lib/database.types";
 import {
   Heart,
   Calendar,
@@ -33,9 +34,8 @@ import { supabase } from "@/lib/supabase";
 export default function PatientDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [appointments, setAppointments] = useState<AppointmentWithDetails[]>(
-    [],
-  );
+  const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
+  const [activePrescriptionsCount, setActivePrescriptionsCount] = useState<number | null>(null);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [showNewAppointment, setShowNewAppointment] = useState(false);
   const [activeTab, setActiveTab] = useState<
@@ -64,6 +64,7 @@ export default function PatientDashboard() {
 
     setUser(session.user);
     loadAppointments(session.user.id);
+    loadPrescriptionCount(session.user.id);
     checkProfileStatus(session.user.id);
 
     if (!hasLogged.current) {
@@ -101,6 +102,17 @@ export default function PatientDashboard() {
     setLoadingAppointments(false);
   };
 
+  const loadPrescriptionCount = async (patientId: string) => {
+    try {
+      const prescriptions = await getPatientPrescriptions(patientId);
+      const activeCount = prescriptions.filter(p => p.status === 'active').length;
+      setActivePrescriptionsCount(activeCount);
+    } catch (error) {
+      console.error("Error loading prescription count:", error);
+      setActivePrescriptionsCount(0);
+    }
+  };
+
   const handleLogout = () => {
     if (user) {
       logAction({
@@ -117,13 +129,13 @@ export default function PatientDashboard() {
   const upcomingAppointments = appointments.filter(
     (apt) =>
       new Date(apt.appointment_date + "T" + apt.appointment_time) >=
-        new Date() && apt.status === "scheduled",
+      new Date() && apt.status === "scheduled",
   );
 
   const pastAppointments = appointments.filter(
     (apt) =>
       new Date(apt.appointment_date + "T" + apt.appointment_time) <
-        new Date() ||
+      new Date() ||
       apt.status === "completed" ||
       apt.status === "cancelled" ||
       apt.status === "no_show",
@@ -273,8 +285,7 @@ export default function PatientDashboard() {
               Prescriptions
             </h3>
             <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              {/* This would be active count if available, using placeholder */}
-              --
+              {activePrescriptionsCount !== null ? activePrescriptionsCount : <Loader2 className="w-5 h-5 animate-spin mt-1 text-gray-400" />}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Current active medications
@@ -316,11 +327,10 @@ export default function PatientDashboard() {
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      activeTab === tab
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab
                         ? "bg-white dark:bg-gray-700 text-rose-600 dark:text-rose-400 shadow-sm"
                         : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50"
-                    }`}
+                      }`}
                   >
                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
                   </button>

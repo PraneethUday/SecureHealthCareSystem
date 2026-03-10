@@ -755,3 +755,57 @@ export async function verifyMFAOTP(
     };
   }
 }
+
+/**
+ * Synchronizes a password reset from Supabase Auth to the custom role tables
+ */
+export async function syncForgottenPassword(userId: string, newPasswordPlain: string): Promise<boolean> {
+  try {
+    const { data: authData, error: authError } = await supabase.auth.admin.getUserById(userId);
+    if (authError || !authData.user?.email) {
+      console.error("Could not find auth user for password sync", authError);
+      return false;
+    }
+    const userEmail = authData.user.email;
+    const newHash = await hashPassword(newPasswordPlain);
+    const rolesConfig = [
+      { table: "admins", role: "admin", idField: "id" },
+      { table: "patients", role: "patient", idField: "patient_id" },
+      { table: "doctors", role: "doctor", idField: "doctor_id" },
+      { table: "nurses", role: "nurse", idField: "nurse_id" },
+      { table: "staff", role: "staff", idField: "staff_id" },
+    ] as const;
+
+    for (const config of rolesConfig) {
+      const { data } = await supabase.from(config.table).select("*").eq("email", userEmail).single();
+
+      if (data) {
+        await supabase.from(config.table).update({
+          password_hash: newHash,
+          password: null, // Clear plaintext if any
+          password_changed_at: new Date().toISOString()
+        }).eq("email", userEmail);
+
+        // Record in history
+        await supabase.from("password_history").insert({
+          user_id: data[config.idField],
+          user_role: config.role,
+          password_hash: newHash,
+        });
+
+        await logAction({
+          userId: data[config.idField],
+          userRole: config.role,
+          action: "password_reset_success",
+          details: "User successfully reset their forgotten password",
+          status: "success",
+        });
+
+        return true;
+      }
+    }
+  } catch (error) {
+    console.error("Failed to sync forgotten password:", error);
+  }
+  return false;
+}

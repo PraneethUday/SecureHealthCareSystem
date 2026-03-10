@@ -10,6 +10,7 @@ import {
   CheckCircle,
   Pill,
   MessageSquare,
+  Video,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AppointmentWithDetails } from "@/lib/database.types";
@@ -33,6 +34,8 @@ export default function AppointmentCard({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [prescriptionCount, setPrescriptionCount] = useState<number>(0);
   const [isInitiatingCall, setIsInitiatingCall] = useState(false);
+  const [showVideoConsent, setShowVideoConsent] = useState(false);
+  const [showChatConsent, setShowChatConsent] = useState(false);
 
   useEffect(() => {
     async function loadUser() {
@@ -80,17 +83,32 @@ export default function AppointmentCard({
   };
 
   const handleStartVideoCall = () => {
-    // Open Zoom meeting in new tab
-    if (appointment.zoom_join_url) {
-      window.open(appointment.zoom_join_url, "_blank", "noopener,noreferrer");
-    } else if (appointment.video_call_link) {
-      // Fallback to old video_call_link field
-      window.open(appointment.video_call_link, "_blank", "noopener,noreferrer");
+    // Show the consent popup instead of directly routing
+    if (appointment.zoom_join_url || appointment.video_call_link) {
+      setShowVideoConsent(true);
     } else {
       alert(
         "Video call link is being generated. Please refresh the page in a moment, or contact your doctor if the issue persists.",
       );
     }
+  };
+
+  const confirmStartVideoCall = () => {
+    setShowVideoConsent(false);
+    if (appointment.zoom_join_url) {
+      window.open(appointment.zoom_join_url, "_blank", "noopener,noreferrer");
+    } else if (appointment.video_call_link) {
+      window.open(appointment.video_call_link, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleStartChat = () => {
+    setShowChatConsent(true);
+  };
+
+  const confirmStartChat = () => {
+    setShowChatConsent(false);
+    router.push(`/dashboard/patient/appointments/${appointment.id}/chat`);
   };
 
   const isPast =
@@ -225,11 +243,7 @@ export default function AppointmentCard({
 
         {canChat && (
           <button
-            onClick={() =>
-              router.push(
-                `/dashboard/patient/appointments/${appointment.id}/chat`
-              )
-            }
+            onClick={handleStartChat}
             className="w-full px-4 py-3 mb-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <MessageSquare className="w-4 h-4" />
@@ -275,6 +289,112 @@ export default function AppointmentCard({
       {isPast && appointment.status === "scheduled" && (
         <div className="pt-4 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
           Past appointment - no actions available
+        </div>
+      )}
+
+      {/* Video Call Consent Modal */}
+      {showVideoConsent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center flex-shrink-0">
+                  <Video className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                  Telemedicine Consent
+                </h3>
+              </div>
+
+              <div className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
+                <p>
+                  Before joining the video consultation with <strong>Dr. {appointment.doctor_name}</strong>, please review and agree to the following:
+                </p>
+                <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg space-y-3 border border-gray-100 dark:border-gray-800">
+                  <div className="flex gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    <p>I consent to the use of my camera and microphone for this clinical consultation.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    <p>I understand this session may be automatically recorded by the hospital for medical record-keeping and quality assurance purposes.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    <p>I confirm I am in a private, quiet location appropriate for a medical discussion.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+              <button
+                onClick={() => setShowVideoConsent(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmStartVideoCall}
+                className="px-5 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-colors flex items-center gap-2"
+              >
+                I Agree, Join Call
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Consent Modal */}
+      {showChatConsent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center flex-shrink-0">
+                  <MessageSquare className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                  Data Sharing Consent
+                </h3>
+              </div>
+
+              <div className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
+                <p>
+                  Before starting a chat with <strong>Dr. {appointment.doctor_name}</strong>, please review the following:
+                </p>
+                <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg space-y-3 border border-gray-100 dark:border-gray-800">
+                  <div className="flex gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    <p>I consent to sharing my medical and health-related data with the doctor via this chat interface.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    <p>I understand that this chat is meant for medical consultation regarding this specific appointment and shouldn't be used for absolute emergencies.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    <p>I agree that the chat records may be stored securely as part of my medical history.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+              <button
+                onClick={() => setShowChatConsent(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmStartChat}
+                className="px-5 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-sm transition-colors flex items-center gap-2"
+              >
+                I Agree, Start Chat
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

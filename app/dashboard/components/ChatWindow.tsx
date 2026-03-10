@@ -195,6 +195,8 @@ export default function ChatWindow({
       const formData = new FormData();
       formData.append("file", file);
       formData.append("conversationId", conversationId);
+      formData.append("userId", currentUserId);
+      formData.append("userRole", currentUserRole);
 
       const response = await fetch("/api/chat/attachments", {
         method: "POST",
@@ -265,7 +267,7 @@ export default function ChatWindow({
     const showDate =
       index === 0 ||
       formatDate(messages[index - 1].created_at) !==
-        formatDate(message.created_at);
+      formatDate(message.created_at);
 
     return (
       <div key={message.id}>
@@ -278,11 +280,10 @@ export default function ChatWindow({
         )}
         <div className={`flex mb-3 ${isOwn ? "justify-end" : "justify-start"}`}>
           <div
-            className={`max-w-[75%] rounded-2xl px-4 py-2 ${
-              isOwn
+            className={`max-w-[75%] rounded-2xl px-4 py-2 ${isOwn
                 ? "bg-blue-600 text-white rounded-br-md"
                 : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md"
-            }`}
+              }`}
           >
             {/* Attachments */}
             {message.attachments && message.attachments.length > 0 && (
@@ -293,11 +294,10 @@ export default function ChatWindow({
                     href={attachment.file_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${
-                      isOwn
+                    className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${isOwn
                         ? "bg-blue-500 hover:bg-blue-400"
                         : "bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500"
-                    }`}
+                      }`}
                   >
                     {getFileIcon(attachment.file_type)}
                     <div className="flex-1 min-w-0">
@@ -305,11 +305,10 @@ export default function ChatWindow({
                         {attachment.file_name}
                       </p>
                       <p
-                        className={`text-xs ${
-                          isOwn
+                        className={`text-xs ${isOwn
                             ? "text-blue-200"
                             : "text-gray-500 dark:text-gray-400"
-                        }`}
+                          }`}
                       >
                         {formatFileSize(attachment.file_size)}
                       </p>
@@ -329,14 +328,12 @@ export default function ChatWindow({
 
             {/* Timestamp and read status */}
             <div
-              className={`flex items-center gap-1 mt-1 ${
-                isOwn ? "justify-end" : "justify-start"
-              }`}
+              className={`flex items-center gap-1 mt-1 ${isOwn ? "justify-end" : "justify-start"
+                }`}
             >
               <span
-                className={`text-xs ${
-                  isOwn ? "text-blue-200" : "text-gray-500 dark:text-gray-400"
-                }`}
+                className={`text-xs ${isOwn ? "text-blue-200" : "text-gray-500 dark:text-gray-400"
+                  }`}
               >
                 {formatTime(message.created_at)}
               </span>

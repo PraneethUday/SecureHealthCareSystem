@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
+import { syncForgottenPassword } from "@/app/actions/auth-actions";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -97,13 +98,19 @@ function ResetPasswordForm() {
 
     try {
       // Use Supabase's updateUser to change password
-      const { error: updateError } = await supabase.auth.updateUser({
+      const { data, error: updateError } = await supabase.auth.updateUser({
         password: password,
       });
 
       if (updateError) {
         setError(updateError.message || "Failed to reset password");
       } else {
+        const userId = data?.user?.id;
+        if (userId) {
+          // Sync the new password into the role-specific table (doctors, patients, etc.)
+          await syncForgottenPassword(userId, password);
+        }
+
         setSuccess(true);
 
         // Sign out after password reset
@@ -212,11 +219,13 @@ function ResetPasswordForm() {
                 required
                 placeholder="Enter new password"
                 className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                suppressHydrationWarning
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                suppressHydrationWarning
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -249,11 +258,13 @@ function ResetPasswordForm() {
                 required
                 placeholder="Confirm new password"
                 className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                suppressHydrationWarning
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                suppressHydrationWarning
               >
                 {showConfirmPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -268,6 +279,7 @@ function ResetPasswordForm() {
             type="submit"
             disabled={loading || !hasSession}
             className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+            suppressHydrationWarning
           >
             {loading ? (
               <>

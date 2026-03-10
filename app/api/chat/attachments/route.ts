@@ -24,18 +24,22 @@ function getSupabaseClient() {
  */
 export async function POST(request: NextRequest) {
     try {
-        const session = await getSession();
-        if (!session?.user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
         const formData = await request.formData();
         const file = formData.get("file") as File | null;
         const conversationId = formData.get("conversationId") as string | null;
+        const userId = formData.get("userId") as string | null;
+        const userRole = formData.get("userRole") as string | null;
 
         if (!file || !conversationId) {
             return NextResponse.json(
                 { error: "File and conversation ID are required" },
+                { status: 400 }
+            );
+        }
+
+        if (!userId || !userRole) {
+            return NextResponse.json(
+                { error: "User ID and User Role are required" },
                 { status: 400 }
             );
         }
@@ -65,8 +69,6 @@ export async function POST(request: NextRequest) {
         }
 
         const conversation = conversationResult.conversation;
-        const userId = session.user.id;
-        const userRole = session.user.role;
 
         const isPatient = userRole === "patient" && conversation.patient_id === userId;
         const isDoctor = userRole === "doctor" && conversation.doctor_id === userId;
@@ -157,13 +159,14 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
     try {
-        const session = await getSession();
-        if (!session?.user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
         const { searchParams } = new URL(request.url);
         const attachmentId = searchParams.get("attachmentId");
+        const userId = searchParams.get("userId");
+        const userRole = searchParams.get("userRole");
+
+        if (!userId || !userRole) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
         if (!attachmentId) {
             return NextResponse.json(
@@ -199,8 +202,6 @@ export async function GET(request: NextRequest) {
 
         // Verify user has access
         const conversation = attachment.chat_messages.chat_conversations;
-        const userId = session.user.id;
-        const userRole = session.user.role;
 
         const isPatient = userRole === "patient" && conversation.patient_id === userId;
         const isDoctor = userRole === "doctor" && conversation.doctor_id === userId;

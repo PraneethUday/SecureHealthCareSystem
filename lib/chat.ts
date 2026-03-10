@@ -116,12 +116,12 @@ export async function getOrCreateConversation(
 ): Promise<{ success: boolean; conversation?: ChatConversation; error?: string }> {
     const supabase = getSupabaseClient();
 
-    // First try to get existing conversation
-    const { data: existing, error: fetchError } = await supabase
+    // First try to get existing conversation (use maybeSingle to avoid error when not found)
+    const { data: existing } = await supabase
         .from("chat_conversations")
         .select("*")
         .eq("appointment_id", appointmentId)
-        .single();
+        .maybeSingle();
 
     if (existing) {
         return { success: true, conversation: existing };
@@ -139,6 +139,17 @@ export async function getOrCreateConversation(
         .single();
 
     if (createError) {
+        // If duplicate key error, fetch the existing conversation
+        if (createError.code === "23505") {
+            const { data: retryExisting } = await supabase
+                .from("chat_conversations")
+                .select("*")
+                .eq("appointment_id", appointmentId)
+                .maybeSingle();
+            if (retryExisting) {
+                return { success: true, conversation: retryExisting };
+            }
+        }
         return { success: false, error: createError.message };
     }
 
