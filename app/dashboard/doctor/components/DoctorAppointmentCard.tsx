@@ -30,6 +30,7 @@ import { useState, useEffect } from "react";
 import { NurseAssignment } from "./NurseAssignment";
 import PatientProfileModal from "@/components/PatientProfileModal";
 import VitalsViewer from "./VitalsViewer";
+import ConsentStatusBadge from "./ConsentStatusBadge";
 import Portal from "@/components/ui/Portal";
 
 interface DoctorAppointmentCardProps {
@@ -59,6 +60,10 @@ export default function DoctorAppointmentCard({
   const [showVitalsModal, setShowVitalsModal] = useState(false);
 
   const handleViewVitals = async () => {
+    if (!appointment.share_health_profile) {
+      alert("Access Denied: Patient has not consented to share their health data based on HIPAA rules.");
+      return;
+    }
     const session = await getSession();
     if (session?.user?.doctor_id) {
       await logAction({
@@ -74,6 +79,10 @@ export default function DoctorAppointmentCard({
   };
 
   const handleViewProfile = async () => {
+    if (!appointment.share_health_profile) {
+      alert("Access Denied: Patient has not consented to share their health data based on HIPAA rules.");
+      return;
+    }
     const session = await getSession();
     if (session?.user?.doctor_id) {
       await logAction({
@@ -158,8 +167,8 @@ export default function DoctorAppointmentCard({
     <div className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-blue-300 transition-all">
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
-        <div>
-          <div className="flex items-center gap-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 flex-wrap">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
               <User className="w-5 h-5 text-blue-500" />
               {appointment.patient_name}
@@ -169,6 +178,11 @@ export default function DoctorAppointmentCard({
                 {appointment.patient_id_string}
               </span>
             )}
+            {/* Compact consent badge always visible in the header */}
+            <ConsentStatusBadge
+              shareHealthProfile={appointment.share_health_profile}
+              patientName={appointment.patient_name}
+            />
           </div>
           {isToday && isScheduled && (
             <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
@@ -253,6 +267,13 @@ export default function DoctorAppointmentCard({
         </div>
       )}
 
+      {/* Story 3: Expanded consent status block — visible before clinical data actions */}
+      <ConsentStatusBadge
+        shareHealthProfile={appointment.share_health_profile}
+        patientName={appointment.patient_name}
+        expanded
+      />
+
       {/* Patient Health Information - Always Available */}
       <div className="bg-gradient-to-r from-purple-50 to-rose-50 dark:from-purple-900/20 dark:to-rose-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-5 mb-4">
         <div className="flex items-start gap-4">
@@ -270,14 +291,24 @@ export default function DoctorAppointmentCard({
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={handleViewVitals}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-all shadow-sm hover:shadow-md active:scale-95"
+                disabled={!appointment.share_health_profile}
+                title={!appointment.share_health_profile ? "Patient has not provided consent" : "View patient vitals"}
+                className={`inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all shadow-sm ${appointment.share_health_profile
+                    ? "bg-purple-600 text-white hover:bg-purple-700 hover:shadow-md active:scale-95"
+                    : "bg-purple-100 text-purple-400 dark:bg-purple-900/30 dark:text-purple-700 cursor-not-allowed"
+                  }`}
               >
                 <Activity className="w-4 h-4" />
                 View Vitals
               </button>
               <button
                 onClick={handleViewProfile}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white text-sm font-semibold rounded-lg hover:bg-rose-700 transition-all shadow-sm hover:shadow-md active:scale-95"
+                disabled={!appointment.share_health_profile}
+                title={!appointment.share_health_profile ? "Patient has not provided consent" : "View patient profile"}
+                className={`inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all shadow-sm ${appointment.share_health_profile
+                    ? "bg-rose-600 text-white hover:bg-rose-700 hover:shadow-md active:scale-95"
+                    : "bg-rose-100 text-rose-400 dark:bg-rose-900/30 dark:text-rose-700 cursor-not-allowed"
+                  }`}
               >
                 <User className="w-4 h-4" />
                 View Profile
