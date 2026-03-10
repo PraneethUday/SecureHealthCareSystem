@@ -3,9 +3,17 @@ import { createClient } from "@supabase/supabase-js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
+// Define user tables and their email fields
+const ROLE_TABLES: Record<string, string> = {
+  patient: "patients",
+  doctor: "doctors",
+  nurse: "nurses",
+  staff: "staff",
+};
+
 export async function POST(request: NextRequest) {
   try {
-    const { token, email, password } = await request.json();
+    const { token, email, password, role } = await request.json();
 
     if (!token || !email || !password) {
       return NextResponse.json(
@@ -14,7 +22,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("[Reset Password] Processing request for:", email);
+    console.log("[Reset Password] Processing request for:", email, "role:", role);
 
     // Lazy initialization of Supabase client inside handler
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -36,15 +44,44 @@ export async function POST(request: NextRequest) {
       .update(token)
       .digest("hex");
 
-    // Find user with matching token and email
-    const { data: user, error: userError } = await supabase
-      .from("users")
-      .select("id, email, reset_token, reset_token_expiry")
-      .eq("email", email)
-      .eq("reset_token", resetTokenHash)
-      .single();
+    // Determine which table to search based on role, or search all tables
+    let user: any = null;
+    let userTable: string = "";
 
-    if (userError || !user) {
+    if (role && ROLE_TABLES[role]) {
+      // If role is provided, search only that table
+      const table = ROLE_TABLES[role];
+      const { data, error } = await supabase
+        .from(table)
+        .select("id, email, reset_token, reset_token_expiry")
+        .eq("email", email.toLowerCase())
+        .eq("reset_token", resetTokenHash)
+        .single();
+
+      if (data && !error) {
+        user = data;
+        userTable = table;
+      }
+    } else {
+      // Search all tables if role is not provided
+      for (const [roleName, table] of Object.entries(ROLE_TABLES)) {
+        const { data, error } = await supabase
+          .from(table)
+          .select("id, email, reset_token, reset_token_expiry")
+          .eq("email", email.toLowerCase())
+          .eq("reset_token", resetTokenHash)
+          .single();
+
+        if (data && !error) {
+          user = data;
+          userTable = table;
+          console.log(`[Reset Password] User found in ${table}`);
+          break;
+        }
+      }
+    }
+
+    if (!user) {
       console.log("[Reset Password] Invalid token or email");
       return NextResponse.json(
         { error: "Invalid or expired reset link" },
@@ -71,11 +108,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Update user's password and clear reset token
     const { error: updateError } = await supabase
-      .from("users")
+      .from(userTable)
       .update({
         password: hashedPassword,
         reset_token: null,

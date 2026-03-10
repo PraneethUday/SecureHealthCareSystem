@@ -386,6 +386,8 @@ export default function ChatWindow({
           <button
             onClick={() => setError(null)}
             className="ml-auto p-1 hover:bg-red-100 dark:hover:bg-red-900/40 rounded"
+            title="Dismiss error"
+            aria-label="Dismiss error"
           >
             <X className="w-4 h-4" />
           </button>
@@ -418,6 +420,8 @@ export default function ChatWindow({
             accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx"
             className="hidden"
             disabled={uploading}
+            title="Upload attachment"
+            aria-label="Upload attachment"
           />
           <button
             type="button"
@@ -446,8 +450,7 @@ export default function ChatWindow({
               }}
               placeholder="Type a message..."
               rows={1}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              style={{ minHeight: "40px", maxHeight: "120px" }}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none min-h-[40px] max-h-[120px]"
             />
           </div>
 

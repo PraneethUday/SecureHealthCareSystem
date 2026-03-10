@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, Suspense, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Lock,
   Eye,
@@ -11,21 +11,15 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@supabase/supabase-js";
-import { syncForgottenPassword } from "@/app/actions/auth-actions";
 
 function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // Lazy initialization to prevent build errors when env vars are not available during prerendering
-  const supabase = useMemo(() => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return null;
-    }
-    return createClient(supabaseUrl, supabaseAnonKey);
-  }, []);
+  // Get token, email, and role from URL parameters
+  const token = searchParams.get("token");
+  const email = searchParams.get("email");
+  const role = searchParams.get("role");
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -34,27 +28,15 @@ function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [hasSession, setHasSession] = useState(false);
+  const [isValidLink, setIsValidLink] = useState(true);
 
   useEffect(() => {
-    // Check if user has a valid session (came from reset link)
-    const checkSession = async () => {
-      if (!supabase) {
-        setError("Configuration error. Please try again later.");
-        return;
-      }
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        setHasSession(true);
-      } else {
-        setError("Invalid or expired reset link. Please request a new one.");
-      }
-    };
-
-    checkSession();
-  }, [supabase]);
+    // Check if required parameters are present
+    if (!token || !email) {
+      setIsValidLink(false);
+      setError("Invalid or expired reset link. Please request a new one.");
+    }
+  }, [token, email]);
 
   const validatePassword = (pwd: string) => {
     if (pwd.length < 8) {
@@ -76,11 +58,6 @@ function ResetPasswordForm() {
     e.preventDefault();
     setError("");
 
-    if (!supabase) {
-      setError("Configuration error. Please try again later.");
-      return;
-    }
-
     // Validate password
     const passwordError = validatePassword(password);
     if (passwordError) {
@@ -97,24 +74,26 @@ function ResetPasswordForm() {
     setLoading(true);
 
     try {
-      // Use Supabase's updateUser to change password
-      const { data, error: updateError } = await supabase.auth.updateUser({
-        password: password,
+      // Call the custom reset password API
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          email,
+          password,
+          role,
+        }),
       });
 
-      if (updateError) {
-        setError(updateError.message || "Failed to reset password");
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Failed to reset password");
       } else {
-        const userId = data?.user?.id;
-        if (userId) {
-          // Sync the new password into the role-specific table (doctors, patients, etc.)
-          await syncForgottenPassword(userId, password);
-        }
-
         setSuccess(true);
-
-        // Sign out after password reset
-        await supabase.auth.signOut();
 
         // Redirect to login after 3 seconds
         setTimeout(() => {
@@ -128,7 +107,7 @@ function ResetPasswordForm() {
     }
   };
 
-  if (!hasSession && error) {
+  if (!isValidLink && error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-white to-red-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
         <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700">
@@ -277,7 +256,7 @@ function ResetPasswordForm() {
 
           <button
             type="submit"
-            disabled={loading || !hasSession}
+            disabled={loading || !isValidLink}
             className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             suppressHydrationWarning
           >
