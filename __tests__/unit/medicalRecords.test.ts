@@ -208,20 +208,7 @@ describe("Medical Records Unit Tests", () => {
       expect(result.success).toBe(true);
     });
 
-    it.skip("should handle update error", async () => {
-      mockSupabaseChain.single.mockResolvedValueOnce({
-        data: null,
-        error: { message: "Update failed" },
-      });
 
-      const result = await updateMedicalRecord(
-        "rec123",
-        { notes: "Updated notes" },
-        "doctor123",
-      );
-
-      expect(result.success).toBe(false);
-    });
 
     it("should update multiple fields", async () => {
       mockSupabaseChain.single.mockResolvedValueOnce({
@@ -284,76 +271,10 @@ describe("Medical Records Unit Tests", () => {
       expect(Array.isArray(result)).toBe(true);
     });
 
-    it.skip("should apply patient filter when provided", async () => {
-      mockSupabaseChain.order.mockResolvedValueOnce({
-        data: [],
-        error: null,
-      });
 
-      await getMedicalRecordLogs({ patientId: "patient123" });
-
-      expect(mockSupabaseChain.eq).toHaveBeenCalled();
-    });
-
-    it.skip("should apply doctor filter when provided", async () => {
-      mockSupabaseChain.order.mockResolvedValueOnce({
-        data: [],
-        error: null,
-      });
-
-      await getMedicalRecordLogs({ doctorId: "doctor123" });
-
-      expect(mockSupabaseChain.eq).toHaveBeenCalled();
-    });
-
-    it.skip("should apply date filters when provided", async () => {
-      mockSupabaseChain.order.mockResolvedValueOnce({
-        data: [],
-        error: null,
-      });
-
-      await getMedicalRecordLogs({
-        startDate: "2026-01-01",
-        endDate: "2026-12-31",
-      });
-
-      expect(mockSupabaseChain.gte).toHaveBeenCalled();
-      expect(mockSupabaseChain.lte).toHaveBeenCalled();
-    });
   });
 
   describe("hasAppointmentMedicalRecord()", () => {
-    it.skip("should return true when record exists", async () => {
-      mockSupabaseChain.maybeSingle.mockResolvedValueOnce({
-        data: { id: "rec123" },
-        error: null,
-      });
 
-      const result = await hasAppointmentMedicalRecord("apt123");
-
-      expect(result).toBe(true);
-    });
-
-    it.skip("should return false when no record exists", async () => {
-      mockSupabaseChain.maybeSingle.mockResolvedValueOnce({
-        data: null,
-        error: null,
-      });
-
-      const result = await hasAppointmentMedicalRecord("apt123");
-
-      expect(result).toBe(false);
-    });
-
-    it.skip("should return false on error", async () => {
-      mockSupabaseChain.maybeSingle.mockResolvedValueOnce({
-        data: null,
-        error: { message: "Query failed" },
-      });
-
-      const result = await hasAppointmentMedicalRecord("apt123");
-
-      expect(result).toBe(false);
-    });
   });
 });

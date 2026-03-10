@@ -173,6 +173,10 @@ describe("Appointments Unit Tests", () => {
   });
 
   describe("createAppointment()", () => {
+    const validDate = new Date();
+    validDate.setDate(validDate.getDate() + 2);
+    const validDateStr = validDate.toISOString().split('T')[0];
+
     it("should create appointment successfully", async () => {
       const mockAppointment = {
         id: "apt123",
@@ -189,7 +193,7 @@ describe("Appointments Unit Tests", () => {
         patientId: "patient123",
         doctorId: "doctor123",
         hospitalId: "hospital123",
-        appointmentDate: "2026-12-31",
+        appointmentDate: validDateStr,
         appointmentTime: "10:00",
         reason: "Checkup",
       });
@@ -208,7 +212,7 @@ describe("Appointments Unit Tests", () => {
         patientId: "patient123",
         doctorId: "doctor123",
         hospitalId: "hospital123",
-        appointmentDate: "2026-12-31",
+        appointmentDate: validDateStr,
         appointmentTime: "10:00",
       });
 
@@ -226,7 +230,7 @@ describe("Appointments Unit Tests", () => {
         patientId: "patient123",
         doctorId: "doctor123",
         hospitalId: "hospital123",
-        appointmentDate: "2026-12-31",
+        appointmentDate: validDateStr,
         appointmentTime: "10:00",
         reason: "Annual checkup",
         notes: "Patient has diabetes",
