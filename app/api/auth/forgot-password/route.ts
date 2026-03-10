@@ -46,54 +46,75 @@ export async function POST(request: NextRequest) {
     console.log("[Forgot Password API] 2. Creating Supabase client...");
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log(
-      "[Forgot Password API] 3. Attempting to generate reset link...",
-    );
-    // Generate password reset link using Supabase Auth
-    // We skip the listUsers check and go straight to link generation
-    const { data, error } = await supabase.auth.admin.generateLink({
-      type: "recovery",
-      email: email,
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reset-password`,
-      },
-    });
+    console.log("[Forgot Password API] 3. Searching for user in tables...");
 
-    if (error) {
-      console.error("[Forgot Password API] ❌ ERROR generating link:", error);
-      const errorMsg = error.message?.toLowerCase() || "";
+    // Search for user in all tables
+    let foundUser: any = null;
+    let foundTable: string = "";
+    let foundRole: string = "";
 
-      // If user not found, Supabase returns error. Return success for security (prevent enumeration)
-      if (errorMsg.includes("user") && errorMsg.includes("not found")) {
-        console.log(
-          "[Forgot Password API] Status: User not found matching triggered, returning success for security",
-        );
-        return NextResponse.json({
-          success: true,
-          message:
-            "If an account exists with this email, you will receive a password reset link.",
-        });
+    for (const { table, emailField, role } of USER_TABLES) {
+      const { data, error } = await supabase
+        .from(table)
+        .select("id, email, first_name, last_name")
+        .eq(emailField, email.toLowerCase())
+        .single();
+
+      if (data && !error) {
+        foundUser = data;
+        foundTable = table;
+        foundRole = role;
+        console.log(`[Forgot Password API] ✅ User found in ${table}`);
+        break;
       }
-      return NextResponse.json(
-        { error: `Failed to generate reset link: ${error.message}` },
-        { status: 500 },
-      );
     }
 
-    console.log("[Forgot Password API] 4. Link generated successfully!");
-    const resetLink = data.properties?.action_link;
+    // If user not found, return success for security (prevent email enumeration)
+    if (!foundUser) {
+      console.log(
+        "[Forgot Password API] User not found, returning success for security",
+      );
+      return NextResponse.json({
+        success: true,
+        message:
+          "If an account exists with this email, you will receive a password reset link.",
+      });
+    }
 
-    if (!resetLink) {
+    console.log("[Forgot Password API] 4. Generating secure reset token...");
+
+    // Generate secure reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenHash = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    // Set expiry to 1 hour from now
+    const resetTokenExpiry = new Date();
+    resetTokenExpiry.setHours(resetTokenExpiry.getHours() + 1);
+
+    console.log("[Forgot Password API] 5. Storing reset token in database...");
+
+    // Store the hashed token in the user's table
+    const { error: updateError } = await supabase
+      .from(foundTable)
+      .update({
+        reset_token: resetTokenHash,
+        reset_token_expiry: resetTokenExpiry.toISOString(),
+      })
+      .eq("id", foundUser.id);
+
+    if (updateError) {
       console.error(
-        "[Forgot Password API] ❌ ERROR: No reset link in response properties",
+        "[Forgot Password API] ❌ ERROR storing reset token:",
+        updateError,
       );
       return NextResponse.json(
-        { error: "Internal server error: Link generation failed" },
+        { error: "Failed to generate reset link. Please try again." },
         { status: 500 },
       );
     }
-
-    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reset-password?token=${rawToken}&email=${encodeURIComponent(email)}`;
 
     // Build the reset link with the unhashed token
     const resetLink = `${appUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}&role=${foundRole}`;
@@ -127,7 +148,7 @@ export async function POST(request: NextRequest) {
                 <tr>
                   <td style="padding: 40px 30px;">
                     <p style="font-size: 16px; color: #333; margin: 0 0 20px 0;">
-                      Hello ${foundUser.first_name || 'SecureHealthcare User'},
+                      Hello ${foundUser.first_name || "SecureHealthcare User"},
                     </p>
                     
                     <p style="font-size: 16px; color: #333; margin: 0 0 20px 0;">
@@ -163,7 +184,7 @@ export async function POST(request: NextRequest) {
                         ⚠️ Security Notice
                       </p>
                       <p style="margin: 0; font-size: 14px; color: #666;">
-                        This link will expire in <strong>1 hour</strong>. If you didn't request this password reset, please ignore this email or contact support if you have concerns.
+                        This link will expire in <strong>1 hour</strong>. If you did not request this password reset, please ignore this email or contact support if you have concerns.
                       </p>
                     </div>
 
@@ -197,7 +218,7 @@ export async function POST(request: NextRequest) {
     const emailText = `
 Password Reset Request
 
-Hello ${foundUser.first_name || 'SecureHealthcare User'},
+Hello ${foundUser.first_name || "SecureHealthcare User"},
 
 We received a request to reset your password for your SecureHealthCare account.
 
@@ -206,7 +227,7 @@ ${resetLink}
 
 This link will expire in 1 hour.
 
-If you didn't request this password reset, please ignore this email.
+If you did not request this password reset, please ignore this email.
 
 Best regards,
 SecureHealthCare Team
@@ -228,13 +249,11 @@ SecureHealthCare Team
         user: emailUser,
         pass: emailPass,
       },
-      // Higher timeout
       connectionTimeout: 10000,
       greetingTimeout: 10000,
     });
 
     try {
-      // Verify transporter first
       await transporter.verify();
       console.log("[Forgot Password API] Transporter verified");
 
@@ -273,4 +292,3 @@ SecureHealthCare Team
     );
   }
 }
-
