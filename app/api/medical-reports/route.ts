@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     if (file.size > maxSize) {
       return NextResponse.json(
         { error: "File size exceeds 50MB limit" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       console.error("❌ [Upload Report] Storage error:", uploadError);
       return NextResponse.json(
         { error: `Failed to upload file: ${uploadError.message}` },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       await supabase.storage.from("medical-reports").remove([fileName]);
       return NextResponse.json(
         { error: `Failed to save report: ${dbError.message}` },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
     console.error("❌ [Upload Report] Exception:", error);
     return NextResponse.json(
       { error: error.message || "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -140,8 +140,80 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const patientId = searchParams.get("patientId");
     const reportType = searchParams.get("reportType");
+    const doctorId = searchParams.get("doctorId");
 
-    console.log("🔍 [Get Reports] Params:", { patientId, reportType });
+    console.log("🔍 [Get Reports] Params:", {
+      patientId,
+      reportType,
+      doctorId,
+    });
+
+    // If doctorId is provided, we need to verify the doctor has an appointment with the patient
+    if (doctorId && patientId) {
+      // Get patient UUID from patient_id
+      const { data: patientData, error: patientError } = await supabase
+        .from("patients")
+        .select("id")
+        .eq("patient_id", patientId)
+        .single();
+
+      if (patientError || !patientData) {
+        console.log("⚠️ [Get Reports] Patient not found:", patientId);
+        return NextResponse.json({ reports: [] });
+      }
+
+      // Get doctor UUID from doctor_id
+      const { data: doctorData, error: doctorError } = await supabase
+        .from("doctors")
+        .select("id")
+        .eq("doctor_id", doctorId)
+        .single();
+
+      if (doctorError || !doctorData) {
+        console.log("⚠️ [Get Reports] Doctor not found:", doctorId);
+        return NextResponse.json(
+          { error: "Doctor not found" },
+          { status: 404 },
+        );
+      }
+
+      // Check if the doctor has any appointment with this patient
+      const { data: appointmentData, error: appointmentError } = await supabase
+        .from("appointments")
+        .select("id")
+        .eq("doctor_id", doctorData.id)
+        .eq("patient_id", patientData.id)
+        .limit(1);
+
+      if (appointmentError) {
+        console.error(
+          "❌ [Get Reports] Error checking appointments:",
+          appointmentError,
+        );
+        return NextResponse.json(
+          { error: "Failed to verify appointment" },
+          { status: 500 },
+        );
+      }
+
+      if (!appointmentData || appointmentData.length === 0) {
+        console.log(
+          "🚫 [Get Reports] No appointment found between doctor and patient",
+        );
+        return NextResponse.json(
+          {
+            error:
+              "Access denied. You can only view reports for patients who have booked an appointment with you.",
+            accessDenied: true,
+          },
+          { status: 403 },
+        );
+      }
+
+      console.log(
+        "✅ [Get Reports] Appointment verified, doctor can access patient reports",
+      );
+    }
 
     let query = supabase
       .from("medical_reports")
@@ -154,7 +226,7 @@ export async function GET(request: NextRequest) {
           last_name,
           email
         )
-      `
+      `,
       )
       .order("report_date", { ascending: false });
 
@@ -174,6 +246,51 @@ export async function GET(request: NextRequest) {
       query = query.eq("patient_id", patientData.id);
     }
 
+    // If doctorId is provided without patientId, only show reports for patients with appointments
+    if (doctorId && !patientId) {
+      // Get doctor UUID
+      const { data: doctorData, error: doctorError } = await supabase
+        .from("doctors")
+        .select("id")
+        .eq("doctor_id", doctorId)
+        .single();
+
+      if (doctorError || !doctorData) {
+        console.log("⚠️ [Get Reports] Doctor not found:", doctorId);
+        return NextResponse.json({ reports: [] });
+      }
+
+      // Get all patient IDs that have appointments with this doctor
+      const { data: appointmentsData, error: appointmentsError } =
+        await supabase
+          .from("appointments")
+          .select("patient_id")
+          .eq("doctor_id", doctorData.id);
+
+      if (appointmentsError) {
+        console.error(
+          "❌ [Get Reports] Error fetching appointments:",
+          appointmentsError,
+        );
+        return NextResponse.json({ reports: [] });
+      }
+
+      // Get unique patient IDs
+      const patientIds = [
+        ...new Set(appointmentsData?.map((apt) => apt.patient_id) || []),
+      ];
+
+      if (patientIds.length === 0) {
+        console.log(
+          "📭 [Get Reports] No patients with appointments for this doctor",
+        );
+        return NextResponse.json({ reports: [] });
+      }
+
+      // Filter reports to only include patients with appointments
+      query = query.in("patient_id", patientIds);
+    }
+
     if (reportType && reportType !== "all") {
       query = query.eq("report_type", reportType);
     }
@@ -184,7 +301,7 @@ export async function GET(request: NextRequest) {
       console.error("❌ [Get Reports] Error:", error);
       return NextResponse.json(
         { error: `Failed to fetch reports: ${error.message}` },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -212,7 +329,7 @@ export async function GET(request: NextRequest) {
             console.warn(
               "⚠️ Could not generate signed URL for:",
               filePath,
-              urlError
+              urlError,
             );
           }
         } catch (err) {
@@ -228,7 +345,7 @@ export async function GET(request: NextRequest) {
             : "Unknown Patient",
           patient_email: report.patients?.email || "",
         };
-      })
+      }),
     );
 
     return NextResponse.json({ reports: reportsWithSignedUrls });
@@ -236,7 +353,7 @@ export async function GET(request: NextRequest) {
     console.error("❌ [Get Reports] Exception:", error);
     return NextResponse.json(
       { error: error.message || "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

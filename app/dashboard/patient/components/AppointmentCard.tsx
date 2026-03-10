@@ -308,20 +308,32 @@ export default function AppointmentCard({
 
               <div className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
                 <p>
-                  Before joining the video consultation with <strong>Dr. {appointment.doctor_name}</strong>, please review and agree to the following:
+                  Before joining the video consultation with{" "}
+                  <strong>Dr. {appointment.doctor_name}</strong>, please review
+                  and agree to the following:
                 </p>
                 <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg space-y-3 border border-gray-100 dark:border-gray-800">
                   <div className="flex gap-2">
                     <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                    <p>I consent to the use of my camera and microphone for this clinical consultation.</p>
+                    <p>
+                      I consent to the use of my camera and microphone for this
+                      clinical consultation.
+                    </p>
                   </div>
                   <div className="flex gap-2">
                     <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                    <p>I understand this session may be automatically recorded by the hospital for medical record-keeping and quality assurance purposes.</p>
+                    <p>
+                      I understand this session may be automatically recorded by
+                      the hospital for medical record-keeping and quality
+                      assurance purposes.
+                    </p>
                   </div>
                   <div className="flex gap-2">
                     <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                    <p>I confirm I am in a private, quiet location appropriate for a medical discussion.</p>
+                    <p>
+                      I confirm I am in a private, quiet location appropriate
+                      for a medical discussion.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -361,20 +373,32 @@ export default function AppointmentCard({
 
               <div className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
                 <p>
-                  Before starting a chat with <strong>Dr. {appointment.doctor_name}</strong>, please review the following:
+                  Before starting a chat with{" "}
+                  <strong>Dr. {appointment.doctor_name}</strong>, please review
+                  the following:
                 </p>
                 <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg space-y-3 border border-gray-100 dark:border-gray-800">
                   <div className="flex gap-2">
                     <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                    <p>I consent to sharing my medical and health-related data with the doctor via this chat interface.</p>
+                    <p>
+                      I consent to sharing my medical and health-related data
+                      with the doctor via this chat interface.
+                    </p>
                   </div>
                   <div className="flex gap-2">
                     <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                    <p>I understand that this chat is meant for medical consultation regarding this specific appointment and shouldn&apos;t be used for absolute emergencies.</p>
+                    <p>
+                      I understand that this chat is meant for medical
+                      consultation regarding this specific appointment and
+                      should not be used for absolute emergencies.
+                    </p>
                   </div>
                   <div className="flex gap-2">
                     <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                    <p>I agree that the chat records may be stored securely as part of my medical history.</p>
+                    <p>
+                      I agree that the chat records may be stored securely as
+                      part of my medical history.
+                    </p>
                   </div>
                 </div>
               </div>
