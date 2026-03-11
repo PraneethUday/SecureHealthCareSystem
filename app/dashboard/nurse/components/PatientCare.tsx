@@ -202,71 +202,56 @@ export function PatientCare({ nurseId }: PatientCareProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-full p-3">
-            <Users className="w-6 h-6 text-white" />
+          <div className="p-2.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
+            <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Patient Care</h2>
-            <p className="text-sm text-gray-600">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+              Patient Care
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               View and manage your assigned patients
             </p>
           </div>
         </div>
 
         {/* Filter Buttons */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setFilter("today")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === "today"
-                ? "bg-green-500 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            Today
-          </button>
-          <button
-            onClick={() => setFilter("upcoming")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === "upcoming"
-                ? "bg-green-500 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            Upcoming
-          </button>
-          <button
-            onClick={() => setFilter("all")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === "all"
-                ? "bg-green-500 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            All
-          </button>
+        <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+          {(["today", "upcoming", "all"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors capitalize ${
+                filter === f
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+              }`}
+            >
+              {f === "today" ? "Today" : f === "upcoming" ? "Upcoming" : "All"}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Loading State */}
       {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+        <div className="flex items-center justify-center py-16">
+          <div className="w-7 h-7 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
 
       {/* Empty State */}
       {!isLoading && patients.length === 0 && (
-        <div className="bg-white rounded-xl shadow-md p-12 text-center">
-          <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">
+        <div className="flex flex-col items-center justify-center py-16">
+          <Users className="w-12 h-12 text-slate-200 dark:text-slate-700 mb-3" />
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">
             No Patients Assigned
           </h3>
-          <p className="text-gray-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             You don&apos;t have any assigned patients for the selected filter.
           </p>
         </div>
@@ -274,113 +259,111 @@ export function PatientCare({ nurseId }: PatientCareProps) {
 
       {/* Patients List */}
       {!isLoading && patients.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {patients.map((patient) => (
             <div
               key={patient.appointment_id}
-              className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow border-l-4 border-green-500"
+              className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors p-5"
             >
               {/* Patient Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="bg-green-100 rounded-full p-2">
-                    <User className="w-6 h-6 text-green-600" />
+                  <div className="bg-emerald-50 dark:bg-emerald-900/30 rounded-xl p-2">
+                    <User className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg text-gray-900">
+                    <h3 className="font-semibold text-slate-900 dark:text-white">
                       {patient.patient_name}
                     </h3>
-                    <p className="text-sm text-gray-500">
-                      ID: {patient.patient_id} • Age:{" "}
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      ID: {patient.patient_id} &bull; Age:{" "}
                       {getAge(patient.patient_dob)}
                     </p>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-col items-end gap-1.5">
                   <span
-                    className={`px-3 py-1 text-xs font-bold rounded-full border ${patient.status === "scheduled" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-green-50 text-green-700 border-green-200"}`}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${
+                      patient.status === "scheduled"
+                        ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800"
+                        : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800"
+                    }`}
                   >
                     {patient.status.toUpperCase()}
                   </span>
                   {patient.isNew && (
-                    <span className="px-3 py-1 bg-orange-500 text-white text-[10px] font-black rounded-full animate-pulse uppercase tracking-tighter">
-                      New Assignment
+                    <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-bold rounded-full uppercase tracking-wide">
+                      New
                     </span>
                   )}
                 </div>
               </div>
 
               {/* Appointment Details */}
-              <div className="space-y-3 mb-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Calendar className="w-4 h-4 text-green-500" />
-                  <span className="font-medium">
-                    {formatDate(patient.appointment_date)}
-                  </span>
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                  <Calendar className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>{formatDate(patient.appointment_date)}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Clock className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                  <Clock className="w-3.5 h-3.5 text-emerald-500" />
                   <span>{formatTime(patient.appointment_time)}</span>
                 </div>
-                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 flex items-center gap-3">
-                  <div className="bg-white p-2 rounded-lg shadow-sm">
-                    <Stethoscope className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-indigo-500 font-bold uppercase tracking-wider">
+                <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-xl px-3 py-2.5">
+                  <Stethoscope className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
                       Assigned By
                     </p>
-                    <p className="text-sm font-bold text-gray-800">
+                    <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                       {patient.doctor_name}
                     </p>
-                    <p className="text-[10px] text-gray-500 font-medium">
+                    <p className="text-[10px] text-slate-500">
                       {patient.doctor_specialization}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <MapPin className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-500" />
                   <span>{patient.hospital_name}</span>
                 </div>
               </div>
 
               {/* Reason */}
-              <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium text-gray-700">Reason:</span>{" "}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg px-3 py-2 mb-4 border border-slate-100 dark:border-slate-700">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  <span className="font-medium text-slate-700 dark:text-slate-300">
+                    Reason:
+                  </span>{" "}
                   {patient.reason}
                 </p>
               </div>
 
               {/* Shared Health Profile Banner */}
               {patient.share_health_profile && (
-                <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-rose-100 p-2 rounded-lg">
-                        <Heart className="w-5 h-5 text-rose-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-rose-900">
-                          Health Profile Shared
-                        </p>
-                        <p className="text-xs text-rose-700">
-                          Patient shared their medical history.
-                        </p>
-                      </div>
+                <div className="flex items-center justify-between gap-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 rounded-xl px-3 py-2.5 mb-4">
+                  <div className="flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-rose-500 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-rose-800 dark:text-rose-300">
+                        Health Profile Shared
+                      </p>
+                      <p className="text-[10px] text-rose-600 dark:text-rose-400">
+                        Patient shared their medical history.
+                      </p>
                     </div>
-                    <button
-                      onClick={() => setShowProfileModal(patient.patient_id)}
-                      className="px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition-colors shadow-sm whitespace-nowrap"
-                    >
-                      View Profile
-                    </button>
                   </div>
+                  <button
+                    onClick={() => setShowProfileModal(patient.patient_id)}
+                    className="px-2.5 py-1 bg-rose-600 text-white text-xs font-semibold rounded-lg hover:bg-rose-700 transition-colors whitespace-nowrap flex-shrink-0"
+                  >
+                    View
+                  </button>
                 </div>
               )}
 
               {/* Vitals Actions */}
-              <div className="flex gap-3 mb-4">
+              <div className="flex gap-2 mb-4">
                 <button
                   onClick={() =>
                     setShowVitalsForm({
@@ -388,9 +371,9 @@ export function PatientCare({ nurseId }: PatientCareProps) {
                       patientName: patient.patient_name,
                     })
                   }
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all shadow-md shadow-green-500/20 active:scale-95"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-colors"
                 >
-                  <Activity className="w-4 h-4" />
+                  <Activity className="w-3.5 h-3.5" />
                   Record Vitals
                 </button>
                 <button
@@ -400,22 +383,22 @@ export function PatientCare({ nurseId }: PatientCareProps) {
                       patientName: patient.patient_name,
                     })
                   }
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-green-200 text-green-700 text-sm font-bold rounded-xl hover:bg-green-50 transition-all active:scale-95"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                 >
-                  <Eye className="w-4 h-4" />
+                  <Eye className="w-3.5 h-3.5" />
                   View Vitals
                 </button>
               </div>
 
               {/* Contact Info */}
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Phone className="w-4 h-4 text-green-500" />
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <Phone className="w-3.5 h-3.5" />
                   <span>{patient.patient_phone || "N/A"}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Mail className="w-4 h-4 text-green-500" />
-                  <span className="truncate max-w-[150px]">
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <Mail className="w-3.5 h-3.5" />
+                  <span className="truncate max-w-[140px]">
                     {patient.patient_email}
                   </span>
                 </div>
@@ -427,15 +410,15 @@ export function PatientCare({ nurseId }: PatientCareProps) {
 
       {/* Summary Footer */}
       {!isLoading && patients.length > 0 && (
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Users className="w-8 h-8 text-green-600" />
+              <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               <div>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-lg font-bold text-slate-900 dark:text-white">
                   {patients.length}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {filter === "today"
                     ? "Today's Patients"
                     : filter === "upcoming"
@@ -446,7 +429,7 @@ export function PatientCare({ nurseId }: PatientCareProps) {
             </div>
             <button
               onClick={fetchAssignedPatients}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors"
             >
               Refresh
             </button>
@@ -467,8 +450,8 @@ export function PatientCare({ nurseId }: PatientCareProps) {
 
       {/* Nurse Vitals Form Modal */}
       {showVitalsForm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-3xl rounded-3xl shadow-2xl p-6 md:p-10 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
             <NurseVitalsForm
               patientId={showVitalsForm.patientId}
               patientName={showVitalsForm.patientName}
@@ -482,20 +465,28 @@ export function PatientCare({ nurseId }: PatientCareProps) {
 
       {/* Vitals Viewer Modal */}
       {showVitalsViewer && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-3xl rounded-3xl shadow-2xl p-6 md:p-10 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
-            <div className="flex justify-end mb-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800">
+              <div>
+                <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+                  Patient Vitals
+                </h2>
+                <p className="text-xs text-slate-500">{showVitalsViewer.patientName}</p>
+              </div>
               <button
                 onClick={() => setShowVitalsViewer(null)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
-                <span className="text-gray-500 text-xl font-bold">&times;</span>
+                <span className="text-slate-500 text-lg font-bold leading-none">&times;</span>
               </button>
             </div>
-            <VitalsViewer
-              patientId={showVitalsViewer.patientId}
-              patientName={showVitalsViewer.patientName}
-            />
+            <div className="p-5 overflow-y-auto max-h-[calc(90vh-70px)]">
+              <VitalsViewer
+                patientId={showVitalsViewer.patientId}
+                patientName={showVitalsViewer.patientName}
+              />
+            </div>
           </div>
         </div>
       )}

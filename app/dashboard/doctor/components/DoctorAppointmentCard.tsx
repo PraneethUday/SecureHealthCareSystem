@@ -33,6 +33,7 @@ import { useState, useEffect } from "react";
 import { NurseAssignment } from "./NurseAssignment";
 import PatientProfileModal from "@/components/PatientProfileModal";
 import VitalsViewer from "./VitalsViewer";
+import MedicalHistoryViewer from "./MedicalHistoryViewer";
 import Portal from "@/components/ui/Portal";
 
 interface DoctorAppointmentCardProps {
@@ -61,6 +62,7 @@ export default function DoctorAppointmentCard({
   const [hasMedicalRecord, setHasMedicalRecord] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showVitalsModal, setShowVitalsModal] = useState(false);
+  const [showMedicalHistoryModal, setShowMedicalHistoryModal] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -91,6 +93,27 @@ export default function DoctorAppointmentCard({
       });
     }
     setShowVitalsModal(true);
+  };
+
+  const handleViewMedicalHistory = async () => {
+    if (!appointment.share_health_profile) {
+      alert(
+        "Access Denied: Patient has not consented to share their health data based on HIPAA rules.",
+      );
+      return;
+    }
+    const session = await getSession();
+    if (session?.user?.doctor_id) {
+      await logAction({
+        userId: session.user.doctor_id,
+        userRole: "doctor",
+        action: "view_patient_medical_history",
+        resourceType: "medical_records",
+        resourceId: appointment.patient_id,
+        details: `Doctor viewed medical history for patient ${appointment.patient_name}`,
+      });
+    }
+    setShowMedicalHistoryModal(true);
   };
 
   const handleViewProfile = async () => {
@@ -335,6 +358,17 @@ export default function DoctorAppointmentCard({
                 >
                   Profile
                 </button>
+                <button
+                  onClick={handleViewMedicalHistory}
+                  disabled={!appointment.share_health_profile}
+                  className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
+                    appointment.share_health_profile
+                      ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
+                  }`}
+                >
+                  History
+                </button>
               </div>
 
               {/* Action Buttons - Compact Row */}
@@ -496,6 +530,39 @@ export default function DoctorAppointmentCard({
           patientId={appointment.patient_id}
           onClose={() => setShowProfileModal(false)}
         />
+      )}
+
+      {/* Medical History Modal */}
+      {showMedicalHistoryModal && (
+        <Portal>
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                    Medical History
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {appointment.patient_name}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowMedicalHistoryModal(false)}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                  aria-label="Close medical history modal"
+                >
+                  <XCircle className="w-5 h-5 text-slate-500" />
+                </button>
+              </div>
+              <div className="p-5 overflow-y-auto max-h-[calc(90vh-80px)]">
+                <MedicalHistoryViewer
+                  patientId={appointment.patient_id}
+                  patientName={appointment.patient_name}
+                />
+              </div>
+            </div>
+          </div>
+        </Portal>
       )}
 
       {/* Vitals Modal */}
