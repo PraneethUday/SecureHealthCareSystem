@@ -162,35 +162,29 @@ export default function StaffDashboard() {
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <Calendar
-                className={`w-4 h-4 ${activeTab === "appointments" ? "text-purple-500 dark:text-purple-400" : ""}`}
-              />
+              <Calendar className="w-4 h-4" />
               Appointments
             </button>
             <button
               onClick={() => setActiveTab("patients")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === "patients"
                   ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <Users
-                className={`w-4 h-4 ${activeTab === "patients" ? "text-purple-500 dark:text-purple-400" : ""}`}
-              />
+              <Users className="w-4 h-4" />
               Patients
             </button>
             <button
               onClick={() => setActiveTab("overview")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === "overview"
                   ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <UserCog
-                className={`w-4 h-4 ${activeTab === "overview" ? "text-purple-500 dark:text-purple-400" : ""}`}
-              />
+              <UserCog className="w-4 h-4" />
               Overview
             </button>
           </div>
@@ -205,22 +199,26 @@ export default function StaffDashboard() {
           ) : activeTab === "appointments" ? (
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden p-6 md:p-8">
               <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                    <Calendar className="w-6 h-6 text-purple-500" />
-                    Book Appointment
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-                    Book appointments for patients visiting{" "}
-                    {hospitalName || "the hospital"}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg">
+                    <Calendar className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                      Book Appointment
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Book appointments for patients visiting{" "}
+                      {hospitalName || "the hospital"}
+                    </p>
+                  </div>
                 </div>
                 {hospitalId && (
                   <button
                     onClick={() => setShowAppointmentForm(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white rounded-xl font-medium transition-all shadow-lg shadow-purple-500/20"
+                    className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-500 text-white text-sm rounded-lg font-medium transition-colors"
                   >
-                    <Plus className="w-5 h-5" />
+                    <Plus className="w-4 h-4" />
                     New Appointment
                   </button>
                 )}
@@ -228,21 +226,21 @@ export default function StaffDashboard() {
 
               {!hospitalId ? (
                 <div className="text-center py-12">
-                  <Hospital className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                  <Hospital className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                     No hospital assigned
                   </p>
-                  <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                     Contact admin to assign you to a hospital
                   </p>
                 </div>
               ) : (
-                <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/30 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700">
-                  <Calendar className="w-16 h-16 mx-auto text-purple-300 dark:text-purple-600 mb-4" />
-                  <p className="text-gray-600 dark:text-gray-400 text-lg font-medium">
+                <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
+                  <Calendar className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                  <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
                     Ready to book appointments
                   </p>
-                  <p className="text-gray-400 dark:text-gray-500 text-sm mt-2 max-w-md mx-auto">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-md mx-auto">
                     Click &quot;New Appointment&quot; to book an appointment for
                     a patient visiting {hospitalName}
                   </p>
@@ -252,127 +250,118 @@ export default function StaffDashboard() {
           ) : activeTab === "patients" ? (
             <PatientDirectory />
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Profile Stats Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Stat: Hospital */}
                 {hospitalName && (
-                  <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
-                    <div className="bg-indigo-100 dark:bg-indigo-900/50 p-3 rounded-xl text-indigo-600 dark:text-indigo-400">
-                      <Hospital className="w-6 h-6" />
-                    </div>
-                    <div className="overflow-hidden">
-                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                        Hospital
-                      </p>
-                      <p
-                        className="text-lg font-bold text-slate-800 dark:text-slate-100 truncate"
-                        title={hospitalName}
-                      >
-                        {hospitalName}
-                      </p>
+                  <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-cyan-50 dark:bg-cyan-900/30 rounded-lg">
+                        <Hospital className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Hospital</p>
+                        <p className="font-semibold text-slate-900 dark:text-white truncate" title={hospitalName}>
+                          {hospitalName}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {/* Stat: Role */}
-                <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
-                  <div className="bg-purple-100 dark:bg-purple-900/50 p-3 rounded-xl text-purple-600 dark:text-purple-400">
-                    <Briefcase className="w-6 h-6" />
-                  </div>
-                  <div className="overflow-hidden">
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                      Role
-                    </p>
-                    <p
-                      className="text-lg font-bold text-slate-800 dark:text-slate-100 truncate"
-                      title={user.role}
-                    >
-                      {user.role}
-                    </p>
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg">
+                      <Briefcase className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Role</p>
+                      <p className="font-semibold text-slate-900 dark:text-white" title={user.role}>
+                        {user.role}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
                 {/* Stat: Department */}
-                <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
-                  <div className="bg-violet-100 dark:bg-violet-900/50 p-3 rounded-xl text-violet-600 dark:text-violet-400">
-                    <Users className="w-6 h-6" />
-                  </div>
-                  <div className="overflow-hidden">
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                      Department
-                    </p>
-                    <p
-                      className="text-lg font-bold text-slate-800 dark:text-slate-100 truncate"
-                      title={user.department}
-                    >
-                      {user.department}
-                    </p>
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-teal-50 dark:bg-teal-900/30 rounded-lg">
+                      <Users className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Department</p>
+                      <p className="font-semibold text-slate-900 dark:text-white" title={user.department}>
+                        {user.department}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Quick Actions Grid */}
-              <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 pl-2 border-l-4 border-purple-500">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                 Staff Tools
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div
                   onClick={() => setActiveTab("pharmacy")}
-                  className="group bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-700 transition-colors cursor-pointer"
+                  className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer"
                 >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="bg-purple-100 dark:bg-purple-900/50 p-3 rounded-xl text-purple-600 dark:text-purple-400">
-                      <FileText className="w-8 h-8" />
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg">
+                      <FileText className="w-5 h-5 text-violet-600 dark:text-violet-400" />
                     </div>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">
+                      Records Management
+                    </h3>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">
-                    Records Management
-                  </h3>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
                     Manage medical records and documentation efficiently.
                   </p>
-                  <span className="text-purple-600 dark:text-purple-400 font-semibold text-sm flex items-center gap-1">
+                  <span className="text-violet-600 dark:text-violet-400 text-sm font-medium">
                     View Records →
                   </span>
                 </div>
 
                 <div
                   onClick={() => setActiveTab("appointments")}
-                  className="group bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 hover:border-violet-300 dark:hover:border-violet-700 transition-colors cursor-pointer"
+                  className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer"
                 >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="bg-violet-100 dark:bg-violet-900/50 p-3 rounded-xl text-violet-600 dark:text-violet-400">
-                      <Calendar className="w-8 h-8" />
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                      <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">
+                      Appointments
+                    </h3>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">
-                    Appointments
-                  </h3>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
                     Schedule and manage clinic appointments.
                   </p>
-                  <span className="text-violet-600 dark:text-violet-400 font-semibold text-sm flex items-center gap-1">
+                  <span className="text-blue-600 dark:text-blue-400 text-sm font-medium">
                     Open Calendar →
                   </span>
                 </div>
 
                 <div
                   onClick={() => setActiveTab("patients")}
-                  className="group bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors cursor-pointer"
+                  className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer"
                 >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="bg-indigo-100 dark:bg-indigo-900/50 p-3 rounded-xl text-indigo-600 dark:text-indigo-400">
-                      <Users className="w-8 h-8" />
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 bg-teal-50 dark:bg-teal-900/30 rounded-lg">
+                      <Users className="w-5 h-5 text-teal-600 dark:text-teal-400" />
                     </div>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">
+                      Patient Directory
+                    </h3>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">
-                    Patient Directory
-                  </h3>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
                     Access detailed patient information and contacts.
                   </p>
-                  <span className="text-indigo-600 dark:text-indigo-400 font-semibold text-sm flex items-center gap-1">
+                  <span className="text-teal-600 dark:text-teal-400 text-sm font-medium">
                     Search Patients →
                   </span>
                 </div>

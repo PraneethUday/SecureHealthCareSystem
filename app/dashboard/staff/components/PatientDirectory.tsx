@@ -68,79 +68,85 @@ export default function PatientDirectory() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Search Section */}
-      <div className="bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 dark:border-white/10 p-6">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-          <User className="w-6 h-6 text-purple-500" />
-          Patient Directory
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-          Search for patients by name, phone number, email, or patient ID.
-        </p>
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg">
+            <User className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Patient Directory
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Search for patients by name, phone number, email, or patient ID.
+            </p>
+          </div>
+        </div>
 
         <div className="flex gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && searchPatients()}
               placeholder="Search by name, phone, email, or patient ID..."
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 dark:focus:border-violet-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
           </div>
           <button
             onClick={searchPatients}
             disabled={loading || !searchTerm.trim()}
-            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white rounded-xl font-medium transition-all disabled:opacity-50 shadow-lg shadow-purple-500/20"
+            className="px-5 py-2.5 bg-violet-600 hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-500 text-white text-sm rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Search"}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
           </button>
         </div>
       </div>
 
       {/* Results Section */}
       {patients.length > 0 && (
-        <div className="bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 dark:border-white/10 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-100">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+          <div className="px-6 py-3 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               Search Results ({patients.length} found)
             </h3>
           </div>
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {patients.map((patient) => (
               <div
                 key={patient.id}
                 onClick={() => setSelectedPatient(patient)}
-                className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors group"
+                className="px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors group"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center text-white font-bold text-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 font-semibold text-sm">
                       {patient.first_name[0]}
                       {patient.last_name[0]}
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-100">
+                      <h4 className="font-medium text-sm text-slate-900 dark:text-white">
                         {patient.first_name} {patient.last_name}
                       </h4>
-                      <p className="text-sm text-purple-600 dark:text-purple-400">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         ID: {patient.patient_id}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <Phone className="w-4 h-4" />
+                  <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                    <span className="hidden sm:flex items-center gap-1">
+                      <Phone className="w-3.5 h-3.5" />
                       {patient.phone}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Mail className="w-4 h-4" />
+                    <span className="hidden md:flex items-center gap-1">
+                      <Mail className="w-3.5 h-3.5" />
                       {patient.email}
                     </span>
-                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
+                    <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors" />
                   </div>
                 </div>
               </div>
@@ -151,10 +157,10 @@ export default function PatientDirectory() {
 
       {/* No Results */}
       {patients.length === 0 && searchTerm && !loading && (
-        <div className="bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 dark:border-white/10 p-10 text-center">
-          <User className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-          <p className="text-gray-500 dark:text-gray-400">No patients found</p>
-          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-10 text-center">
+          <User className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+          <p className="text-sm text-slate-500 dark:text-slate-400">No patients found</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
             Try a different search term
           </p>
         </div>
@@ -162,69 +168,69 @@ export default function PatientDirectory() {
 
       {/* Patient Detail Modal */}
       {selectedPatient && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full border border-gray-200 dark:border-gray-800">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 max-w-lg w-full">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
-              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 Patient Details
               </h3>
               <button
                 onClick={() => setSelectedPatient(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Content */}
             <div className="p-6">
               {/* Profile Header */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center text-white font-bold text-2xl">
+              <div className="flex items-center gap-4 mb-5">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold text-lg">
                   {selectedPatient.first_name[0]}
                   {selectedPatient.last_name[0]}
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                  <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
                     {selectedPatient.first_name} {selectedPatient.last_name}
                   </h4>
-                  <p className="text-purple-600 dark:text-purple-400 font-medium">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     {selectedPatient.patient_id}
                   </p>
                 </div>
               </div>
 
               {/* Info Grid */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
-                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
-                      <Phone className="w-4 h-4" />
-                      <span className="text-sm">Phone</span>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
+                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-1">
+                      <Phone className="w-3.5 h-3.5" />
+                      <span className="text-xs">Phone</span>
                     </div>
-                    <p className="font-medium text-gray-800 dark:text-gray-200">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">
                       {selectedPatient.phone}
                     </p>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
-                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
-                      <Mail className="w-4 h-4" />
-                      <span className="text-sm">Email</span>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
+                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-1">
+                      <Mail className="w-3.5 h-3.5" />
+                      <span className="text-xs">Email</span>
                     </div>
-                    <p className="font-medium text-gray-800 dark:text-gray-200 truncate">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                       {selectedPatient.email}
                     </p>
                   </div>
                 </div>
 
                 {selectedPatient.date_of_birth && (
-                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
-                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
-                      <Calendar className="w-4 h-4" />
-                      <span className="text-sm">Date of Birth</span>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
+                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-1">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span className="text-xs">Date of Birth</span>
                     </div>
-                    <p className="font-medium text-gray-800 dark:text-gray-200">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">
                       {new Date(
                         selectedPatient.date_of_birth,
                       ).toLocaleDateString()}{" "}
@@ -234,24 +240,24 @@ export default function PatientDirectory() {
                 )}
 
                 {selectedPatient.gender && (
-                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
-                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
-                      <User className="w-4 h-4" />
-                      <span className="text-sm">Gender</span>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
+                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-1">
+                      <User className="w-3.5 h-3.5" />
+                      <span className="text-xs">Gender</span>
                     </div>
-                    <p className="font-medium text-gray-800 dark:text-gray-200 capitalize">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white capitalize">
                       {selectedPatient.gender}
                     </p>
                   </div>
                 )}
 
                 {(selectedPatient.address || selectedPatient.city) && (
-                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
-                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
-                      <MapPin className="w-4 h-4" />
-                      <span className="text-sm">Address</span>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
+                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-1">
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span className="text-xs">Address</span>
                     </div>
-                    <p className="font-medium text-gray-800 dark:text-gray-200">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">
                       {[
                         selectedPatient.address,
                         selectedPatient.city,
@@ -264,7 +270,7 @@ export default function PatientDirectory() {
                 )}
 
                 {selectedPatient.created_at && (
-                  <div className="text-sm text-gray-500 dark:text-gray-400 text-center pt-2">
+                  <div className="text-xs text-slate-400 dark:text-slate-500 text-center pt-2">
                     Patient since{" "}
                     {new Date(selectedPatient.created_at).toLocaleDateString()}
                   </div>
@@ -273,10 +279,10 @@ export default function PatientDirectory() {
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex justify-end">
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
               <button
                 onClick={() => setSelectedPatient(null)}
-                className="px-6 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg font-medium transition-colors"
+                className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors"
               >
                 Close
               </button>

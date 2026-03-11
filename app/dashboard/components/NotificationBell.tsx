@@ -28,6 +28,8 @@ const typeIcons: Record<NotificationType, React.ReactNode> = {
   access_revoked: <UserX className="w-4 h-4 text-red-500" />,
   report_uploaded: <FileText className="w-4 h-4 text-blue-500" />,
   prescription_created: <Pill className="w-4 h-4 text-purple-500" />,
+  security_alert: <AlertCircle className="w-4 h-4 text-orange-500" />,
+  breach_notification: <AlertCircle className="w-4 h-4 text-red-600" />,
   system: <AlertCircle className="w-4 h-4 text-gray-500" />,
   general: <Bell className="w-4 h-4 text-gray-500" />,
 };
