@@ -365,6 +365,8 @@ export type NotificationType =
   | "access_revoked"
   | "report_uploaded"
   | "prescription_created"
+  | "security_alert"
+  | "breach_notification"
   | "system"
   | "general";
 
@@ -396,4 +398,106 @@ export interface DataAccessRecord {
   expires_at?: string;
   is_active: boolean;
   appointment_id?: string;
+}
+
+// ==========================================
+// Security Monitoring Types (EPIC 5)
+// ==========================================
+
+export type SecurityIncidentType =
+  | "unusual_access_pattern"
+  | "brute_force_attempt"
+  | "unauthorized_access"
+  | "data_exfiltration_risk"
+  | "off_hours_access"
+  | "excessive_record_access"
+  | "rapid_fire_actions"
+  | "account_compromise"
+  | "policy_violation"
+  | "system_breach"
+  | "other";
+
+export type SecuritySeverity = "low" | "medium" | "high" | "critical";
+
+export type SecurityIncidentStatus = "open" | "investigating" | "resolved" | "dismissed";
+
+export type SecurityAlertType =
+  | "anomaly_detected"
+  | "incident_created"
+  | "threshold_exceeded"
+  | "breach_suspected"
+  | "policy_violation"
+  | "retention_executed"
+  | "system_warning";
+
+export interface SecurityIncident {
+  id: string;
+  incident_type: SecurityIncidentType;
+  severity: SecuritySeverity;
+  title: string;
+  description: string;
+  affected_user_id?: string;
+  affected_user_role?: string;
+  source_ip?: string;
+  user_agent?: string;
+  evidence_snapshot?: Record<string, any>;
+  status: SecurityIncidentStatus;
+  detected_at?: string;
+  resolved_at?: string;
+  resolved_by?: string;
+  resolution_notes?: string;
+  created_at?: string;
+}
+
+export interface SecurityAlert {
+  id: string;
+  alert_type: SecurityAlertType;
+  severity: SecuritySeverity;
+  title: string;
+  message: string;
+  related_incident_id?: string;
+  metadata?: Record<string, any>;
+  is_dismissed: boolean;
+  dismissed_by?: string;
+  dismissed_at?: string;
+  created_at?: string;
+}
+
+export interface AuditRetentionPolicy {
+  id: string;
+  log_type: string;
+  display_name: string;
+  retention_days: number;
+  archive_before_delete: boolean;
+  is_active: boolean;
+  last_executed_at?: string;
+  records_deleted_last_run?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AnomalyDetectionResult {
+  anomaly_type: string;
+  user_id: string;
+  user_role: string;
+  details: string;
+  event_count: number;
+  time_window: string;
+}
+
+export interface BreachReport {
+  id: string;
+  generated_at: string;
+  generated_by: string;
+  incident_id?: string;
+  time_range: { start: string; end: string };
+  summary: string;
+  affected_users: Array<{ user_id: string; user_role: string; impact: string }>;
+  timeline: Array<{ timestamp: string; event: string; details: string }>;
+  evidence: {
+    access_logs: any[];
+    incidents: any[];
+    login_attempts: any[];
+  };
+  recommendations: string[];
 }

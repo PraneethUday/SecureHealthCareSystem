@@ -101,70 +101,37 @@ export default function StaffDashboard() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[conic-gradient(at_top,_var(--tw-gradient-stops))] from-purple-50 via-violet-50 to-indigo-50 dark:from-purple-950 dark:via-violet-950 dark:to-indigo-950 pb-10 transition-colors duration-500">
-      {/* Dynamic Background Mesh */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-60 dark:opacity-30">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-200 dark:bg-purple-900/40 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob"></div>
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-violet-200 dark:bg-violet-900/40 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-1/3 w-96 h-96 bg-fuchsia-200 dark:bg-fuchsia-900/40 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-4000"></div>
-      </div>
-
-      <style jsx global>{`
-        @keyframes blob {
-          0% {
-            transform: translate(0px, 0px) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-          100% {
-            transform: translate(0px, 0px) scale(1);
-          }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-      `}</style>
-
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
       {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-white/70 dark:bg-gray-900/70 border-b border-white/50 dark:border-gray-800/50 shadow-sm transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
+      <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-purple-500 to-violet-600 dark:from-purple-900 dark:to-violet-800 rounded-xl p-2.5 shadow-lg shadow-purple-500/20 transform transition-transform hover:scale-105">
-                <UserCog className="w-6 h-6 text-white" />
+              <div className="bg-violet-600 dark:bg-violet-500 rounded-lg p-2">
+                <UserCog className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
+                <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
                   Staff Dashboard
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {user.first_name} {user.last_name} • {user.role}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="bg-white/80 dark:bg-gray-800/80 px-3 py-1.5 rounded-lg border border-purple-100 dark:border-purple-900 text-xs text-purple-700 dark:text-purple-400 font-semibold shadow-sm">
-                ID: {user.staff_id}
+            <div className="flex items-center gap-3">
+              <div className="px-2.5 py-1 bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 text-xs font-medium rounded-lg">
+                {user.staff_id}
               </div>
               <NotificationBell userId={user.id} userRole="staff" />
               <ThemeToggle />
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-gray-700 text-purple-700 dark:text-purple-400 rounded-lg border border-purple-200 dark:border-purple-800 hover:border-purple-300 active:scale-95 transition-all shadow-sm hover:shadow-md font-medium text-sm group"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
-                <LogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-                Logout
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </div>
           </div>
@@ -172,29 +139,27 @@ export default function StaffDashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Navigation Tabs */}
         <div className="flex justify-center">
-          <div className="inline-flex bg-white/40 dark:bg-gray-800/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm flex-wrap gap-1">
+          <div className="inline-flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg flex-wrap gap-1">
             <button
               onClick={() => setActiveTab("pharmacy")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === "pharmacy"
-                  ? "bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-md shadow-purple-900/5 transform scale-105"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/50"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <Pill
-                className={`w-4 h-4 ${activeTab === "pharmacy" ? "text-purple-500 dark:text-purple-400" : ""}`}
-              />
+              <Pill className="w-4 h-4" />
               Pharmacy
             </button>
             <button
               onClick={() => setActiveTab("appointments")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === "appointments"
-                  ? "bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-md shadow-purple-900/5 transform scale-105"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/50"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Calendar
@@ -204,10 +169,10 @@ export default function StaffDashboard() {
             </button>
             <button
               onClick={() => setActiveTab("patients")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 activeTab === "patients"
-                  ? "bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-md shadow-purple-900/5 transform scale-105"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/50"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Users
@@ -217,10 +182,10 @@ export default function StaffDashboard() {
             </button>
             <button
               onClick={() => setActiveTab("overview")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 activeTab === "overview"
-                  ? "bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-md shadow-purple-900/5 transform scale-105"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/50"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <UserCog
@@ -234,11 +199,11 @@ export default function StaffDashboard() {
         {/* Tab Content */}
         <div className="anime-in fade-in slide-in-from-bottom-4 duration-500">
           {activeTab === "pharmacy" ? (
-            <div className="bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 dark:border-white/10 overflow-hidden p-6 md:p-8">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden p-6 md:p-8">
               <PharmacyManager staffId={user.staff_id} />
             </div>
           ) : activeTab === "appointments" ? (
-            <div className="bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 dark:border-white/10 overflow-hidden p-6 md:p-8">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden p-6 md:p-8">
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
@@ -292,16 +257,16 @@ export default function StaffDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Stat: Hospital */}
                 {hospitalName && (
-                  <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-4">
-                    <div className="bg-gradient-to-br from-indigo-400 to-blue-500 p-3 rounded-2xl shadow-lg shadow-indigo-500/20 text-white">
+                  <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
+                    <div className="bg-indigo-100 dark:bg-indigo-900/50 p-3 rounded-xl text-indigo-600 dark:text-indigo-400">
                       <Hospital className="w-6 h-6" />
                     </div>
                     <div className="overflow-hidden">
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                         Hospital
                       </p>
                       <p
-                        className="text-lg font-bold text-gray-800 dark:text-gray-100 truncate"
+                        className="text-lg font-bold text-slate-800 dark:text-slate-100 truncate"
                         title={hospitalName}
                       >
                         {hospitalName}
@@ -311,16 +276,16 @@ export default function StaffDashboard() {
                 )}
 
                 {/* Stat: Role */}
-                <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-4">
-                  <div className="bg-gradient-to-br from-purple-400 to-violet-500 p-3 rounded-2xl shadow-lg shadow-purple-500/20 text-white">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
+                  <div className="bg-purple-100 dark:bg-purple-900/50 p-3 rounded-xl text-purple-600 dark:text-purple-400">
                     <Briefcase className="w-6 h-6" />
                   </div>
                   <div className="overflow-hidden">
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                       Role
                     </p>
                     <p
-                      className="text-lg font-bold text-gray-800 dark:text-gray-100 truncate"
+                      className="text-lg font-bold text-slate-800 dark:text-slate-100 truncate"
                       title={user.role}
                     >
                       {user.role}
@@ -329,16 +294,16 @@ export default function StaffDashboard() {
                 </div>
 
                 {/* Stat: Department */}
-                <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-4">
-                  <div className="bg-gradient-to-br from-violet-400 to-indigo-500 p-3 rounded-2xl shadow-lg shadow-violet-500/20 text-white">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
+                  <div className="bg-violet-100 dark:bg-violet-900/50 p-3 rounded-xl text-violet-600 dark:text-violet-400">
                     <Users className="w-6 h-6" />
                   </div>
                   <div className="overflow-hidden">
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                       Department
                     </p>
                     <p
-                      className="text-lg font-bold text-gray-800 dark:text-gray-100 truncate"
+                      className="text-lg font-bold text-slate-800 dark:text-slate-100 truncate"
                       title={user.department}
                     >
                       {user.department}
@@ -348,66 +313,66 @@ export default function StaffDashboard() {
               </div>
 
               {/* Quick Actions Grid */}
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 pl-2 border-l-4 border-purple-500">
+              <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 pl-2 border-l-4 border-purple-500">
                 Staff Tools
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div
                   onClick={() => setActiveTab("pharmacy")}
-                  className="group bg-white/70 dark:bg-gray-800/60 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                  className="group bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-700 transition-colors cursor-pointer"
                 >
                   <div className="flex justify-between items-start mb-4">
-                    <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-xl group-hover:bg-purple-500 group-hover:text-white transition-colors text-purple-600 dark:text-purple-400">
+                    <div className="bg-purple-100 dark:bg-purple-900/50 p-3 rounded-xl text-purple-600 dark:text-purple-400">
                       <FileText className="w-8 h-8" />
                     </div>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">
                     Records Management
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
                     Manage medical records and documentation efficiently.
                   </p>
-                  <span className="text-purple-600 dark:text-purple-400 font-semibold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  <span className="text-purple-600 dark:text-purple-400 font-semibold text-sm flex items-center gap-1">
                     View Records →
                   </span>
                 </div>
 
                 <div
                   onClick={() => setActiveTab("appointments")}
-                  className="group bg-white/70 dark:bg-gray-800/60 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                  className="group bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 hover:border-violet-300 dark:hover:border-violet-700 transition-colors cursor-pointer"
                 >
                   <div className="flex justify-between items-start mb-4">
-                    <div className="bg-violet-100 dark:bg-violet-900/30 p-3 rounded-xl group-hover:bg-violet-500 group-hover:text-white transition-colors text-violet-600 dark:text-violet-400">
+                    <div className="bg-violet-100 dark:bg-violet-900/50 p-3 rounded-xl text-violet-600 dark:text-violet-400">
                       <Calendar className="w-8 h-8" />
                     </div>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">
                     Appointments
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
                     Schedule and manage clinic appointments.
                   </p>
-                  <span className="text-violet-600 dark:text-violet-400 font-semibold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  <span className="text-violet-600 dark:text-violet-400 font-semibold text-sm flex items-center gap-1">
                     Open Calendar →
                   </span>
                 </div>
 
                 <div
                   onClick={() => setActiveTab("patients")}
-                  className="group bg-white/70 dark:bg-gray-800/60 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-6 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                  className="group bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors cursor-pointer"
                 >
                   <div className="flex justify-between items-start mb-4">
-                    <div className="bg-indigo-100 dark:bg-indigo-900/30 p-3 rounded-xl group-hover:bg-indigo-500 group-hover:text-white transition-colors text-indigo-600 dark:text-indigo-400">
+                    <div className="bg-indigo-100 dark:bg-indigo-900/50 p-3 rounded-xl text-indigo-600 dark:text-indigo-400">
                       <Users className="w-8 h-8" />
                     </div>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">
                     Patient Directory
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
                     Access detailed patient information and contacts.
                   </p>
-                  <span className="text-indigo-600 dark:text-indigo-400 font-semibold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  <span className="text-indigo-600 dark:text-indigo-400 font-semibold text-sm flex items-center gap-1">
                     Search Patients →
                   </span>
                 </div>

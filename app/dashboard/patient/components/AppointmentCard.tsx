@@ -124,7 +124,7 @@ export default function AppointmentCard({
   const canChat = ["scheduled", "completed"].includes(appointment.status);
 
   return (
-    <div className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-red-300 dark:hover:border-red-800 transition-all shadow-sm dark:shadow-black/20">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 hover:border-slate-300 dark:hover:border-slate-600 transition-all">
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
@@ -232,9 +232,9 @@ export default function AppointmentCard({
         {canStartCall && (
           <button
             onClick={handleStartVideoCall}
-            className="w-full px-4 py-3 mb-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+            className="w-full px-4 py-2.5 mb-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
           >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M15.5 1h-8C6.12 1 5 2.12 5 3.5v17C5 21.88 6.12 23 7.5 23h8c1.38 0 2.5-1.12 2.5-2.5v-17C18 2.12 16.88 1 15.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z" />
             </svg>
             Join Video Call (Zoom)
@@ -244,7 +244,7 @@ export default function AppointmentCard({
         {canChat && (
           <button
             onClick={handleStartChat}
-            className="w-full px-4 py-3 mb-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2"
+            className="w-full px-4 py-2.5 mb-2 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             <MessageSquare className="w-4 h-4" />
             Chat with Doctor

@@ -29,6 +29,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import NotificationBell from "@/app/dashboard/components/NotificationBell";
 import CreateUserModal from "@/components/CreateUserModal";
 import ViewUsersModal from "@/components/ViewUsersModal";
+import SecurityMonitoringPanel from "./components/SecurityMonitoringPanel";
 
 export default function AdminDashboard() {
   const hasLogged = useRef(false);
@@ -38,7 +39,7 @@ export default function AdminDashboard() {
   const [appointmentLogs, setAppointmentLogs] = useState<AppointmentLog[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [loadingAppointmentLogs, setLoadingAppointmentLogs] = useState(true);
-  const [activeLogTab, setActiveLogTab] = useState<"system" | "appointments">(
+  const [activeLogTab, setActiveLogTab] = useState<"system" | "appointments" | "security">(
     "system",
   );
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
@@ -380,6 +381,16 @@ export default function AdminDashboard() {
             >
               Appointments
             </button>
+            <button
+              onClick={() => setActiveLogTab("security")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeLogTab === "security"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              }`}
+            >
+              Security
+            </button>
           </div>
 
           {/* Filters */}
@@ -669,6 +680,13 @@ export default function AdminDashboard() {
                 </table>
               </div>
             ))}
+
+          {/* Security Monitoring */}
+          {activeLogTab === "security" && (
+            <div className="p-4">
+              <SecurityMonitoringPanel adminId={user?.id || "admin"} />
+            </div>
+          )}
         </div>
       </main>
 

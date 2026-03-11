@@ -171,47 +171,39 @@ export default function AppointmentsCalendar({
       {/* Card Preview */}
       <div
         onClick={() => setIsOpen(true)}
-        className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl p-5 shadow-lg shadow-gray-200/50 dark:shadow-black/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group"
+        className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 cursor-pointer hover:border-purple-300 dark:hover:border-purple-800 transition-colors"
       >
-        <div className="flex justify-between items-start mb-4">
-          <div className="bg-gradient-to-br from-purple-400 to-pink-500 p-3 rounded-xl shadow-md shadow-purple-500/20 text-white group-hover:scale-105 transition-transform">
-            <Calendar className="w-6 h-6" />
+        <div className="flex items-center gap-3 mb-3">
+          <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+            <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           </div>
-          <span className="text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded-full border border-purple-100 dark:border-purple-800">
-            Today
-          </span>
+          <div>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              {todayStats.total}
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Today&apos;s Schedule
+            </p>
+          </div>
         </div>
 
-        <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">
-          Today&apos;s Schedule
-        </h3>
-
-        <div className="flex items-baseline gap-2 mb-3">
-          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-            {todayStats.total}
-          </p>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            appointments
-          </span>
-        </div>
-
-        <div className="flex gap-3 text-xs">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
-            <span className="text-gray-600 dark:text-gray-400">
+        <div className="flex gap-4 text-xs mb-3">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+            <span className="text-slate-600 dark:text-slate-400">
               {todayStats.completed} done
             </span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-red-400"></div>
-            <span className="text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-red-500"></div>
+            <span className="text-slate-600 dark:text-slate-400">
               {todayStats.cancelled} cancelled
             </span>
           </div>
         </div>
 
-        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-          <p className="text-xs text-purple-600 dark:text-purple-400 font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+          <p className="text-xs text-purple-600 dark:text-purple-400 font-medium flex items-center gap-1 hover:gap-2 transition-all">
             View Calendar
             <ChevronRight className="w-3 h-3" />
           </p>

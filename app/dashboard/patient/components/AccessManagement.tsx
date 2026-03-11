@@ -139,61 +139,59 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
   ).length;
 
   return (
-    <div className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-md rounded-2xl border border-white/60 dark:border-white/10 shadow-lg overflow-hidden">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-500 to-teal-500">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Shield className="w-6 h-6 text-white" />
-            <div>
-              <h2 className="text-lg font-bold text-white">
-                Data Access Management
-              </h2>
-              <p className="text-sm text-white/80">
-                Control who can view your medical records
-              </p>
-            </div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
+            <Shield className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <button
-            onClick={fetchAccessRecords}
-            className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
-            title="Refresh"
-          >
-            <RefreshCw
-              className={`w-5 h-5 text-white ${isLoading ? "animate-spin" : ""}`}
-            />
-          </button>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Data Access Management
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Control who can view your medical records
+            </p>
+          </div>
         </div>
+        <button
+          onClick={fetchAccessRecords}
+          className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          title="Refresh"
+        >
+          <RefreshCw
+            className={`w-5 h-5 ${isLoading ? "animate-spin" : ""}`}
+          />
+        </button>
       </div>
 
       {/* Summary Stats */}
-      <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-              <Eye className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {activeAccessCount}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Active Access
-              </p>
-            </div>
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
+            <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {accessRecords.length}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Total Records
-              </p>
-            </div>
+          <div>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">
+              {activeAccessCount}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Active Access
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+            <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">
+              {accessRecords.length}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Total Records
+            </p>
           </div>
         </div>
       </div>
@@ -217,59 +215,44 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
       )}
 
       {/* Access Records List */}
-      <div className="p-6">
+      {/* Access Records List */}
+      <div className="space-y-3">
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400"></div>
           </div>
         ) : accessRecords.length === 0 ? (
           <div className="text-center py-10">
-            <Shield className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-            <p className="text-gray-500 dark:text-gray-400">
+            <Shield className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+            <p className="text-slate-500 dark:text-slate-400">
               No access records found
             </p>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
               When you share health records with doctors, they will appear here
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
             {accessRecords.map((record) => (
               <div
                 key={record.id}
-                className={`rounded-xl border p-4 transition-all ${
-                  record.shareHealthProfile
-                    ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10"
-                    : "border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30"
-                }`}
+                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 p-4 transition-all hover:border-slate-300 dark:hover:border-slate-600"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        record.shareHealthProfile
-                          ? "bg-emerald-100 dark:bg-emerald-900/30"
-                          : "bg-gray-200 dark:bg-gray-700"
-                      }`}
-                    >
-                      <User
-                        className={`w-5 h-5 ${
-                          record.shareHealthProfile
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-gray-500 dark:text-gray-400"
-                        }`}
-                      />
+                    <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+                      <User className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white">
+                      <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
                         Dr. {record.doctorName}
                       </h3>
-                      <div className="flex items-center gap-2 mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        <Hospital className="w-4 h-4" />
+                      <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        <Hospital className="w-3.5 h-3.5" />
                         <span>{record.hospitalName}</span>
                       </div>
-                      <div className="flex items-center gap-2 mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        <Clock className="w-4 h-4" />
+                      <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                        <Clock className="w-3.5 h-3.5" />
                         <span>
                           Appointment:{" "}
                           {new Date(
@@ -280,13 +263,12 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    {/* Status Badge */}
+                  <div className="flex items-center gap-2">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      className={`px-2.5 py-1 rounded-lg text-xs font-medium ${
                         record.shareHealthProfile
-                          ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                          : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                          ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                          : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
                       }`}
                     >
                       {record.shareHealthProfile
@@ -294,7 +276,6 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
                         : "Access Revoked"}
                     </span>
 
-                    {/* Action Button */}
                     {record.appointmentStatus === "scheduled" &&
                       (record.shareHealthProfile ? (
                         <button
@@ -302,12 +283,12 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
                             revokeAccess(record.id, record.doctorName)
                           }
                           disabled={revoking === record.id}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
                         >
                           {revoking === record.id ? (
-                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                           ) : (
-                            <UserX className="w-4 h-4" />
+                            <UserX className="w-3.5 h-3.5" />
                           )}
                           Revoke
                         </button>
@@ -317,12 +298,12 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
                             grantAccess(record.id, record.doctorName)
                           }
                           disabled={revoking === record.id}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
                         >
                           {revoking === record.id ? (
-                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                           ) : (
-                            <CheckCircle className="w-4 h-4" />
+                            <CheckCircle className="w-3.5 h-3.5" />
                           )}
                           Grant
                         </button>
@@ -336,9 +317,9 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
       </div>
 
       {/* Footer Info */}
-      <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700">
-        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4" />
+      <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+        <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-2">
+          <AlertCircle className="w-3.5 h-3.5" />
           Revoking access will prevent the doctor from viewing your health
           records during the appointment.
         </p>

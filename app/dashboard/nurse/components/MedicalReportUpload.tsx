@@ -15,7 +15,6 @@ import {
   User,
   Loader2,
   FileCheck,
-  Sparkles,
 } from "lucide-react";
 import { MedicalReportType } from "@/lib/database.types";
 
@@ -158,322 +157,284 @@ export function MedicalReportUpload({ nurseId }: MedicalReportUploadProps) {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-green-600 to-teal-700 p-8 shadow-2xl">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30" />
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-teal-400/20 rounded-full blur-2xl" />
-        <div className="relative flex items-center gap-5">
-          <div className="rounded-2xl bg-white/20 p-4 backdrop-blur-sm ring-1 ring-white/30 shadow-lg">
-            <FileUp className="w-8 h-8 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-3xl font-bold text-white">
-                Upload Medical Report
-              </h2>
-            </div>
-            <p className="text-green-100 mt-1">
-              Securely upload patient diagnostic documents and lab results
-            </p>
-          </div>
+      <div className="flex items-center gap-4">
+        <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
+          <FileUp className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+            Upload Medical Report
+          </h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Securely upload patient diagnostic documents and lab results
+          </p>
         </div>
       </div>
 
       {/* Alerts */}
       {success && (
-        <div className="rounded-xl border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-5 flex gap-4 shadow-sm animate-in slide-in-from-top duration-300">
-          <div className="rounded-full bg-green-100 p-2 h-fit">
-            <CheckCircle className="text-green-600 w-5 h-5" />
-          </div>
+        <div className="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-4 flex gap-3 items-start">
+          <CheckCircle className="text-emerald-600 dark:text-emerald-400 w-5 h-5 mt-0.5 flex-shrink-0" />
           <div>
-            <h4 className="font-semibold text-green-900">Upload Successful!</h4>
-            <p className="text-sm text-green-700 mt-0.5">
-              Medical report has been securely uploaded and is now available in
-              the patient record.
+            <p className="font-medium text-emerald-900 dark:text-emerald-300 text-sm">
+              Upload Successful!
+            </p>
+            <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">
+              Medical report has been securely uploaded and is now available in the patient record.
             </p>
           </div>
         </div>
       )}
 
       {error && (
-        <div className="rounded-xl border-2 border-red-200 bg-gradient-to-r from-red-50 to-rose-50 p-5 flex gap-4 shadow-sm animate-in slide-in-from-top duration-300">
-          <div className="rounded-full bg-red-100 p-2 h-fit">
-            <AlertCircle className="text-red-600 w-5 h-5" />
-          </div>
+        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4 flex gap-3 items-start">
+          <AlertCircle className="text-red-600 dark:text-red-400 w-5 h-5 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
-            <h4 className="font-semibold text-red-900">Upload Failed</h4>
-            <p className="text-sm text-red-700 mt-0.5">{error}</p>
+            <p className="font-medium text-red-900 dark:text-red-300 text-sm">
+              Upload Failed
+            </p>
+            <p className="text-xs text-red-700 dark:text-red-400 mt-0.5">{error}</p>
           </div>
           <button
             onClick={() => setError(null)}
-            className="text-red-400 hover:text-red-600 transition-colors"
+            className="text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors"
             aria-label="Dismiss error"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {/* Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-2xl bg-white shadow-xl border border-gray-100 overflow-hidden"
-      >
-        {/* Form Header */}
-        <div className="bg-gradient-to-r from-gray-50 to-slate-50 px-8 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-            <ClipboardList className="w-5 h-5 text-emerald-500" />
-            Report Details
-          </h3>
-        </div>
-
-        <div className="p-8 space-y-8">
-          {/* Two Column Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Patient ID */}
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <User className="w-4 h-4 text-gray-400" />
-                Patient ID <span className="text-red-500">*</span>
-              </label>
-              <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-emerald-500 transition-colors" />
-                <input
-                  value={patientId}
-                  onChange={(e) => setPatientId(e.target.value)}
-                  className="w-full rounded-xl border-2 border-gray-200 pl-12 pr-4 py-3.5 text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-200"
-                  placeholder="Enter patient ID (e.g., P001)"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Report Type */}
-            <div className="space-y-2">
-              <label
-                className="flex items-center gap-2 text-sm font-medium text-gray-700"
-                htmlFor="report-type"
-              >
-                <FileText className="w-4 h-4 text-gray-400" />
-                Report Type <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="report-type"
-                value={reportType}
-                onChange={(e) =>
-                  setReportType(e.target.value as MedicalReportType)
-                }
-                className="w-full rounded-xl border-2 border-gray-200 px-4 py-3.5 text-gray-900 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-200 appearance-none bg-white cursor-pointer"
-                aria-label="Report Type"
-              >
-                {REPORT_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Report Name */}
-            <div className="space-y-2">
-              <label
-                className="flex items-center gap-2 text-sm font-medium text-gray-700"
-                htmlFor="report-name"
-              >
-                <FileCheck className="w-4 h-4 text-gray-400" />
-                Report Name <span className="text-red-500">*</span>
-              </label>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Two Column Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Patient ID */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+              <User className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+              Patient ID <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 w-4 h-4" />
               <input
-                id="report-name"
-                value={reportName}
-                onChange={(e) => setReportName(e.target.value)}
-                className="w-full rounded-xl border-2 border-gray-200 px-4 py-3.5 text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-200"
-                placeholder="e.g., Complete Blood Count (CBC)"
+                value={patientId}
+                onChange={(e) => setPatientId(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                placeholder="Enter patient ID (e.g., P001)"
                 required
               />
             </div>
-
-            {/* Date */}
-            <div className="space-y-2">
-              <label
-                className="flex items-center gap-2 text-sm font-medium text-gray-700"
-                htmlFor="report-date"
-              >
-                <Calendar className="w-4 h-4 text-gray-400" />
-                Report Date
-              </label>
-              <input
-                id="report-date"
-                type="date"
-                value={reportDate}
-                onChange={(e) => setReportDate(e.target.value)}
-                className="w-full rounded-xl border-2 border-gray-200 px-4 py-3.5 text-gray-900 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-200"
-                aria-label="Report Date"
-              />
-            </div>
           </div>
 
-          {/* Description - Full Width */}
-          <div className="space-y-2">
-            <label
-              className="flex items-center gap-2 text-sm font-medium text-gray-700"
-              htmlFor="description"
-            >
-              <ClipboardList className="w-4 h-4 text-gray-400" />
-              Description
+          {/* Report Type */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+              <FileText className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+              Report Type <span className="text-red-500">*</span>
             </label>
-            <textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-              className="w-full rounded-xl border-2 border-gray-200 px-4 py-3.5 text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-200 resize-none"
-              placeholder="Brief description of the report contents..."
+            <select
+              value={reportType}
+              onChange={(e) =>
+                setReportType(e.target.value as MedicalReportType)
+              }
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all appearance-none cursor-pointer"
+              aria-label="Report Type"
+            >
+              {REPORT_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Report Name */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+              <FileCheck className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+              Report Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              value={reportName}
+              onChange={(e) => setReportName(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+              placeholder="e.g., Complete Blood Count (CBC)"
+              required
             />
           </div>
 
-          {/* Notes */}
-          <div className="space-y-2">
-            <label
-              className="flex items-center gap-2 text-sm font-medium text-gray-700"
-              htmlFor="notes"
-            >
-              <StickyNote className="w-4 h-4 text-gray-400" />
-              Additional Notes
+          {/* Date */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+              <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+              Report Date
             </label>
-            <textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              className="w-full rounded-xl border-2 border-gray-200 px-4 py-3.5 text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-200 resize-none"
-              placeholder="Any additional notes, observations, or special instructions..."
+            <input
+              type="date"
+              value={reportDate}
+              onChange={(e) => setReportDate(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+              aria-label="Report Date"
             />
-          </div>
-
-          {/* File Upload Section */}
-          <div className="space-y-3">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <Upload className="w-4 h-4 text-gray-400" />
-              Upload File <span className="text-red-500">*</span>
-            </label>
-
-            {!file ? (
-              <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                className={`relative rounded-2xl border-2 border-dashed transition-all duration-300 ${
-                  isDragging
-                    ? "border-emerald-500 bg-emerald-50 scale-[1.02]"
-                    : "border-gray-300 bg-gradient-to-b from-gray-50 to-white hover:border-emerald-400 hover:bg-emerald-50/50"
-                }`}
-              >
-                <label className="flex cursor-pointer flex-col items-center justify-center p-10">
-                  <div
-                    className={`rounded-2xl p-4 mb-4 transition-all duration-300 ${
-                      isDragging ? "bg-emerald-100" : "bg-gray-100"
-                    }`}
-                  >
-                    <Upload
-                      className={`w-10 h-10 transition-colors duration-300 ${
-                        isDragging ? "text-emerald-600" : "text-gray-400"
-                      }`}
-                    />
-                  </div>
-                  <p className="text-lg font-medium text-gray-700 mb-1">
-                    {isDragging
-                      ? "Drop your file here"
-                      : "Drag & drop your file here"}
-                  </p>
-                  <p className="text-sm text-gray-500 mb-4">
-                    or click to browse from your computer
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {["PDF", "JPG", "PNG", "DICOM"].map((format) => (
-                      <span
-                        key={format}
-                        className="px-3 py-1 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-600 shadow-sm"
-                      >
-                        {format}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-400 mt-4">
-                    Maximum file size: 50MB
-                  </p>
-                  <input
-                    ref={fileInputRef}
-                    id="file-upload"
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png,.dcm,.dicom"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    required
-                  />
-                </label>
-              </div>
-            ) : (
-              <div className="rounded-2xl bg-gradient-to-r from-emerald-50 via-green-50 to-teal-50 border-2 border-emerald-200 p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-4 items-center">
-                    <div className="rounded-xl bg-white p-3 shadow-sm border border-emerald-100">
-                      <span className="text-3xl">{getFileIcon()}</span>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900 mb-0.5">
-                        {file.name}
-                      </p>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm text-gray-600">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
-                        </span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                        <span className="text-sm text-green-600 font-medium">
-                          Ready to upload
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={clearFile}
-                    className="rounded-xl p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
-                    title="Remove file"
-                    aria-label="Remove file"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div className="bg-gradient-to-r from-gray-50 to-slate-50 px-8 py-6 border-t border-gray-100">
+        {/* Description */}
+        <div className="space-y-1.5">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+            <ClipboardList className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+            Description
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={2}
+            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none"
+            placeholder="Brief description of the report contents..."
+          />
+        </div>
+
+        {/* Notes */}
+        <div className="space-y-1.5">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+            <StickyNote className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+            Additional Notes
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none"
+            placeholder="Any additional notes, observations, or special instructions..."
+          />
+        </div>
+
+        {/* File Upload */}
+        <div className="space-y-1.5">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+            <Upload className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+            Upload File <span className="text-red-500">*</span>
+          </label>
+
+          {!file ? (
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`relative rounded-lg border-2 border-dashed transition-all duration-200 ${
+                isDragging
+                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
+                  : "border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50 hover:border-emerald-400 dark:hover:border-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10"
+              }`}
+            >
+              <label className="flex cursor-pointer flex-col items-center justify-center py-10 px-6">
+                <div
+                  className={`rounded-xl p-3 mb-3 transition-all duration-200 ${
+                    isDragging
+                      ? "bg-emerald-100 dark:bg-emerald-800/40"
+                      : "bg-slate-100 dark:bg-slate-700"
+                  }`}
+                >
+                  <Upload
+                    className={`w-7 h-7 transition-colors duration-200 ${
+                      isDragging
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-slate-400 dark:text-slate-500"
+                    }`}
+                  />
+                </div>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {isDragging
+                    ? "Drop your file here"
+                    : "Drag & drop your file here"}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                  or click to browse from your computer
+                </p>
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {["PDF", "JPG", "PNG", "DICOM"].map((format) => (
+                    <span
+                      key={format}
+                      className="px-2.5 py-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full text-[11px] font-medium text-slate-500 dark:text-slate-400"
+                    >
+                      {format}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-3">
+                  Maximum file size: 50MB
+                </p>
+                <input
+                  ref={fileInputRef}
+                  id="file-upload"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.dcm,.dicom"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  required
+                />
+              </label>
+            </div>
+          ) : (
+            <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex gap-3 items-center">
+                  <div className="rounded-lg bg-white dark:bg-slate-800 p-2.5 border border-emerald-100 dark:border-emerald-800">
+                    <span className="text-2xl">{getFileIcon()}</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-900 dark:text-white text-sm">
+                      {file.name}
+                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-slate-600 dark:text-slate-400">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </span>
+                      <span className="w-1 h-1 rounded-full bg-emerald-500" />
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                        Ready to upload
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={clearFile}
+                  className="rounded-lg p-1.5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                  title="Remove file"
+                  aria-label="Remove file"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Submit */}
+        <div className="pt-2 flex flex-col items-center gap-2">
           <button
             type="submit"
             disabled={isUploading || !file || !patientId || !reportName}
-            className="w-full rounded-xl bg-gradient-to-r from-emerald-500 via-green-600 to-teal-600 py-4 px-6 font-semibold text-white shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg flex items-center justify-center gap-3"
+            className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 py-3 px-6 text-sm font-semibold text-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isUploading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Uploading Report...</span>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Uploading Report...
               </>
             ) : (
               <>
-                <Upload className="w-5 h-5" />
-                <span>Upload Medical Report</span>
+                <Upload className="w-4 h-4" />
+                Upload Medical Report
               </>
             )}
           </button>
-          <p className="text-center text-xs text-gray-500 mt-3">
-            Files are encrypted and stored securely in compliance with
-            healthcare regulations
+          <p className="text-[11px] text-slate-400 dark:text-slate-500">
+            Files are encrypted and stored securely in compliance with healthcare regulations
           </p>
         </div>
       </form>
