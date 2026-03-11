@@ -43,7 +43,11 @@ export default function MedicalHistoryViewer({
     try {
       const session = await getSession();
       const doctorId = session?.user?.doctor_id || patientId;
-      const data = await getPatientMedicalRecords(patientId, "doctor", doctorId);
+      const data = await getPatientMedicalRecords(
+        patientId,
+        "doctor",
+        doctorId,
+      );
       setRecords(data);
     } catch (err) {
       console.error("Error loading medical history:", err);

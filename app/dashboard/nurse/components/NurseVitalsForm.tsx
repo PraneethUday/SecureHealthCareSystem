@@ -609,7 +609,7 @@ export default function NurseVitalsForm({
                 value={formData.stress_level}
                 onChange={handleChange}
                 title="Stress Level"
-              className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
               />
               <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
                 <span>Low (1)</span>
@@ -724,7 +724,9 @@ function VitalInput({
   return (
     <div className="space-y-1.5">
       <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-        <span className={`p-1 rounded-lg ${colorClasses[color] || "text-slate-400 bg-slate-100"}`}>
+        <span
+          className={`p-1 rounded-lg ${colorClasses[color] || "text-slate-400 bg-slate-100"}`}
+        >
           {icon}
         </span>
         {label}

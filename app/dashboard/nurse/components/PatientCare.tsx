@@ -472,13 +472,17 @@ export function PatientCare({ nurseId }: PatientCareProps) {
                 <h2 className="text-base font-semibold text-slate-900 dark:text-white">
                   Patient Vitals
                 </h2>
-                <p className="text-xs text-slate-500">{showVitalsViewer.patientName}</p>
+                <p className="text-xs text-slate-500">
+                  {showVitalsViewer.patientName}
+                </p>
               </div>
               <button
                 onClick={() => setShowVitalsViewer(null)}
                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
-                <span className="text-slate-500 text-lg font-bold leading-none">&times;</span>
+                <span className="text-slate-500 text-lg font-bold leading-none">
+                  &times;
+                </span>
               </button>
             </div>
             <div className="p-5 overflow-y-auto max-h-[calc(90vh-70px)]">

@@ -81,7 +81,9 @@ export default function PatientProfileModal({
             {loading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="w-7 h-7 border-2 border-rose-400 border-t-transparent rounded-full animate-spin mb-3" />
-                <p className="text-sm text-slate-500">Loading profile data...</p>
+                <p className="text-sm text-slate-500">
+                  Loading profile data...
+                </p>
               </div>
             ) : error ? (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 p-4 rounded-xl flex items-center gap-3">
@@ -146,7 +148,8 @@ export default function PatientProfileModal({
                   icon={<Activity className="w-4 h-4 text-rose-500" />}
                   title="Current Symptoms & Concerns"
                   content={
-                    profile.health_profile?.symptoms || "No current concerns reported"
+                    profile.health_profile?.symptoms ||
+                    "No current concerns reported"
                   }
                   accent="rose"
                   fullWidth
@@ -184,12 +187,16 @@ function Section({
   fullWidth?: boolean;
 }) {
   const accentMap: Record<string, string> = {
-    amber: "border-amber-100 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/10",
+    amber:
+      "border-amber-100 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/10",
     blue: "border-blue-100 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-900/10",
-    emerald: "border-emerald-100 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/10",
-    purple: "border-purple-100 dark:border-purple-800/50 bg-purple-50 dark:bg-purple-900/10",
+    emerald:
+      "border-emerald-100 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/10",
+    purple:
+      "border-purple-100 dark:border-purple-800/50 bg-purple-50 dark:bg-purple-900/10",
     rose: "border-rose-100 dark:border-rose-800/50 bg-rose-50 dark:bg-rose-900/10",
-    slate: "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50",
+    slate:
+      "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50",
   };
 
   return (
