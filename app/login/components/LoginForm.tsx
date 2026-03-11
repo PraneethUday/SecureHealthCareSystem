@@ -1,5 +1,6 @@
 import { Mail, Lock, IdCard } from "lucide-react";
 import { ThemeClasses, UserRole } from "../types";
+import Link from "next/link";
 
 interface LoginFormProps {
   identifier: string;
@@ -34,7 +35,20 @@ export default function LoginForm({
     <form onSubmit={onSubmit} className={isPatient ? "space-y-3" : "space-y-5"}>
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error}
+          <div className="flex flex-col gap-1">
+            <span>{error}</span>
+            {isPatient && (
+              <div className="mt-1 pt-1 border-t border-red-100 flex items-center gap-1.5 font-medium">
+                <span>New user?</span>
+                <Link
+                  href="/register"
+                  className="text-red-800 underline hover:text-red-900 transition-colors"
+                >
+                  Create an account
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
