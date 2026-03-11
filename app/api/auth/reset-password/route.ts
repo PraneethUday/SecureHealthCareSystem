@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import bcrypt from "bcryptjs";
+import { hashPassword } from "@/lib/security";
 import crypto from "crypto";
 
 // Define user tables and their email fields
@@ -104,24 +104,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate password strength
-    if (password.length < 8) {
+    // Validate password strength (using 12 as per security requirement)
+    if (password.length < 12) {
       return NextResponse.json(
-        { error: "Password must be at least 8 characters long" },
+        { error: "Password must be at least 12 characters long for high security" },
         { status: 400 },
       );
     }
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // Hash the new password using project's security utility
+    const hashedPasswordHash = await hashPassword(password);
 
     // Update user's password and clear reset token
+    // We update password_hash and clear the legacy password field
     const { error: updateError } = await supabase
       .from(userTable)
       .update({
-        password: hashedPassword,
+        password_hash: hashedPasswordHash,
+        password: null, // Clear legacy plaintext/incorrectly hashed password
         reset_token: null,
         reset_token_expiry: null,
+        password_changed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq("id", user.id);
