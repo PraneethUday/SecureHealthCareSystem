@@ -92,7 +92,12 @@ export async function login(
         details: "Invalid credentials",
         status: "failure",
       });
-      return { success: false, message: "Invalid credentials" };
+      return {
+        success: false,
+        message: role === "patient"
+          ? "Account not found. Please create an account if you are a new user."
+          : "Invalid credentials"
+      };
     }
 
     // Check if account is locked using new centralized system
