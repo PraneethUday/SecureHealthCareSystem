@@ -158,20 +158,10 @@ export default function NurseVitalsForm({
     setError(null);
 
     try {
-      // Resolve nurse UUID — nurseId prop is the string ID (e.g. "N001"), not the UUID
-      let nurseUUID: string = nurseId;
-      const { data: nurseRow } = await supabase
-        .from("nurses")
-        .select("id")
-        .eq("nurse_id", nurseId)
-        .single();
-      if (nurseRow?.id) nurseUUID = nurseRow.id;
-
       // Convert string values to appropriate types
       const vitalsData: Record<string, unknown> = {
         patient_id: patientId,
         recorded_by: "nurse",
-        nurse_id: nurseUUID,
       };
 
       // Only include non-empty fields
