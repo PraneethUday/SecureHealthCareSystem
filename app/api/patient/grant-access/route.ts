@@ -61,7 +61,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Update the appointment to grant access (with optional expiry)
-    const updatePayload: Record<string, unknown> = { share_health_profile: true };
+    const updatePayload: Record<string, unknown> = {
+      share_health_profile: true,
+    };
     if (expiresAt) {
       updatePayload.access_expires_at = expiresAt;
     } else {

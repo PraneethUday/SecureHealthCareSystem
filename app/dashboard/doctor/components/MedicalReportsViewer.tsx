@@ -223,7 +223,9 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3">
           <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
           <div>
-            <h3 className="text-sm font-semibold text-red-900 dark:text-red-300">Error</h3>
+            <h3 className="text-sm font-semibold text-red-900 dark:text-red-300">
+              Error
+            </h3>
             <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
           </div>
         </div>
@@ -244,9 +246,8 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
               appointment with you.
             </p>
             <p className="text-sm text-amber-600 dark:text-amber-500 mt-1">
-              The patient{" "}
-              <span className="font-medium">{searchPatientId}</span> has not
-              booked any appointments with you.
+              The patient <span className="font-medium">{searchPatientId}</span>{" "}
+              has not booked any appointments with you.
             </p>
           </div>
         </div>
@@ -256,12 +257,15 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-12">
           <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">Loading reports...</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Loading reports...
+          </p>
         </div>
       ) : filteredReports.length > 0 ? (
         <div className="space-y-3">
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-            {filteredReports.length} report{filteredReports.length !== 1 ? "s" : ""} found
+            {filteredReports.length} report
+            {filteredReports.length !== 1 ? "s" : ""} found
           </p>
 
           <div className="space-y-3">
@@ -308,7 +312,9 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
                         <User className="w-3.5 h-3.5 flex-shrink-0" />
                         <span className="truncate">
                           {report.patient_name}{" "}
-                          <span className="text-slate-400">({report.patient_id})</span>
+                          <span className="text-slate-400">
+                            ({report.patient_id})
+                          </span>
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
@@ -338,9 +344,8 @@ export function MedicalReportsViewer({ doctorId }: MedicalReportsViewerProps) {
 
                     {/* Upload Info */}
                     <p className="text-xs text-slate-400 dark:text-slate-500">
-                      Uploaded{" "}
-                      {new Date(report.uploaded_at).toLocaleString()} by{" "}
-                      {report.uploaded_by_role}
+                      Uploaded {new Date(report.uploaded_at).toLocaleString()}{" "}
+                      by {report.uploaded_by_role}
                     </p>
                   </div>
 

@@ -55,8 +55,11 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
     text: string;
   } | null>(null);
   // Grant / set-expiry modal state
-  const [grantingDoctor, setGrantingDoctor] = useState<DoctorAccessEntry | null>(null);
-  const [editingExpiry, setEditingExpiry] = useState<DoctorAccessEntry | null>(null);
+  const [grantingDoctor, setGrantingDoctor] =
+    useState<DoctorAccessEntry | null>(null);
+  const [editingExpiry, setEditingExpiry] = useState<DoctorAccessEntry | null>(
+    null,
+  );
   const [expiresAt, setExpiresAt] = useState("");
 
   const fetchAccessRecords = useCallback(async () => {
@@ -94,7 +97,9 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
           doctorName: record.doctorName,
           hospitalName: record.hospitalName,
           hasActiveAccess: record.shareHealthProfile,
-          accessExpiresAt: record.shareHealthProfile ? record.accessExpiresAt : null,
+          accessExpiresAt: record.shareHealthProfile
+            ? record.accessExpiresAt
+            : null,
           activeAppointmentId: record.shareHealthProfile ? record.id : null,
           latestAppointmentDate: record.appointmentDate,
           hasUpcoming: isUpcoming,
@@ -146,7 +151,12 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
         setAccessRecords((prev) =>
           prev.map((r) =>
             r.doctorId === entry.doctorId
-              ? { ...r, shareHealthProfile: false, accessExpiresAt: null, status: "revoked" }
+              ? {
+                  ...r,
+                  shareHealthProfile: false,
+                  accessExpiresAt: null,
+                  status: "revoked",
+                }
               : r,
           ),
         );
@@ -181,7 +191,10 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
         const expiryNote = expiresAt
           ? ` (expires ${new Date(expiresAt).toLocaleDateString()})`
           : "";
-        showMessage("success", `Access granted to Dr. ${grantingDoctor.doctorName}${expiryNote}`);
+        showMessage(
+          "success",
+          `Access granted to Dr. ${grantingDoctor.doctorName}${expiryNote}`,
+        );
         // Refresh to get the updated appointmentId and expiry from server
         await fetchAccessRecords();
       } else {
@@ -280,8 +293,12 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
             <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <p className="text-xl font-bold text-slate-900 dark:text-white">{activeCount}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Active Access</p>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">
+              {activeCount}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Active Access
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -289,8 +306,12 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
             <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <p className="text-xl font-bold text-slate-900 dark:text-white">{doctorEntries.length}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Doctors</p>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">
+              {doctorEntries.length}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Doctors
+            </p>
           </div>
         </div>
       </div>
@@ -322,7 +343,9 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
         ) : doctorEntries.length === 0 ? (
           <div className="text-center py-10">
             <Shield className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-            <p className="text-slate-500 dark:text-slate-400">No access records found</p>
+            <p className="text-slate-500 dark:text-slate-400">
+              No access records found
+            </p>
             <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
               When you share health records with doctors, they will appear here
             </p>
@@ -355,7 +378,9 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
                         <Calendar className="w-3 h-3 flex-shrink-0" />
                         <span>
                           Last appt:{" "}
-                          {new Date(entry.latestAppointmentDate).toLocaleDateString()}
+                          {new Date(
+                            entry.latestAppointmentDate,
+                          ).toLocaleDateString()}
                           {entry.appointmentCount > 1 && (
                             <span className="ml-1 text-slate-400">
                               (+{entry.appointmentCount - 1} more)
@@ -390,7 +415,9 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
                             setEditingExpiry(entry);
                             setExpiresAt(
                               entry.accessExpiresAt
-                                ? new Date(entry.accessExpiresAt).toISOString().slice(0, 16)
+                                ? new Date(entry.accessExpiresAt)
+                                    .toISOString()
+                                    .slice(0, 16)
                                 : "",
                             );
                           }}
@@ -460,7 +487,10 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
                 Grant Access
               </h3>
               <button
-                onClick={() => { setGrantingDoctor(null); setExpiresAt(""); }}
+                onClick={() => {
+                  setGrantingDoctor(null);
+                  setExpiresAt("");
+                }}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <X className="w-4 h-4" />
@@ -499,7 +529,8 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
                 </div>
                 {!expiresAt && (
                   <p className="text-xs text-slate-400 mt-1">
-                    Leave blank to grant access until manually revoked or appointment ends.
+                    Leave blank to grant access until manually revoked or
+                    appointment ends.
                   </p>
                 )}
               </div>
@@ -536,7 +567,10 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
 
               <div className="flex gap-3 pt-1">
                 <button
-                  onClick={() => { setGrantingDoctor(null); setExpiresAt(""); }}
+                  onClick={() => {
+                    setGrantingDoctor(null);
+                    setExpiresAt("");
+                  }}
                   className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   Cancel
@@ -568,7 +602,10 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
                 Set Time Limit
               </h3>
               <button
-                onClick={() => { setEditingExpiry(null); setExpiresAt(""); }}
+                onClick={() => {
+                  setEditingExpiry(null);
+                  setExpiresAt("");
+                }}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <X className="w-4 h-4" />
@@ -644,7 +681,10 @@ export default function AccessManagement({ patientId }: AccessManagementProps) {
 
               <div className="flex gap-3 pt-1">
                 <button
-                  onClick={() => { setEditingExpiry(null); setExpiresAt(""); }}
+                  onClick={() => {
+                    setEditingExpiry(null);
+                    setExpiresAt("");
+                  }}
                   className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   Cancel
