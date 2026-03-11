@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Missing patientId" }, { status: 400 });
     }
 
-    // Get all appointments that have share_health_profile set (either true or false from previously sharing)
+    // Get all appointments for this patient
     const { data: appointments, error } = await supabase
       .from("appointments")
       .select(
@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
         doctor_id,
         appointment_date,
         share_health_profile,
+        access_expires_at,
         status,
         doctors (
           first_name,
@@ -40,7 +41,33 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Transform the data into access records format
+    const now = new Date();
+    const completedStatuses = ["completed", "cancelled", "no_show"];
+
+    // Auto-revoke access for appointments that are over or whose time period has expired
+    const toRevoke = (appointments || []).filter((apt: any) => {
+      if (!apt.share_health_profile) return false;
+      const appointmentEnded = completedStatuses.includes(apt.status);
+      const accessExpired =
+        apt.access_expires_at && new Date(apt.access_expires_at) < now;
+      return appointmentEnded || accessExpired;
+    });
+
+    if (toRevoke.length > 0) {
+      const idsToRevoke = toRevoke.map((apt: any) => apt.id);
+      await supabase
+        .from("appointments")
+        .update({ share_health_profile: false, access_expires_at: null })
+        .in("id", idsToRevoke);
+
+      // Mark them as revoked in local data so the response is accurate
+      toRevoke.forEach((apt: any) => {
+        apt.share_health_profile = false;
+        apt.access_expires_at = null;
+      });
+    }
+
+    // Transform to access records format
     const records = (appointments || []).map((apt: any) => ({
       id: apt.id,
       doctorId: apt.doctor_id,
@@ -50,6 +77,7 @@ export async function GET(request: NextRequest) {
       hospitalName: apt.hospitals?.name || "Unknown Hospital",
       appointmentDate: apt.appointment_date,
       shareHealthProfile: apt.share_health_profile || false,
+      accessExpiresAt: apt.access_expires_at || null,
       status: apt.share_health_profile ? "active" : "revoked",
       appointmentStatus: apt.status,
     }));

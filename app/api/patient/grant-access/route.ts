@@ -4,35 +4,74 @@ import { supabase } from "@/lib/supabase";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { appointmentId, patientId } = body;
+    const { appointmentId, doctorId, patientId, expiresAt } = body;
 
-    if (!appointmentId || !patientId) {
+    if (!patientId || (!appointmentId && !doctorId)) {
       return NextResponse.json(
-        { error: "Missing appointmentId or patientId" },
+        { error: "Missing patientId and either appointmentId or doctorId" },
         { status: 400 },
       );
     }
 
-    // Verify the appointment belongs to the patient
-    const { data: appointment, error: fetchError } = await supabase
-      .from("appointments")
-      .select("id, patient_id, doctor_id, doctors(first_name, last_name)")
-      .eq("id", appointmentId)
-      .eq("patient_id", patientId)
-      .single();
+    let appointment: any;
 
-    if (fetchError || !appointment) {
+    if (doctorId) {
+      // Grant access for the most recent upcoming/scheduled appointment with this doctor
+      const { data, error: fetchError } = await supabase
+        .from("appointments")
+        .select("id, patient_id, doctor_id, doctors(first_name, last_name)")
+        .eq("patient_id", patientId)
+        .eq("doctor_id", doctorId)
+        .eq("status", "scheduled")
+        .order("appointment_date", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (fetchError || !data) {
+        return NextResponse.json(
+          { error: "No upcoming appointment found for this doctor" },
+          { status: 404 },
+        );
+      }
+      appointment = data;
+    } else {
+      // Grant for specific appointment
+      const { data, error: fetchError } = await supabase
+        .from("appointments")
+        .select("id, patient_id, doctor_id, doctors(first_name, last_name)")
+        .eq("id", appointmentId)
+        .eq("patient_id", patientId)
+        .single();
+
+      if (fetchError || !data) {
+        return NextResponse.json(
+          { error: "Appointment not found or access denied" },
+          { status: 404 },
+        );
+      }
+      appointment = data;
+    }
+
+    // Validate expiresAt is in the future if provided
+    if (expiresAt && new Date(expiresAt) <= new Date()) {
       return NextResponse.json(
-        { error: "Appointment not found or access denied" },
-        { status: 404 },
+        { error: "Expiry time must be in the future" },
+        { status: 400 },
       );
     }
 
-    // Update the appointment to grant access
+    // Update the appointment to grant access (with optional expiry)
+    const updatePayload: Record<string, unknown> = { share_health_profile: true };
+    if (expiresAt) {
+      updatePayload.access_expires_at = expiresAt;
+    } else {
+      updatePayload.access_expires_at = null;
+    }
+
     const { error: updateError } = await supabase
       .from("appointments")
-      .update({ share_health_profile: true })
-      .eq("id", appointmentId);
+      .update(updatePayload)
+      .eq("id", appointment.id);
 
     if (updateError) {
       console.error("Error granting access:", updateError);
@@ -59,16 +98,20 @@ export async function POST(request: NextRequest) {
       ? `${patientData.first_name} ${patientData.last_name}`
       : "Patient";
 
+    const expiryNote = expiresAt
+      ? ` (expires ${new Date(expiresAt).toLocaleDateString()})`
+      : "";
+
     // Create notification
     await supabase.from("notifications").insert({
       recipient_id: appointment.doctor_id,
       recipient_role: "doctor",
       title: "Access Granted",
-      message: `${patientName} has granted you access to their health records.`,
+      message: `${patientName} has granted you access to their health records${expiryNote}.`,
       type: "access_granted",
       related_entity_type: "appointment",
-      related_entity_id: appointmentId,
-      metadata: { patientId, patientName },
+      related_entity_id: appointment.id,
+      metadata: { patientId, patientName, expiresAt: expiresAt || null },
     });
 
     // Log the action
@@ -79,15 +122,16 @@ export async function POST(request: NextRequest) {
       action_type: "access_granted",
       resource_type: "health_profile",
       metadata: {
-        appointmentId,
+        appointmentId: appointment.id,
         doctorId: appointment.doctor_id,
         doctorName,
+        expiresAt: expiresAt || null,
       },
     });
 
     return NextResponse.json({
       success: true,
-      message: `Access granted to Dr. ${doctorName}`,
+      message: `Access granted to Dr. ${doctorName}${expiryNote}`,
     });
   } catch (error) {
     console.error("Error in grant-access POST:", error);
