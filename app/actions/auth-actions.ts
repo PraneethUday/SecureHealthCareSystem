@@ -248,8 +248,11 @@ export async function login(
       })
       .eq(idField, identifier);
 
-    // Check if MFA is enabled
-    const isMFAEnabled = data.is_mfa_enabled !== false; // Default to true
+    // MFA/OTP temporarily disabled: Gmail is rejecting SMTP login for the
+    // configured EMAIL_USER/EMAIL_PASSWORD (534-5.7.9 WebLoginRequired), so
+    // sendOTPEmail() always fails and blocks every login. Re-enable by
+    // restoring: data.is_mfa_enabled !== false
+    const isMFAEnabled = false;
 
     if (isMFAEnabled) {
       // Generate OTP and send via email
