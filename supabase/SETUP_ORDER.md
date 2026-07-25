@@ -1,5 +1,26 @@
 # Database Setup Guide
 
+## 🔄 Restored from a pg_dump backup? Read this first
+
+If you created a new Supabase project and restored a `db_cluster-*.backup.gz`
+dump into it, the dump only contains schema/data as of the moment it was
+taken. Any schema file in this folder with a later date was applied to the
+*old* project by hand afterward and is **not** in that dump. Restoring an
+older backup into a new project silently drops those tables/columns/
+functions, which surfaces as PostgREST errors like:
+
+```
+Could not find the function public.is_account_locked(...)
+Could not find the 'details' column of 'access_logs'
+Could not find the 'password_changed_at' column of 'patients'
+```
+
+Run `post-restore-sync.sql` once in the Supabase SQL Editor to bring a
+restored database back up to what the current app code expects (MFA/OTP,
+account lockout, chat, vitals, notifications, doctor/nurse/staff hospital
+links, security monitoring, password reset fields). See the file's header
+for exactly what it does and does not include.
+
 ## ✅ Recommended: Single File Setup (Easiest)
 
 **For new Supabase projects or fresh database setup:**

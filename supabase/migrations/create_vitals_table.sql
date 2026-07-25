@@ -1,6 +1,13 @@
 -- ============================================================================
--- VITALS TABLE SCHEMA
--- Stores patient vital signs and health measurements
+-- VITALS TABLE SCHEMA -- DEPRECATED, DO NOT RUN
+-- ============================================================================
+-- Superseded by ../vitals-schema.sql, which creates `patient_vitals` --
+-- the table name every vitals component in app/dashboard actually queries
+-- (see app/dashboard/*/components/*Vitals*.tsx). This file's `vitals` table
+-- also references `public.users` and `auth.uid()`, which don't exist in this
+-- app (accounts live in patients/doctors/nurses/staff, auth is custom
+-- session-based, not Supabase Auth), so its RLS policies can never pass.
+-- Kept only for history; run ../vitals-schema.sql instead.
 -- ============================================================================
 
 -- Create vitals table
