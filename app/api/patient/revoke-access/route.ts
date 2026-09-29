@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { guard } from "@/lib/supabase/server";
+import { logAction } from "@/lib/logging";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { appointmentId, doctorId, patientId } = body;
+    const auth = await guard("patient");
+    if (auth instanceof Response) return auth;
+    const supabase = auth.supabase;
+    // A patient can only grant or revoke access to their own record.
+    const patientId = auth.profileId;
 
-    if (!patientId || (!appointmentId && !doctorId)) {
+    const body = await request.json();
+    const { appointmentId, doctorId } = body;
+
+    if (!appointmentId && !doctorId) {
       return NextResponse.json(
-        { error: "Missing patientId and either appointmentId or doctorId" },
+        { error: "Missing appointmentId or doctorId" },
         { status: 400 },
       );
     }
@@ -75,13 +82,14 @@ export async function POST(request: NextRequest) {
         metadata: { patientId, patientName },
       });
 
-      await supabase.from("access_logs").insert({
-        patient_id: patientId,
-        accessed_by_id: patientId,
-        accessed_by_role: "patient",
-        action_type: "access_revoked",
-        resource_type: "health_profile",
-        metadata: { doctorId, doctorName, appointmentIds: ids },
+      await logAction({
+        userId: auth.businessId,
+        userRole: "patient",
+        action: "access_revoked",
+        resourceType: "health_profile",
+        resourceId: patientId,
+        details: JSON.stringify({ doctorId, doctorName, appointmentIds: ids }),
+        status: "success",
       });
 
       return NextResponse.json({
@@ -143,17 +151,18 @@ export async function POST(request: NextRequest) {
       metadata: { patientId, patientName },
     });
 
-    await supabase.from("access_logs").insert({
-      patient_id: patientId,
-      accessed_by_id: patientId,
-      accessed_by_role: "patient",
-      action_type: "access_revoked",
-      resource_type: "health_profile",
-      metadata: {
+    await logAction({
+      userId: auth.businessId,
+      userRole: "patient",
+      action: "access_revoked",
+      resourceType: "health_profile",
+      resourceId: patientId,
+      details: JSON.stringify({
         appointmentId,
         doctorId: appointment.doctor_id,
         doctorName,
-      },
+      }),
+      status: "success",
     });
 
     return NextResponse.json({

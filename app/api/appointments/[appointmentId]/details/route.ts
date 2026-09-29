@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { guard } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -6,6 +6,9 @@ export async function GET(
   { params }: { params: Promise<{ appointmentId: string }> }
 ) {
   try {
+    const auth = await guard();
+    if (auth instanceof Response) return auth;
+    const supabase = auth.supabase;
     const { appointmentId } = await params;
 
     const { data: appointment, error } = await supabase

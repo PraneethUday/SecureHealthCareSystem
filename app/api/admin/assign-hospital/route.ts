@@ -1,3 +1,4 @@
+import { guard } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { logAction } from "@/lib/logging";
@@ -8,21 +9,12 @@ import { logAction } from "@/lib/logging";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { adminId, userId, userRole, hospitalId } = body;
+    const { userId, userRole, hospitalId } = body;
 
     // Validate admin authorization
-    if (!adminId || adminId !== "admin") {
-      await logAction({
-        userId: adminId || "unknown",
-        userRole: "admin",
-        action: "unauthorized_hospital_assign_attempt",
-        status: "failure",
-      });
-      return NextResponse.json(
-        { error: "Unauthorized. Admin access required." },
-        { status: 403 },
-      );
-    }
+    const auth = await guard("admin");
+    if (auth instanceof Response) return auth;
+    const adminId = auth.businessId;
 
     if (!userId || !userRole || !hospitalId) {
       return NextResponse.json(

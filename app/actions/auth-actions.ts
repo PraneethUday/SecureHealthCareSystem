@@ -1,36 +1,45 @@
 "use server";
 
 import { supabaseAdmin as supabase } from "@/lib/supabase-admin";
+import { createServerSupabase } from "@/lib/supabase/server";
+import { ROLE_TABLES, MFA_REQUIRED_ROLES, syncAuthPassword } from "@/lib/auth-provisioning";
 import { UserRole } from "@/lib/database.types";
 import { logAction } from "@/lib/logging";
 import {
   verifyPassword,
-  generateOTP,
-  generateOTPExpiry,
-  hashOTP,
-  verifyOTP,
   isPasswordExpired,
   validatePasswordComplexity,
   hashPassword,
 } from "@/lib/security";
-import { sendOTPEmail } from "@/lib/email";
 import { checkAccountLock, recordLoginAttempt } from "@/lib/account-lockout";
+
+// Columns safe to hand back to the browser for display.
+const PROFILE_OMIT = [
+  "password",
+  "password_hash",
+  "password_reset_token",
+  "password_reset_expires_at",
+  "reset_token",
+  "reset_token_expiry",
+  "mfa_secret",
+];
+
+function publicProfile(row: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(row).filter(([k]) => !PROFILE_OMIT.includes(k)),
+  );
+}
 
 interface LoginResult {
   success: boolean;
   message: string;
   user?: any;
   role?: UserRole;
+  /** A TOTP factor is enrolled: verify a code before continuing. */
   requiresMFA?: boolean;
-  mfaToken?: string; // Temporary token for OTP verification
+  /** Role requires MFA but no factor is enrolled yet: go to enrolment. */
+  requiresMFAEnrollment?: boolean;
   requiresPasswordChange?: boolean;
-}
-
-interface OTPVerifyResult {
-  success: boolean;
-  message: string;
-  user?: any;
-  role?: UserRole;
 }
 
 export async function login(
@@ -38,377 +47,193 @@ export async function login(
   password: string,
   role: UserRole,
 ): Promise<LoginResult> {
-  try {
-    // Determine the table based on role
-    let table: string;
-    let idField: string;
-    let userIdField: string;
+  const config = ROLE_TABLES[role];
+  if (!config) return { success: false, message: "Invalid role selected" };
 
-    switch (role) {
-      case "admin":
-        table = "admins";
-        idField = "id";
-        userIdField = "id";
-        break;
-      case "patient":
-        table = "patients";
-        idField = "email";
-        userIdField = "patient_id";
-        break;
-      case "doctor":
-        table = "doctors";
-        idField = "doctor_id";
-        userIdField = "doctor_id";
-        break;
-      case "nurse":
-        table = "nurses";
-        idField = "nurse_id";
-        userIdField = "nurse_id";
-        break;
-      case "staff":
-        table = "staff";
-        idField = "staff_id";
-        userIdField = "staff_id";
-        break;
-      default:
-        return { success: false, message: "Invalid role selected" };
-    }
+  const { data, error } = await supabase
+    .from(config.table)
+    .select("*")
+    .eq(config.loginField, identifier)
+    .maybeSingle();
 
-    // Query the database for the user
-    const { data, error } = await supabase
-      .from(table)
-      .select("*")
-      .eq(idField, identifier)
-      .single();
-
-    if (error || !data) {
-      // Record failed login attempt - user not found
-      await recordLoginAttempt(identifier, role, "failed", "user_not_found");
-
-      await logAction({
-        userId: identifier,
-        userRole: role,
-        action: "login_failed",
-        details: "Invalid credentials",
-        status: "failure",
-      });
-      return {
-        success: false,
-        message: role === "patient"
-          ? "Account not found. Please create an account if you are a new user."
-          : "Invalid credentials"
-      };
-    }
-
-    // Check if account is locked using new centralized system
-    const lockStatus = await checkAccountLock(identifier, role);
-    if (lockStatus.isLocked) {
-      if (lockStatus.isManuallyLocked) {
-        // Manually locked by admin - no auto-unlock
-        await recordLoginAttempt(
-          identifier,
-          role,
-          "failed",
-          "account_locked_by_admin",
-        );
-
-        await logAction({
-          userId: identifier,
-          userRole: role,
-          action: "login_failed",
-          details: "Account manually locked by administrator",
-          status: "failure",
-        });
-
-        return {
-          success: false,
-          message:
-            "Your account has been locked by an administrator. Please contact support.",
-        };
-      } else if (lockStatus.lockedUntil) {
-        // Auto-locked due to failed attempts
-        const now = new Date();
-        if (now < lockStatus.lockedUntil) {
-          const minutesRemaining = Math.ceil(
-            (lockStatus.lockedUntil.getTime() - now.getTime()) / 60000,
-          );
-
-          await recordLoginAttempt(
-            identifier,
-            role,
-            "failed",
-            "account_locked",
-          );
-
-          await logAction({
-            userId: identifier,
-            userRole: role,
-            action: "login_failed",
-            details: `Account locked for ${minutesRemaining} more minutes`,
-            status: "failure",
-          });
-
-          return {
-            success: false,
-            message: `Account is locked due to too many failed login attempts. Please try again in ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}.`,
-          };
-        }
-      }
-    }
-
-    // Verify password using bcrypt hash
-    // First check if password_hash exists (new secure format)
-    let passwordValid = false;
-    if (data.password_hash) {
-      passwordValid = await verifyPassword(password, data.password_hash);
-    } else if (data.password) {
-      // Fallback for old plaintext passwords (migrate on next login)
-      passwordValid = data.password === password;
-      if (passwordValid) {
-        console.warn(
-          `User ${identifier} still has plaintext password. Consider migrating.`,
-        );
-      }
-    }
-
-    if (!passwordValid) {
-      // Record failed login attempt
-      const attemptResult = await recordLoginAttempt(
-        identifier,
-        role,
-        "failed",
-        "invalid_password",
-      );
-
-      // Log audit
-      await supabase.from("login_audit").insert({
-        user_id: data[userIdField],
-        user_role: role,
-        login_status: "failed_password",
-        mfa_verified: false,
-      });
-
-      await logAction({
-        userId: identifier,
-        userRole: role,
-        action: "login_failed",
-        details: `Invalid password (attempt ${attemptResult.failedCount}/5)`,
-        status: "failure",
-      });
-
-      if (attemptResult.shouldLock && attemptResult.lockedUntil) {
-        return {
-          success: false,
-          message:
-            "Account locked due to too many failed login attempts. Please try again in 3 minutes.",
-        };
-      }
-
-      const attemptsRemaining = 5 - attemptResult.failedCount;
-      return {
-        success: false,
-        message: `Invalid credentials. ${attemptsRemaining} attempt${attemptsRemaining !== 1 ? "s" : ""} remaining before account lockout.`,
-      };
-    }
-
-    // Password is valid - check for expiry (skip for admin)
-    if (role !== "admin") {
-      const isExpired = isPasswordExpired(data.password_changed_at);
-      if (isExpired) {
-        await logAction({
-          userId: identifier,
-          userRole: role,
-          action: "password_expired_login",
-          details: "User login redirected to password change due to expiry",
-          status: "success",
-        });
-
-        // Remove sensitive data
-        const { password_hash, password: _dbPassword, ...userSafeData } = data;
-
-        return {
-          success: true,
-          message: "Your password has expired. Please update it.",
-          requiresPasswordChange: true,
-          user: userSafeData,
-          role,
-        };
-      }
-    }
-
-    // Password is valid - record successful attempt and clear locks
-    await recordLoginAttempt(identifier, role, "success");
-
-    // Also reset old login attempts columns for backward compatibility
-    await supabase
-      .from(table)
-      .update({
-        login_attempts: 0,
-        is_locked: false,
-      })
-      .eq(idField, identifier);
-
-    // MFA/OTP temporarily disabled: Gmail is rejecting SMTP login for the
-    // configured EMAIL_USER/EMAIL_PASSWORD (534-5.7.9 WebLoginRequired), so
-    // sendOTPEmail() always fails and blocks every login. Re-enable by
-    // restoring: data.is_mfa_enabled !== false
-    const isMFAEnabled = false;
-
-    if (isMFAEnabled) {
-      // Generate OTP and send via email
-      const otp = generateOTP();
-      const otpHash = hashOTP(otp);
-      const expiryTime = generateOTPExpiry();
-
-      // Log OTP in development for testing (remove in production)
-      if (process.env.NODE_ENV === "development") {
-        console.log("=".repeat(50));
-        console.log("🔐 OTP GENERATED FOR", role.toUpperCase(), "LOGIN");
-        console.log("User ID:", data[userIdField]);
-        console.log("Email:", data.email);
-        console.log("OTP CODE:", otp);
-        console.log("Expires at:", expiryTime.toISOString());
-        console.log("=".repeat(50));
-      }
-
-      // Delete any old unverified OTPs for this user to prevent stale codes
-      await supabase
-        .from("otp_logs")
-        .delete()
-        .eq("user_id", data[userIdField])
-        .eq("user_role", role)
-        .eq("is_verified", false);
-
-      // Store OTP in database
-      const { error: otpError } = await supabase.from("otp_logs").insert({
-        user_id: data[userIdField],
-        user_role: role,
-        otp_hash: otpHash,
-        expires_at: expiryTime.toISOString(),
-        attempts: 0,
-      });
-
-      if (otpError) {
-        console.error("Error storing OTP:", otpError);
-        return {
-          success: false,
-          message: "Error generating OTP. Please try again.",
-        };
-      }
-
-      // Send OTP email
-      const emailSent = await sendOTPEmail(
-        data.email,
-        otp,
-        `${data.first_name || data.firstName} ${data.last_name || data.lastName}`,
-      );
-
-      if (!emailSent) {
-        await logAction({
-          userId: identifier,
-          userRole: role,
-          action: "otp_send_failed",
-          details: "Failed to send OTP email",
-          status: "failure",
-        });
-        return {
-          success: false,
-          message: "Failed to send OTP. Please try again.",
-        };
-      }
-
-      // Log audit
-      await supabase.from("login_audit").insert({
-        user_id: data[userIdField],
-        user_role: role,
-        login_status: "success",
-        mfa_verified: false,
-      });
-
-      // Create a temporary token for MFA verification (JWT-like)
-      const mfaToken = Buffer.from(
-        JSON.stringify({
-          userId: data[userIdField],
-          role,
-          timestamp: Date.now(),
-        }),
-      ).toString("base64");
-
-      await logAction({
-        userId: identifier,
-        userRole: role,
-        action: "otp_sent",
-        details: "OTP sent to registered email",
-        status: "success",
-      });
-
-      // Remove sensitive data
-      const { password_hash, password: _dbOldPassword, ...userSafeData } = data;
-
-      return {
-        success: true,
-        message: "OTP sent to your email",
-        requiresMFA: true,
-        mfaToken,
-        user: userSafeData,
-        role,
-      };
-    }
-
-    // MFA disabled - login successful
-    await supabase.from("login_audit").insert({
-      user_id: data[userIdField],
-      user_role: role,
-      login_status: "success",
-      mfa_verified: true,
-    });
-
+  if (error || !data) {
+    await recordLoginAttempt(identifier, role, "failed", "user_not_found");
     await logAction({
       userId: identifier,
       userRole: role,
-      action: "login_success",
-      details: "User logged in successfully",
+      action: "login_failed",
+      details: "Invalid credentials",
+      status: "failure",
+    });
+    return {
+      success: false,
+      message:
+        role === "patient"
+          ? "Account not found. Please create an account if you are a new user."
+          : "Invalid credentials",
+    };
+  }
+
+  const businessId = String(data[config.businessIdField]);
+
+  const lockStatus = await checkAccountLock(identifier, role);
+  if (lockStatus.isLocked) {
+    if (lockStatus.isManuallyLocked) {
+      await recordLoginAttempt(identifier, role, "failed", "account_locked_by_admin");
+      await logAction({
+        userId: identifier,
+        userRole: role,
+        action: "login_failed",
+        details: "Account manually locked by administrator",
+        status: "failure",
+      });
+      return {
+        success: false,
+        message:
+          "Your account has been locked by an administrator. Please contact support.",
+      };
+    }
+    if (lockStatus.lockedUntil && new Date() < lockStatus.lockedUntil) {
+      const minutesRemaining = Math.ceil(
+        (lockStatus.lockedUntil.getTime() - Date.now()) / 60000,
+      );
+      await recordLoginAttempt(identifier, role, "failed", "account_locked");
+      await logAction({
+        userId: identifier,
+        userRole: role,
+        action: "login_failed",
+        details: `Account locked for ${minutesRemaining} more minutes`,
+        status: "failure",
+      });
+      return {
+        success: false,
+        message: `Account is locked due to too many failed login attempts. Please try again in ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}.`,
+      };
+    }
+  }
+
+  if (!data.auth_user_id) {
+    // Not yet migrated to Supabase Auth (run `npm run auth:sync`).
+    console.error(`Login for ${config.table}.${data.id} has no auth_user_id`);
+    return {
+      success: false,
+      message: "Your account is being upgraded. Please contact support.",
+    };
+  }
+
+  // Supabase Auth verifies the password and, on success, writes the
+  // session cookie for this browser.
+  const authClient = await createServerSupabase();
+  const { error: signInError } = await authClient.auth.signInWithPassword({
+    email: data.email,
+    password,
+  });
+
+  if (signInError) {
+    const attempt = await recordLoginAttempt(identifier, role, "failed", "invalid_password");
+    await supabase.from("login_audit").insert({
+      user_id: businessId,
+      user_role: role,
+      login_status: "failed_password",
+      mfa_verified: false,
+    });
+    await logAction({
+      userId: identifier,
+      userRole: role,
+      action: "login_failed",
+      details: `Invalid password (attempt ${attempt.failedCount}/5)`,
+      status: "failure",
+    });
+    if (attempt.shouldLock && attempt.lockedUntil) {
+      return {
+        success: false,
+        message:
+          "Account locked due to too many failed login attempts. Please try again in 3 minutes.",
+      };
+    }
+    const remaining = 5 - attempt.failedCount;
+    return {
+      success: false,
+      message: `Invalid credentials. ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining before account lockout.`,
+    };
+  }
+
+  await recordLoginAttempt(identifier, role, "success");
+  await supabase
+    .from(config.table)
+    .update({ login_attempts: 0, is_locked: false, last_login: new Date().toISOString() })
+    .eq("id", data.id);
+
+  const user = publicProfile(data);
+
+  if (role !== "admin" && isPasswordExpired(data.password_changed_at)) {
+    await logAction({
+      userId: identifier,
+      userRole: role,
+      action: "password_expired_login",
+      details: "User login redirected to password change due to expiry",
       status: "success",
     });
-
-    // Update last login time
-    await supabase
-      .from(table)
-      .update({
-        last_login: new Date().toISOString(),
-      })
-      .eq(idField, identifier);
-
-    // Remove sensitive data
-    const {
-      password_hash,
-      password: _dbPassword,
-      ...userWithoutPassword
-    } = data;
-
     return {
       success: true,
-      message: "Login successful",
-      user: userWithoutPassword,
+      message: "Your password has expired. Please update it.",
+      requiresPasswordChange: true,
+      user,
       role,
     };
-  } catch (error) {
-    console.error("Login error stack trace:", error);
-    throw error;
   }
+
+  // TOTP: staff roles must reach aal2 before any clinical data is readable
+  // (enforced in RLS). Patients may opt in; if they have, verify it too.
+  const { data: aal } = await authClient.auth.mfa.getAuthenticatorAssuranceLevel();
+  const hasFactor = aal?.nextLevel === "aal2";
+  const mfaRequired = MFA_REQUIRED_ROLES.includes(role);
+
+  await supabase.from("login_audit").insert({
+    user_id: businessId,
+    user_role: role,
+    login_status: "success",
+    mfa_verified: false,
+  });
+  await logAction({
+    userId: identifier,
+    userRole: role,
+    action: "login_password_ok",
+    details: hasFactor ? "Awaiting TOTP" : mfaRequired ? "Awaiting TOTP enrolment" : "Signed in",
+    status: "success",
+  });
+
+  if (hasFactor) {
+    return { success: true, message: "Enter your authenticator code", requiresMFA: true, user, role };
+  }
+  if (mfaRequired) {
+    return {
+      success: true,
+      message: "Set up two-factor authentication to continue",
+      requiresMFAEnrollment: true,
+      user,
+      role,
+    };
+  }
+  return { success: true, message: "Login successful", user, role };
+}
+
+export async function logout(): Promise<void> {
+  const authClient = await createServerSupabase();
+  await authClient.auth.signOut();
 }
 
 /**
- * Update user password with complexity and rotation checks
+ * Update user password with complexity and rotation checks. The caller is
+ * taken from the session, not from the arguments.
  */
 export async function updatePassword(
-  identifier: string,
+  _identifier: string,
   oldPassword: string,
   newPassword: string,
   role: UserRole,
 ): Promise<LoginResult> {
   try {
-    // Admin password cannot be changed - it must remain as "admin"
     if (role === "admin") {
       return {
         success: false,
@@ -416,57 +241,28 @@ export async function updatePassword(
       };
     }
 
-    // 1. Determine table and fields
-    let table: string;
-    let idField: string;
-    let userIdField: string;
+    const authClient = await createServerSupabase();
+    const {
+      data: { user: authUser },
+    } = await authClient.auth.getUser();
+    if (!authUser?.email) return { success: false, message: "Not signed in" };
 
-    switch (role) {
-      case "patient":
-        table = "patients";
-        idField = "patient_id";
-        userIdField = "patient_id";
-        break;
-      case "doctor":
-        table = "doctors";
-        idField = "doctor_id";
-        userIdField = "doctor_id";
-        break;
-      case "nurse":
-        table = "nurses";
-        idField = "nurse_id";
-        userIdField = "nurse_id";
-        break;
-      case "staff":
-        table = "staff";
-        idField = "staff_id";
-        userIdField = "staff_id";
-        break;
-      default:
-        return { success: false, message: "Invalid role" };
-    }
-
-    // 2. Get user data (including current hash)
-    const { data: user, error: userError } = await supabase
-      .from(table)
+    const config = ROLE_TABLES[role];
+    const { data: user } = await supabase
+      .from(config.table)
       .select("*")
-      .eq(idField, identifier)
-      .single();
+      .eq("auth_user_id", authUser.id)
+      .maybeSingle();
+    if (!user) return { success: false, message: "User not found" };
 
-    if (userError || !user) {
-      return { success: false, message: "User not found" };
-    }
+    const identifier = String(user[config.businessIdField]);
 
-    // 3. Verify old password
-    let oldPasswordValid = false;
-    if (user.password_hash) {
-      oldPasswordValid = await verifyPassword(oldPassword, user.password_hash);
-    } else if (user.password) {
-      // Fallback for old plaintext passwords
-      oldPasswordValid = user.password === oldPassword;
-    }
-
-    if (!oldPasswordValid) {
+    // Re-verify the current password against Supabase Auth.
+    const { error: reauthError } = await authClient.auth.signInWithPassword({
+      email: authUser.email,
+      password: oldPassword,
+    });
+    if (reauthError) {
       await logAction({
         userId: identifier,
         userRole: role,
@@ -477,61 +273,44 @@ export async function updatePassword(
       return { success: false, message: "Incorrect current password" };
     }
 
-    // 4. Validate new password complexity
-    const complexityResult = validatePasswordComplexity(newPassword);
-    if (!complexityResult.valid) {
-      return {
-        success: false,
-        message: complexityResult.message || "Invalid password format",
-      };
+    const complexity = validatePasswordComplexity(newPassword);
+    if (!complexity.valid) {
+      return { success: false, message: complexity.message || "Invalid password format" };
     }
 
-    // 5. Check password history (prevent reuse of last 3 passwords)
     const { data: history } = await supabase
       .from("password_history")
       .select("password_hash")
-      .eq("user_id", user[userIdField])
+      .eq("user_id", identifier)
       .eq("user_role", role)
       .order("changed_at", { ascending: false })
       .limit(3);
-
-    if (history) {
-      for (const record of history) {
-        const matches = await verifyPassword(newPassword, record.password_hash);
-        if (matches) {
-          return {
-            success: false,
-            message: "Cannot reuse one of your last 3 passwords",
-          };
-        }
+    for (const record of history ?? []) {
+      if (await verifyPassword(newPassword, record.password_hash)) {
+        return { success: false, message: "Cannot reuse one of your last 3 passwords" };
       }
     }
 
-    // 6. Hash new password
-    const newPasswordHash = await hashPassword(newPassword);
+    await syncAuthPassword(supabase, role, user.id, newPassword);
 
-    // 7. Update user table
+    // password_hash is kept only for the reuse check above.
+    const newPasswordHash = await hashPassword(newPassword);
     const { error: updateError } = await supabase
-      .from(table)
+      .from(config.table)
       .update({
         password_hash: newPasswordHash,
-        password: null, // Clear plaintext if any
+        password: null,
         password_changed_at: new Date().toISOString(),
       })
-      .eq(idField, identifier);
+      .eq("id", user.id);
+    if (updateError) throw updateError;
 
-    if (updateError) {
-      throw updateError;
-    }
-
-    // 8. Record in history
     await supabase.from("password_history").insert({
-      user_id: user[userIdField],
+      user_id: identifier,
       user_role: role,
       password_hash: newPasswordHash,
     });
 
-    // 9. Log success
     await logAction({
       userId: identifier,
       userRole: role,
@@ -540,417 +319,14 @@ export async function updatePassword(
       status: "success",
     });
 
-    const { password_hash, password: _dbPassword, ...userSafeData } = user;
-
     return {
       success: true,
       message: "Password updated successfully",
-      user: userSafeData,
+      user: publicProfile(user),
       role,
     };
   } catch (error) {
     console.error("Password update error:", error);
-    return {
-      success: false,
-      message: "Failed to update password. Please try again.",
-    };
+    return { success: false, message: "Failed to update password. Please try again." };
   }
-}
-
-/**
- * Resend OTP code for MFA
- */
-export async function resendOTP(
-  mfaToken: string,
-  role: UserRole,
-): Promise<LoginResult> {
-  try {
-    // Decode MFA token
-    let tokenData: any;
-    try {
-      tokenData = JSON.parse(Buffer.from(mfaToken, "base64").toString());
-    } catch (e) {
-      return { success: false, message: "Invalid verification token" };
-    }
-
-    const { userId } = tokenData;
-
-    // Determine the table based on role
-    let table: string;
-    let idField: string;
-
-    switch (role) {
-      case "admin":
-        table = "admins";
-        idField = "id";
-        break;
-      case "patient":
-        table = "patients";
-        idField = "patient_id";
-        break;
-      case "doctor":
-        table = "doctors";
-        idField = "doctor_id";
-        break;
-      case "nurse":
-        table = "nurses";
-        idField = "nurse_id";
-        break;
-      case "staff":
-        table = "staff";
-        idField = "staff_id";
-        break;
-      default:
-        return { success: false, message: "Invalid role" };
-    }
-
-    // Get user data
-    const { data: userData, error: userError } = await supabase
-      .from(table)
-      .select("*")
-      .eq(idField, userId)
-      .single();
-
-    if (userError || !userData) {
-      return { success: false, message: "User not found" };
-    }
-
-    // Delete all old unverified OTPs for this user
-    await supabase
-      .from("otp_logs")
-      .delete()
-      .eq("user_id", userId)
-      .eq("user_role", role)
-      .eq("is_verified", false);
-
-    // Generate new OTP
-    const otp = generateOTP();
-    const otpHash = hashOTP(otp);
-    const expiryTime = generateOTPExpiry();
-
-    if (process.env.NODE_ENV === "development") {
-      console.log("=".repeat(50));
-      console.log("🔄 OTP RESENT FOR", role.toUpperCase());
-      console.log("User ID:", userId);
-      console.log("Email:", userData.email);
-      console.log("OTP CODE:", otp);
-      console.log("Expires at:", expiryTime.toISOString());
-      console.log("=".repeat(50));
-    }
-
-    // Store new OTP in database
-    const { error: otpError } = await supabase.from("otp_logs").insert({
-      user_id: userId,
-      user_role: role,
-      otp_hash: otpHash,
-      expires_at: expiryTime.toISOString(),
-      attempts: 0,
-    });
-
-    if (otpError) {
-      console.error("Error storing OTP:", otpError);
-      return {
-        success: false,
-        message: "Error generating OTP. Please try again.",
-      };
-    }
-
-    // Send OTP email
-    const emailSent = await sendOTPEmail(
-      userData.email,
-      otp,
-      `${userData.first_name || userData.firstName} ${userData.last_name || userData.lastName}`,
-    );
-
-    if (!emailSent) {
-      return {
-        success: false,
-        message: "Failed to send OTP. Please try again.",
-      };
-    }
-
-    return {
-      success: true,
-      message: "A new OTP has been sent to your email.",
-    };
-  } catch (error) {
-    console.error("Resend OTP error:", error);
-    return {
-      success: false,
-      message: "Error resending OTP. Please try again.",
-    };
-  }
-}
-
-/**
- * Verify OTP code for MFA
- */
-export async function verifyMFAOTP(
-  mfaToken: string,
-  otpCode: string,
-  role: UserRole,
-): Promise<OTPVerifyResult> {
-  try {
-    // Decode MFA token
-    let tokenData: any;
-    try {
-      tokenData = JSON.parse(Buffer.from(mfaToken, "base64").toString());
-    } catch (e) {
-      return { success: false, message: "Invalid verification token" };
-    }
-
-    const { userId } = tokenData;
-
-    // Determine the table based on role
-    let table: string;
-    let idField: string;
-
-    switch (role) {
-      case "admin":
-        table = "admins";
-        idField = "id";
-        break;
-      case "patient":
-        table = "patients";
-        idField = "patient_id";
-        break;
-      case "doctor":
-        table = "doctors";
-        idField = "doctor_id";
-        break;
-      case "nurse":
-        table = "nurses";
-        idField = "nurse_id";
-        break;
-      case "staff":
-        table = "staff";
-        idField = "staff_id";
-        break;
-      default:
-        return { success: false, message: "Invalid role" };
-    }
-
-    // Get user data
-    const { data: userData, error: userError } = await supabase
-      .from(table)
-      .select("*")
-      .eq(idField, userId)
-      .single();
-
-    if (userError || !userData) {
-      return { success: false, message: "User not found" };
-    }
-
-    // Get latest OTP record
-    const { data: otpRecord, error: otpError } = await supabase
-      .from("otp_logs")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("user_role", role)
-      .eq("is_verified", false)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (otpError || !otpRecord) {
-      await logAction({
-        userId: userId,
-        userRole: role,
-        action: "otp_verification_failed",
-        details: "No valid OTP found",
-        status: "failure",
-      });
-      return {
-        success: false,
-        message: "No valid OTP found. Request a new one.",
-      };
-    }
-
-    // Check if OTP has expired
-    const now = new Date();
-    const expiryTime = new Date(otpRecord.expires_at);
-    if (now > expiryTime) {
-      await logAction({
-        userId: userId,
-        userRole: role,
-        action: "otp_verification_failed",
-        details: "OTP expired",
-        status: "failure",
-      });
-      return { success: false, message: "OTP has expired. Request a new one." };
-    }
-
-    // Check maximum attempts
-    if ((otpRecord.attempts || 0) >= 5) {
-      // Delete expired OTP
-      await supabase.from("otp_logs").delete().eq("id", otpRecord.id);
-
-      await logAction({
-        userId: userId,
-        userRole: role,
-        action: "otp_verification_failed",
-        details: "Maximum OTP attempts exceeded",
-        status: "failure",
-      });
-      return {
-        success: false,
-        message: "Maximum OTP attempts exceeded. Request a new OTP.",
-      };
-    }
-
-    // Verify OTP (hash and compare) - trim whitespace from input
-    const trimmedOTP = otpCode.trim();
-
-    // Debug logging in development
-    if (process.env.NODE_ENV === "development") {
-      console.log("=".repeat(50));
-      console.log("🔍 OTP VERIFICATION ATTEMPT");
-      console.log("User ID:", userId);
-      console.log("Role:", role);
-      console.log("Input OTP:", trimmedOTP);
-      console.log("OTP Length:", trimmedOTP.length);
-      console.log("Stored Hash:", otpRecord.otp_hash);
-      console.log("Input Hash:", hashOTP(trimmedOTP));
-      console.log("=".repeat(50));
-    }
-
-    const otpMatches = verifyOTP(trimmedOTP, otpRecord.otp_hash);
-
-    if (!otpMatches) {
-      // Increment attempts
-      await supabase
-        .from("otp_logs")
-        .update({
-          attempts: (otpRecord.attempts || 0) + 1,
-        })
-        .eq("id", otpRecord.id);
-
-      await logAction({
-        userId: userId,
-        userRole: role,
-        action: "otp_verification_failed",
-        details: `Invalid OTP (attempt ${(otpRecord.attempts || 0) + 1}/5)`,
-        status: "failure",
-      });
-      return { success: false, message: "Invalid OTP. Please try again." };
-    }
-
-    // OTP is valid - mark as verified
-    await supabase
-      .from("otp_logs")
-      .update({
-        is_verified: true,
-        verified_at: new Date().toISOString(),
-      })
-      .eq("id", otpRecord.id);
-
-    // Update last login
-    await supabase
-      .from(table)
-      .update({
-        last_login: new Date().toISOString(),
-      })
-      .eq(idField, userId);
-
-    // Log audit
-    await supabase.from("login_audit").insert({
-      user_id: userId,
-      user_role: role,
-      login_status: "success",
-      mfa_verified: true,
-    });
-
-    await logAction({
-      userId: userId,
-      userRole: role,
-      action: "otp_verified",
-      details: "OTP verified successfully",
-      status: "success",
-    });
-
-    // Remove sensitive data
-    const {
-      password_hash,
-      password: _dbPassword,
-      ...userWithoutPassword
-    } = userData;
-
-    return {
-      success: true,
-      message: "MFA verification successful",
-      user: userWithoutPassword,
-      role,
-    };
-  } catch (error) {
-    console.error("OTP verification error:", error);
-    return {
-      success: false,
-      message: "Error verifying OTP. Please try again.",
-    };
-  }
-}
-
-/**
- * Synchronizes a password reset from Supabase Auth to the custom role tables
- */
-export async function syncForgottenPassword(
-  userId: string,
-  newPasswordPlain: string,
-): Promise<boolean> {
-  try {
-    const { data: authData, error: authError } =
-      await supabase.auth.admin.getUserById(userId);
-    if (authError || !authData.user?.email) {
-      console.error("Could not find auth user for password sync", authError);
-      return false;
-    }
-    const userEmail = authData.user.email;
-    const newHash = await hashPassword(newPasswordPlain);
-    const rolesConfig = [
-      { table: "admins", role: "admin", idField: "id" },
-      { table: "patients", role: "patient", idField: "patient_id" },
-      { table: "doctors", role: "doctor", idField: "doctor_id" },
-      { table: "nurses", role: "nurse", idField: "nurse_id" },
-      { table: "staff", role: "staff", idField: "staff_id" },
-    ] as const;
-
-    for (const config of rolesConfig) {
-      const { data } = await supabase
-        .from(config.table)
-        .select("*")
-        .eq("email", userEmail)
-        .single();
-
-      if (data) {
-        await supabase
-          .from(config.table)
-          .update({
-            password_hash: newHash,
-            password: null, // Clear plaintext if any
-            password_changed_at: new Date().toISOString(),
-          })
-          .eq("email", userEmail);
-
-        // Record in history
-        await supabase.from("password_history").insert({
-          user_id: data[config.idField],
-          user_role: config.role,
-          password_hash: newHash,
-        });
-
-        await logAction({
-          userId: data[config.idField],
-          userRole: config.role,
-          action: "password_reset_success",
-          details: "User successfully reset their forgotten password",
-          status: "success",
-        });
-
-        return true;
-      }
-    }
-  } catch (error) {
-    console.error("Failed to sync forgotten password:", error);
-  }
-  return false;
 }

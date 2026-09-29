@@ -1,18 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { guard } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   try {
+    // Pharmacy staff and clinicians; RLS limits rows to patients they serve.
+    const auth = await guard("staff", "doctor", "nurse");
+    if (auth instanceof Response) return auth;
+    const supabase = auth.supabase;
+
     const searchParams = request.nextUrl.searchParams;
     const patientId = searchParams.get("patientId");
-    const patientName = searchParams.get("patientName");
+    // Strip PostgREST filter syntax so input can't add conditions to .or().
+    const patientName = searchParams
+      .get("patientName")
+      ?.replace(/[^\p{L}\p{N}\s-]/gu, "");
     const status = searchParams.get("status");
-
-    console.log("🔍 [Prescription Search] Params:", {
-      patientId,
-      patientName,
-      status,
-    });
 
     // Build the query
     let query = supabase
@@ -107,7 +109,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error("❌ [Prescription Search] Error:", error);
       return NextResponse.json(
-        { error: `Failed to fetch prescriptions: ${error.message}` },
+        { error: "Failed to fetch prescriptions" },
         { status: 500 }
       );
     }
@@ -137,7 +139,7 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error("❌ [Prescription Search] Exception:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

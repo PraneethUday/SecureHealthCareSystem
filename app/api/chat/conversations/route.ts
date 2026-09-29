@@ -3,7 +3,7 @@ import {
     getOrCreateConversation,
     getConversationByAppointment,
 } from "@/lib/chat";
-import { supabase } from "@/lib/supabase";
+import { guard } from "@/lib/supabase/server";
 
 /**
  * GET /api/chat/conversations
@@ -11,6 +11,8 @@ import { supabase } from "@/lib/supabase";
  */
 export async function GET(request: NextRequest) {
     try {
+        const auth = await guard("patient", "doctor");
+        if (auth instanceof Response) return auth;
         const { searchParams } = new URL(request.url);
         const appointmentId = searchParams.get("appointmentId");
 
@@ -43,6 +45,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
     try {
+        const auth = await guard("patient", "doctor");
+        if (auth instanceof Response) return auth;
+        const supabase = auth.supabase;
         const body = await request.json();
         const { appointmentId } = body;
 
@@ -67,9 +72,6 @@ export async function POST(request: NextRequest) {
                 { status: 404 }
             );
         }
-
-        // Allow chat for any status for now (development mode)
-        console.log(`Creating conversation for appointment ${appointmentId} with status: ${appointment.status}`);
 
         const result = await getOrCreateConversation(
             appointmentId,

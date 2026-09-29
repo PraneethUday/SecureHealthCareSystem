@@ -2,7 +2,8 @@
 // EPIC 5: Audit, Monitoring & Breach Handling
 // Covers User Stories: 10577, 10578, 10580, 10583, 10585
 
-import { supabase } from "./supabase";
+// Server-only: callers (admin API routes) authorize the admin first.
+import { supabaseAdmin as supabase } from "./supabase-admin";
 import { createNotification } from "./notifications";
 import type {
   SecurityIncident,

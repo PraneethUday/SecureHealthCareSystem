@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { guard } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await guard();
+    if (auth instanceof Response) return auth;
+    const supabase = auth.supabase;
     const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get("userId");
-    const userRole = searchParams.get("userRole");
+    // Always the caller's own inbox; any userId in the query is ignored.
+    const userId = auth.profileId;
+    const userRole = auth.role;
     const limit = parseInt(searchParams.get("limit") || "20");
     const unreadOnly = searchParams.get("unreadOnly") === "true";
 
@@ -62,6 +66,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await guard();
+    if (auth instanceof Response) return auth;
+    const supabase = auth.supabase;
     const body = await request.json();
     const {
       recipientId,

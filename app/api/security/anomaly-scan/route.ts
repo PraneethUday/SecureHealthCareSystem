@@ -1,14 +1,14 @@
+import { guard } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { runAnomalyScan } from "@/lib/security-monitoring";
 
 export async function POST(request: Request) {
+  const auth = await guard("admin");
+  if (auth instanceof Response) return auth;
   try {
     const body = await request.json();
-    const { adminId, hoursLookback } = body;
-
-    if (!adminId) {
-      return NextResponse.json({ error: "Missing adminId" }, { status: 400 });
-    }
+    const { hoursLookback } = body;
+    const adminId = auth.businessId;
 
     const result = await runAnomalyScan(adminId, hoursLookback || 24);
 

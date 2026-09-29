@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { guard } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const patientId = searchParams.get("patientId");
-
-    if (!patientId) {
-      return NextResponse.json({ error: "Missing patientId" }, { status: 400 });
-    }
+    const auth = await guard("patient");
+    if (auth instanceof Response) return auth;
+    const supabase = auth.supabase;
+    // Only ever the caller's own appointments.
+    const patientId = auth.profileId;
 
     // Get all appointments for this patient
     const { data: appointments, error } = await supabase

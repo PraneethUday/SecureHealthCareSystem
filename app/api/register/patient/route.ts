@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+// Public sign-up: the insert is privileged, so it runs server-side with the
+// service role after the input has been validated below.
+import { supabaseAdmin as supabase } from "@/lib/supabase-admin";
+import { provisionAuthUser } from "@/lib/auth-provisioning";
 import { logAction } from "@/lib/logging";
-import { hashPassword, generateOTP, generateOTPExpiry, hashOTP, validatePasswordComplexity } from "@/lib/security";
-import { sendOTPEmail, sendRegistrationConfirmationEmail } from "@/lib/email";
+import { hashPassword, validatePasswordComplexity } from "@/lib/security";
+import { sendRegistrationConfirmationEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -110,11 +113,6 @@ export async function POST(request: NextRequest) {
       newPatientId = `P${String(lastNumber + 1).padStart(3, "0")}`;
     }
 
-    // Generate initial OTP for email verification
-    const otp = generateOTP();
-    const otpHash = hashOTP(otp);
-    const otpExpiry = generateOTPExpiry();
-
     // Insert new patient
     const { data, error } = await supabase
       .from("patients")
@@ -132,8 +130,8 @@ export async function POST(request: NextRequest) {
         emergency_contact: emergencyContact,
         blood_group: bloodGroup,
         allergies: allergies || "None",
-        is_mfa_enabled: true, // Enable MFA by default
-        mfa_method: "email",
+        is_mfa_enabled: false, // TOTP is optional for patients
+        mfa_method: "totp",
         password_changed_at: new Date().toISOString(),
       })
       .select()
@@ -153,37 +151,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Store initial OTP for email verification
-    const { error: otpError } = await supabase.from("otp_logs").insert({
-      user_id: newPatientId,
-      user_role: "patient",
-      otp_hash: otpHash,
-      expires_at: otpExpiry.toISOString(),
-      attempts: 0,
-    });
-
-    if (otpError) {
-      console.error("OTP storage error:", otpError);
-      // Don't fail registration if OTP storage fails, but log it
-      await logAction({
-        userId: newPatientId,
-        userRole: "patient",
-        action: "otp_storage_failed",
-        details: "Failed to store initial OTP",
-        ipAddress: request.headers.get("x-forwarded-for") || "unknown",
+    try {
+      await provisionAuthUser(supabase, {
+        email,
+        role: "patient",
+        profileId: data.id,
+        password,
       });
-    }
-
-    // Send OTP verification email
-    const otpEmailSent = await sendOTPEmail(
-      email,
-      otp,
-      `${firstName} ${lastName}`
-    );
-
-    if (!otpEmailSent) {
-      console.warn("Failed to send OTP email during registration");
-      // Don't fail registration if email sending fails
+    } catch (authError) {
+      console.error("Auth provisioning error:", authError);
+      await supabase.from("patients").delete().eq("id", data.id);
+      return NextResponse.json(
+        { error: "Failed to create account" },
+        { status: 500 },
+      );
     }
 
     // Send registration confirmation email
@@ -202,7 +183,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Account created successfully. Please verify your email.",
+        message: "Account created successfully. You can now sign in.",
         patientId: newPatientId,
       },
       { status: 201 },

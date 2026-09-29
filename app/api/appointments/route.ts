@@ -1,8 +1,11 @@
-import { supabase } from "@/lib/supabase";
+import { guard } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
     try {
+        const auth = await guard();
+        if (auth instanceof Response) return auth;
+        const supabase = auth.supabase;
         const { searchParams } = new URL(request.url);
         const id = searchParams.get("id");
 

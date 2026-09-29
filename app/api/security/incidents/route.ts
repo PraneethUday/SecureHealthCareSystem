@@ -1,3 +1,4 @@
+import { guard } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import {
   getSecurityIncidents,
@@ -8,6 +9,8 @@ import {
 import type { SecurityIncidentType, SecuritySeverity, SecurityIncidentStatus } from "@/lib/database.types";
 
 export async function GET(request: Request) {
+  const auth = await guard("admin");
+  if (auth instanceof Response) return auth;
   const { searchParams } = new URL(request.url);
   const severity = searchParams.get("severity") as SecuritySeverity | null;
   const status = searchParams.get("status") as SecurityIncidentStatus | null;
@@ -32,6 +35,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const auth = await guard("admin");
+  if (auth instanceof Response) return auth;
   try {
     const body = await request.json();
     const { incident_type, severity, title, description, affected_user_id, affected_user_role, source_ip } = body;
@@ -62,9 +67,12 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const auth = await guard("admin");
+  if (auth instanceof Response) return auth;
   try {
     const body = await request.json();
-    const { incidentId, action, resolvedBy, resolutionNotes, status } = body;
+    const { incidentId, action, resolutionNotes, status } = body;
+    const resolvedBy = auth.businessId;
 
     if (!incidentId) {
       return NextResponse.json({ error: "Missing incidentId" }, { status: 400 });

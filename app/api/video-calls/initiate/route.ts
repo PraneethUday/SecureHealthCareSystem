@@ -1,29 +1,15 @@
-import { supabase } from "@/lib/supabase";
+import { guard } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const { appointmentId, doctorId, userId, userRole } = await request.json();
+    // Only patients initiate calls; who they are comes from the session.
+    const auth = await guard("patient");
+    if (auth instanceof Response) return auth;
+    const supabase = auth.supabase;
+    const userId = auth.profileId;
 
-    console.log("[API] Video call initiate request:", {
-      appointmentId,
-      doctorId,
-      userId,
-      userRole,
-    });
-
-    // Verify user is authenticated
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Verify user is patient
-    if (userRole !== "patient") {
-      return NextResponse.json(
-        { error: "Only patients can initiate video calls" },
-        { status: 403 }
-      );
-    }
+    const { appointmentId, doctorId } = await request.json();
 
     // Verify appointment exists and belongs to patient
     const { data: appointment, error: aptError } = await supabase
@@ -42,8 +28,6 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
-
-    console.log("[API] Appointment found:", { appointment });
 
     if (appointment.patient_id !== userId) {
       return NextResponse.json(

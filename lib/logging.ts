@@ -12,7 +12,7 @@ interface LogActionParams {
   userAgent?: string;
 }
 
-import { supabase } from "./supabase";
+
 
 /**
  * Centralized audit logger
@@ -24,7 +24,9 @@ export async function logAction(params: LogActionParams): Promise<void> {
   // Instead of fetching /api/audit, we can just call the db directly if we have supabase access
   if (typeof window === "undefined") {
     try {
-      const { error } = await supabase.from("access_logs").insert({
+      // Audit writes are privileged; only server code may insert directly.
+      const { supabaseAdmin } = await import("./supabase-admin");
+      const { error } = await supabaseAdmin.from("access_logs").insert({
         user_id: params.userId,
         user_role: params.userRole,
         action: params.action,

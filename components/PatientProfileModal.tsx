@@ -32,7 +32,10 @@ export default function PatientProfileModal({
       try {
         const { data, error } = await supabase
           .from("patients")
-          .select("*")
+          // Credential columns are not selectable, so list what we show.
+          .select(
+            "id, patient_id, first_name, last_name, email, phone, phone_number, date_of_birth, gender, address, city, state, zip_code, emergency_contact, blood_group, allergies, medical_history, current_medications, health_profile, is_profile_completed",
+          )
           .eq("id", patientId)
           .single();
 

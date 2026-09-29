@@ -1,3 +1,4 @@
+import { guard } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { logAction } from "@/lib/logging";
@@ -8,21 +9,11 @@ import { logAction } from "@/lib/logging";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const adminId = searchParams.get("adminId");
 
     // Validate admin authorization
-    if (!adminId || adminId !== "admin") {
-      await logAction({
-        userId: adminId || "unknown",
-        userRole: "admin",
-        action: "unauthorized_hospitals_view_attempt",
-        status: "failure",
-      });
-      return NextResponse.json(
-        { error: "Unauthorized. Admin access required." },
-        { status: 403 },
-      );
-    }
+    const auth = await guard("admin");
+    if (auth instanceof Response) return auth;
+    const adminId = auth.businessId;
 
     const { data: hospitals, error } = await supabaseAdmin
       .from("hospitals")

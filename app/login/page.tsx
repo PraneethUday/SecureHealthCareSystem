@@ -7,11 +7,10 @@ import { getThemeClasses } from "./constants";
 import Header from "./components/Header";
 import RoleSelector from "./components/RoleSelector";
 import LoginForm from "./components/LoginForm";
-import OTPForm from "./components/OTPForm";
 import Footer from "./components/Footer";
 import InfoBanner from "./components/InfoBanner";
 import { saveSession } from "@/lib/auth";
-import { login, verifyMFAOTP, resendOTP } from "@/app/actions/auth-actions";
+import { login } from "@/app/actions/auth-actions";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function LoginPage() {
@@ -20,9 +19,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [requiresMFA, setRequiresMFA] = useState(false);
-  const [mfaToken, setMFAToken] = useState("");
-  const [otpAttempts, setOtpAttempts] = useState(0);
   const router = useRouter();
 
   const themeClasses = getThemeClasses(selectedRole);
@@ -35,58 +31,17 @@ export default function LoginPage() {
     try {
       const result = await login(identifier, password, selectedRole);
 
-      if (result.requiresMFA && result.mfaToken) {
-        // MFA required - show OTP form
-        setMFAToken(result.mfaToken);
-        setRequiresMFA(true);
-        setOtpAttempts(0);
-      } else if (result.requiresPasswordChange && result.user && result.role) {
-        // Password expired - forced change
+      if (result.success && result.user && result.role) {
         saveSession(result.user, result.role);
-        router.push("/dashboard/profile/change-password?forced=true");
-      } else if (result.success && result.user && result.role) {
-        // No MFA required - login successful
-        saveSession(result.user, result.role);
-        router.push(`/dashboard/${result.role}`);
+        if (result.requiresPasswordChange) {
+          router.push("/dashboard/profile/change-password?forced=true");
+        } else if (result.requiresMFA || result.requiresMFAEnrollment) {
+          router.push("/mfa");
+        } else {
+          router.push(`/dashboard/${result.role}`);
+        }
       } else {
         setError(result.message || "Login failed");
-      }
-    } catch (err) {
-      setError("An error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOTPSubmit = async (e: React.FormEvent, otp: string) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
-
-    try {
-      // Use Server Action instead of API route
-      const result = await verifyMFAOTP(mfaToken, otp, selectedRole);
-
-      if (result.success && result.user && result.role) {
-        // OTP verified successfully
-        saveSession(result.user, result.role);
-        router.push(`/dashboard/${result.role}`);
-      } else {
-        const newAttempts = otpAttempts + 1;
-        setOtpAttempts(newAttempts);
-
-        if (newAttempts >= 5) {
-          setError(
-            "Maximum OTP attempts exceeded. Please try logging in again.",
-          );
-          setRequiresMFA(false);
-          setMFAToken("");
-        } else {
-          setError(
-            result.message ||
-              `Invalid OTP. ${5 - newAttempts} attempts remaining.`,
-          );
-        }
       }
     } catch (err) {
       setError("An error occurred. Please try again.");
@@ -100,34 +55,6 @@ export default function LoginPage() {
     setIdentifier("");
     setPassword("");
     setError("");
-    setRequiresMFA(false);
-    setMFAToken("");
-    setOtpAttempts(0);
-  };
-
-  const handleBackToLogin = () => {
-    setRequiresMFA(false);
-    setMFAToken("");
-    setOtpAttempts(0);
-    setError("");
-  };
-
-  const handleResendOTP = async () => {
-    setError("");
-    setIsLoading(true);
-    try {
-      const result = await resendOTP(mfaToken, selectedRole);
-      if (result.success) {
-        setError("");
-        setOtpAttempts(0);
-      } else {
-        setError(result.message || "Failed to resend OTP.");
-      }
-    } catch (err) {
-      setError("An error occurred while resending OTP.");
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
@@ -198,26 +125,12 @@ export default function LoginPage() {
           >
             <Header themeClasses={themeClasses} selectedRole={selectedRole} />
 
-            {!requiresMFA && (
-              <RoleSelector
-                selectedRole={selectedRole}
-                onRoleChange={handleRoleChange}
-                themeClasses={themeClasses}
-              />
-            )}
+            <RoleSelector
+              selectedRole={selectedRole}
+              onRoleChange={handleRoleChange}
+              themeClasses={themeClasses}
+            />
 
-            {requiresMFA ? (
-              <OTPForm
-                onSubmit={handleOTPSubmit}
-                isLoading={isLoading}
-                error={error}
-                email={identifier}
-                themeClasses={themeClasses}
-                onBackClick={handleBackToLogin}
-                onResendOTP={handleResendOTP}
-                attemptsRemaining={5 - otpAttempts}
-              />
-            ) : (
               <LoginForm
                 identifier={identifier}
                 password={password}
@@ -229,11 +142,8 @@ export default function LoginPage() {
                 isLoading={isLoading}
                 error={error}
               />
-            )}
 
-            {!requiresMFA && (
-              <Footer selectedRole={selectedRole} themeClasses={themeClasses} />
-            )}
+            <Footer selectedRole={selectedRole} themeClasses={themeClasses} />
           </div>
         </div>
       </div>
