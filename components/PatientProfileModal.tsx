@@ -30,13 +30,9 @@ export default function PatientProfileModal({
   useEffect(() => {
     async function loadProfile() {
       try {
+        // Masked for the caller's role and written to the audit chain.
         const { data, error } = await supabase
-          .from("patients")
-          // Credential columns are not selectable, so list what we show.
-          .select(
-            "id, patient_id, first_name, last_name, email, phone, phone_number, date_of_birth, gender, address, city, state, zip_code, emergency_contact, blood_group, allergies, medical_history, current_medications, health_profile, is_profile_completed",
-          )
-          .eq("id", patientId)
+          .rpc("get_patient_profile", { p_patient_id: patientId })
           .single();
 
         if (error) throw error;

@@ -10,7 +10,6 @@ interface Nurse {
   first_name: string;
   last_name: string;
   department: string;
-  license_number: string;
   shift: string;
   phone: string;
 }
@@ -47,7 +46,7 @@ export function NurseAssignment({
           .select(
             `
             nurses (
-              id, nurse_id, first_name, last_name, department, license_number, shift, phone
+              id, nurse_id, first_name, last_name, department, shift, phone
             )
           `,
           )
@@ -70,7 +69,7 @@ export function NurseAssignment({
       const { data: allNurses, error: allError } = await supabase
         .from("nurses")
         .select(
-          "id, nurse_id, first_name, last_name, department, license_number, shift, phone",
+          "id, nurse_id, first_name, last_name, department, shift, phone",
         )
         .order("first_name");
 

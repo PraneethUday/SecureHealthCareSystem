@@ -438,7 +438,7 @@ export async function createAppointment(appointmentData: {
 
       // Get patient, doctor, and hospital details for email
       const { data: patientData } = await supabase
-        .from("patients")
+        .from("patient_directory")
         .select("first_name, last_name, email")
         .eq("id", appointmentData.patientId)
         .single();
@@ -687,7 +687,7 @@ export async function getDoctorAppointments(
       .select(
         `
         *,
-        patients (
+        patients:patient_directory (
           id,
           patient_id,
           first_name,

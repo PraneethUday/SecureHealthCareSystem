@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
 
     let query = auth.supabase
       .from("medical_reports")
-      .select("*, patients!inner (patient_id, first_name, last_name, email)")
+      .select("*, patients:patient_directory!inner (patient_id, first_name, last_name, email)")
       .order("report_date", { ascending: false });
 
     if (patientId) {

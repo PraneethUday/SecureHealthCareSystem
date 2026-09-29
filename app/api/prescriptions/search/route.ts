@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
           last_name,
           specialization
         ),
-        patients!inner (
+        patients:patient_directory!inner (
           patient_id,
           first_name,
           last_name,

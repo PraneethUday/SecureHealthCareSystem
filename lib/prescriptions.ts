@@ -428,7 +428,7 @@ export async function getVideoCallLogs(filters?: {
           appointment_time,
           is_telemedicine
         ),
-        patients (
+        patients:patient_directory (
           first_name,
           last_name,
           email
