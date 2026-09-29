@@ -10,13 +10,22 @@ import {
   User,
   Sparkles,
   Stethoscope,
+  FileText,
+  Pill,
 } from "lucide-react";
+
+interface Citation {
+  ref: string;
+  sourceTable: string;
+  sourceId: string;
+}
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   time?: string;
+  citations?: Citation[];
 }
 
 interface ChatWidgetProps {
@@ -25,10 +34,9 @@ interface ChatWidgetProps {
 }
 
 const QUICK_PROMPTS = [
-  "How do I book an appointment?",
-  "What are healthy eating tips?",
-  "How to read my medical report?",
-  "When should I see a doctor?",
+  "What was my most recent diagnosis?",
+  "Which medications am I currently taking?",
+  "What did my doctor recommend at my last visit?",
 ];
 
 export default function ChatWidget({
@@ -85,6 +93,10 @@ export default function ChatWidget({
     return id;
   }, []);
 
+  const setMessageCitations = useCallback((id: string, citations: Citation[]) => {
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, citations } : m)));
+  }, []);
+
   const updateMessageContent = useCallback((id: string, content: string) => {
     setMessages((prev) =>
       prev.map((m) => (m.id === id ? { ...m, content } : m)),
@@ -113,7 +125,8 @@ export default function ChatWidget({
       currentAssistantIdRef.current = assistantId;
 
       const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), 25000);
+      // Local model: allow time for the first (cold) load.
+      const timeoutId = window.setTimeout(() => controller.abort(), 90000);
 
       if (revealIntervalRef.current) {
         window.clearInterval(revealIntervalRef.current);
@@ -145,7 +158,10 @@ export default function ChatWidget({
         if (!res.ok) {
           updateMessageContent(
             assistantId,
-            "Sorry, something went wrong. Please try again.",
+            (parsed?.reply as string) ??
+              (res.status === 403
+                ? "Complete two-factor authentication to use the records assistant."
+                : "Sorry, something went wrong. Please try again."),
           );
           setLoading(false);
           currentAssistantIdRef.current = null;
@@ -157,6 +173,10 @@ export default function ChatWidget({
           (parsed?.response as string) ??
           rawText ??
           "No response from the AI model.";
+
+        if (Array.isArray(parsed?.citations)) {
+          setMessageCitations(assistantId, parsed.citations as Citation[]);
+        }
 
         // Typewriter effect
         let idx = 0;
@@ -195,7 +215,7 @@ export default function ChatWidget({
         currentAssistantIdRef.current = null;
       }
     },
-    [input, loading, role, page, addMessage, updateMessageContent],
+    [input, loading, role, page, addMessage, updateMessageContent, setMessageCitations],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -261,7 +281,7 @@ export default function ChatWidget({
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
                     <span className="text-white/70 text-[11px]">
-                      Powered by Gemini AI
+                      Local model · your authorized records only
                     </span>
                   </div>
                 </div>
@@ -302,8 +322,8 @@ export default function ChatWidget({
                   Welcome to MedBot
                 </h4>
                 <p className="text-gray-500 dark:text-gray-400 text-xs mb-5 max-w-[260px] leading-relaxed">
-                  I can help with health questions, navigating the app, and
-                  understanding your medical information.
+                  I answer questions from the records you are allowed to see,
+                  and cite the record behind every answer.
                 </p>
                 <div className="w-full space-y-2">
                   <p className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-medium">
@@ -373,6 +393,25 @@ export default function ChatWidget({
                         ""
                       ))}
                   </div>
+                  {msg.role === "assistant" && !!msg.citations?.length && (
+                    <div className="mt-1.5 flex flex-wrap gap-1.5" aria-label="Sources">
+                      {msg.citations.map((c) => {
+                        const Icon = c.sourceTable === "prescriptions" ? Pill : FileText;
+                        return (
+                          <span
+                            key={c.ref}
+                            title={`${c.sourceTable} ${c.sourceId}`}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-[10px] text-emerald-800 dark:text-emerald-300"
+                          >
+                            <Icon className="w-3 h-3" />
+                            {c.ref} ·{" "}
+                            {c.sourceTable === "prescriptions" ? "Prescription" : "Medical record"}{" "}
+                            <span className="font-mono opacity-70">{c.sourceId.slice(0, 8)}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
                   <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 px-1">
                     {msg.time}
                   </span>

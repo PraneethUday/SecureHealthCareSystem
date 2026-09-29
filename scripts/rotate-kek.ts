@@ -12,12 +12,14 @@
  *   npm run kek:rotate
  */
 import { adminClient } from "./lib/admin-client";
-import { Keystore, type EncryptedTable } from "../lib/crypto/clinical";
+import { Keystore } from "../lib/crypto/clinical";
 import { fromBytea, rewrapDek, toBytea } from "../lib/crypto/envelope";
 
 const admin = adminClient();
 const keystore = new Keystore(admin);
-const TABLES: EncryptedTable[] = ["medical_records", "prescriptions"];
+// Every table whose rows carry an envelope (record_chunks holds encrypted
+// RAG chunk text under the same KEK).
+const TABLES = ["medical_records", "prescriptions", "record_chunks"];
 
 async function main() {
   const resume = process.argv.includes("--resume");

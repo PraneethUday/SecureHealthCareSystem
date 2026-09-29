@@ -2,6 +2,8 @@ import "server-only";
 import crypto from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { keystore } from "@/lib/crypto/server";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { processEmbeddingJobs } from "@/lib/rag/indexer";
 import { decryptRow, encryptRow, ENCRYPTED_FIELDS } from "@/lib/crypto/clinical";
 import type { CurrentUser } from "@/lib/supabase/server";
 
@@ -18,6 +20,14 @@ const RX_EMBED = `*,
   doctors ( first_name, last_name, specialization ),
   appointments ( appointment_date, appointment_time, is_telemedicine ),
   patients:patient_directory ( patient_id, first_name, last_name, email, phone_number )`;
+
+// The write triggers enqueued a re-embedding job; drain it now so the
+// assistant sees the change immediately. Failures stay queued for retry.
+function reindexSoon() {
+  processEmbeddingJobs(supabaseAdmin, keystore).catch((e) =>
+    console.error("Re-embedding failed:", (e as Error).message),
+  );
+}
 
 export class ClinicalError extends Error {
   constructor(message: string, public status = 400) {
@@ -89,6 +99,7 @@ export async function createMedicalRecord(user: CurrentUser, input: Record<strin
     performed_by_role: user.role,
     metadata: { appointment_id: input.appointment_id ?? null },
   });
+  reindexSoon();
   const [created] = await listMedicalRecords(user.supabase, { id });
   return created;
 }
@@ -123,6 +134,7 @@ export async function updateMedicalRecord(
     performed_by_role: user.role,
     metadata: { changed_fields: Object.keys(changes) },
   });
+  reindexSoon();
   const [updated] = await listMedicalRecords(user.supabase, { id });
   return updated;
 }
@@ -166,6 +178,7 @@ export async function createPrescription(user: CurrentUser, input: Record<string
     performed_by_role: user.role,
     metadata: { appointment_id: input.appointment_id ?? null },
   });
+  reindexSoon();
   const [created] = await listPrescriptions(user.supabase, { id });
   return created;
 }
@@ -210,4 +223,5 @@ export async function updatePrescription(
     performed_by_role: user.role,
     metadata: { status: status ?? null, dispensed: !!change.dispense, notes_changed: !!change.notes },
   });
+  reindexSoon();
 }
