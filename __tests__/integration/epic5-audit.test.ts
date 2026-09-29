@@ -1,4 +1,4 @@
-import { getAllLogs, getPatientAccessLogs, logAction } from "@/lib/logging";
+import { getAllLogs, logAction } from "@/lib/logging";
 import { supabase } from "@/lib/supabase";
 
 jest.mock("@/lib/supabase", () => ({
@@ -63,11 +63,9 @@ describe("Epic 5: Audit, Monitoring & Breach Handling", () => {
             expect(global.fetch).toHaveBeenCalledWith("/api/audit/logs?limit=50");
         });
 
-        it("should fetch patient specific access logs reliably", async () => {
-            const logs = await getPatientAccessLogs("P001");
-            expect(logs).toBeDefined();
-            expect(global.fetch).toHaveBeenCalledWith("/api/audit/logs?patientId=P001&limit=100");
-        });
+        // Patient-specific history ("who accessed my record") is served by the
+        // my_record_access_log() RPC over the hash-chained audit_log and is
+        // tested against a real database in __tests__/access-control.
     });
     
     describe("TC-AUD-001: Audit Log Generation", () => {

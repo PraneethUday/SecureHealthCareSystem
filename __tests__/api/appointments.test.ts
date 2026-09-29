@@ -16,18 +16,19 @@ const mockSupabaseChain = {
   single: jest.fn(),
 };
 
-jest.mock("@/lib/supabase", () => ({
-  supabase: {
-    from: jest.fn(() => mockSupabaseChain),
-  },
-}));
+const mockClient = { from: jest.fn(() => mockSupabaseChain) };
+
+jest.mock("@/lib/supabase/server", () => require("../helpers/serverAuthMock"));
 
 // Import route
 import { GET } from "@/app/api/appointments/[appointmentId]/details/route";
+import { setCurrentUser } from "../helpers/serverAuthMock";
 
 describe("Appointment Details API Route Tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Queries run as the signed-in user; RLS decides visibility.
+    setCurrentUser({ role: "patient", supabase: mockClient });
     Object.values(mockSupabaseChain).forEach((fn) => {
       if (typeof fn === "function" && fn.mockReturnThis) {
         fn.mockReturnThis();
@@ -36,6 +37,16 @@ describe("Appointment Details API Route Tests", () => {
   });
 
   describe("GET /api/appointments/[appointmentId]/details", () => {
+    it("rejects unauthenticated callers", async () => {
+      setCurrentUser(null);
+      const response = await GET(
+        new NextRequest("http://localhost:3000/api/appointments/apt123/details"),
+        { params: Promise.resolve({ appointmentId: "apt123" }) },
+      );
+      expect(response.status).toBe(401);
+      expect(mockClient.from).not.toHaveBeenCalled();
+    });
+
     it("should return 404 for non-existent appointment", async () => {
       mockSupabaseChain.single.mockResolvedValueOnce({
         data: null,

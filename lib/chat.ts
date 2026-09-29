@@ -75,7 +75,13 @@ export function encryptMessage(text: string): string {
 export function decryptMessage(encryptedText: string): string {
     const key = chatKey();
     const parts = encryptedText.split(":");
-    if (parts.length !== 3 || !parts.every((p) => /^[0-9a-f]+$/i.test(p))) {
+    // iv and tag are always present; the ciphertext of "" is empty.
+    const looksEncrypted =
+        parts.length === 3 &&
+        /^[0-9a-f]{24,32}$/i.test(parts[0]) &&
+        /^[0-9a-f]{32}$/i.test(parts[1]) &&
+        /^[0-9a-f]*$/i.test(parts[2]);
+    if (!looksEncrypted) {
         return encryptedText;
     }
     try {

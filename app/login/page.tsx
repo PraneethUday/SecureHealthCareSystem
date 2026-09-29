@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserRole } from "./types";
 import { getThemeClasses } from "./constants";
@@ -22,6 +22,12 @@ export default function LoginPage() {
   const router = useRouter();
 
   const themeClasses = getThemeClasses(selectedRole);
+
+  // Drop any cached profile from an earlier (possibly expired) session.
+  useEffect(() => {
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("role");
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

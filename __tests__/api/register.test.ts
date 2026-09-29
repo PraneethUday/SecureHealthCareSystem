@@ -33,14 +33,27 @@ const createChainableMock = () => {
       insertCalled = true;
       return chain;
     }),
+    delete: jest.fn(() => {
+      mockDeleted();
+      return chain;
+    }),
   };
   return chain;
 };
 
-jest.mock("@/lib/supabase", () => ({
-  supabase: {
+const mockDeleted = jest.fn();
+
+// Public sign-up runs server-side with the service role.
+jest.mock("@/lib/supabase-admin", () => ({
+  supabaseAdmin: {
     from: jest.fn(() => createChainableMock()),
   },
+}));
+
+// Every new patient gets a linked Supabase Auth user.
+const mockProvision = jest.fn().mockResolvedValue("auth-uid");
+jest.mock("@/lib/auth-provisioning", () => ({
+  provisionAuthUser: (...args: any[]) => mockProvision(...args),
 }));
 
 // Mock logging
@@ -165,6 +178,34 @@ describe("Patient Registration API Route Tests", () => {
       expect(response.status).toBe(201);
       expect(data.message).toContain("successfully");
       expect(data.patientId).toBeDefined();
+    });
+
+    it("provisions a Supabase Auth login linked to the new patient", async () => {
+      mockSingleResults = [
+        { data: null, error: { message: "Not found" } },
+        { data: { patient_id: "P005" }, error: null },
+        { data: { id: "patient-uuid", patient_id: "P006" }, error: null },
+      ];
+      const response = await POST(createMockRequest(validPatientData));
+      expect(response.status).toBe(201);
+      expect(mockProvision).toHaveBeenCalledWith(expect.anything(), {
+        email: validPatientData.email,
+        role: "patient",
+        profileId: "patient-uuid",
+        password: validPatientData.password,
+      });
+    });
+
+    it("rolls back the patient row if the login cannot be created", async () => {
+      mockSingleResults = [
+        { data: null, error: { message: "Not found" } },
+        { data: { patient_id: "P005" }, error: null },
+        { data: { id: "patient-uuid", patient_id: "P006" }, error: null },
+      ];
+      mockProvision.mockRejectedValueOnce(new Error("auth down"));
+      const response = await POST(createMockRequest(validPatientData));
+      expect(response.status).toBe(500);
+      expect(mockDeleted).toHaveBeenCalled();
     });
 
     it("should generate P001 for first patient", async () => {

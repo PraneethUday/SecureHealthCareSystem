@@ -17,14 +17,13 @@ const mockSupabaseChain = {
   insert: jest.fn().mockReturnThis(),
 };
 
-jest.mock("@/lib/supabase", () => ({
-  supabase: {
-    from: jest.fn(() => mockSupabaseChain),
-  },
-}));
+const mockClient = { from: jest.fn(() => mockSupabaseChain) };
+
+jest.mock("@/lib/supabase/server", () => require("../helpers/serverAuthMock"));
 
 // Import route
 import { POST } from "@/app/api/video-calls/initiate/route";
+import { setCurrentUser } from "../helpers/serverAuthMock";
 
 // Helper to create mock request
 function createMockRequest(body: any): NextRequest {
@@ -38,6 +37,8 @@ function createMockRequest(body: any): NextRequest {
 describe("Video Calls Initiate API Route Tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Signed-in patient; userId/userRole in request bodies are ignored.
+    setCurrentUser({ role: "patient", profileId: "patient123", supabase: mockClient });
     Object.values(mockSupabaseChain).forEach((fn) => {
       if (typeof fn === "function" && fn.mockReturnThis) {
         fn.mockReturnThis();
@@ -46,7 +47,8 @@ describe("Video Calls Initiate API Route Tests", () => {
   });
 
   describe("POST /api/video-calls/initiate", () => {
-    it("should return 401 for missing userId", async () => {
+    it("should return 401 when not signed in", async () => {
+      setCurrentUser(null);
       const request = createMockRequest({
         appointmentId: "apt123",
         doctorId: "doctor123",
@@ -58,10 +60,11 @@ describe("Video Calls Initiate API Route Tests", () => {
       const data = await response.json();
 
       expect(response.status).toBe(401);
-      expect(data.error).toContain("Unauthorized");
+      expect(data.error).toContain("Not signed in");
     });
 
     it("should return 403 for non-patient user", async () => {
+      setCurrentUser({ role: "doctor", supabase: mockClient });
       const request = createMockRequest({
         appointmentId: "apt123",
         doctorId: "doctor123",
@@ -73,7 +76,18 @@ describe("Video Calls Initiate API Route Tests", () => {
       const data = await response.json();
 
       expect(response.status).toBe(403);
-      expect(data.error).toContain("patients");
+      expect(data.error).toBe("Forbidden");
+    });
+
+    it("ignores a userId in the body: ownership is checked against the session", async () => {
+      mockSupabaseChain.single.mockResolvedValueOnce({
+        data: { id: "apt123", patient_id: "otherPatient", doctor_id: "doctor123", status: "scheduled" },
+        error: null,
+      });
+      const response = await POST(
+        createMockRequest({ appointmentId: "apt123", doctorId: "doctor123", userId: "otherPatient", userRole: "patient" }),
+      );
+      expect(response.status).toBe(403);
     });
 
     it("should return 404 for non-existent appointment", async () => {

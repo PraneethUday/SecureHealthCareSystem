@@ -12,6 +12,9 @@ import {
   getMedicalRecordLogs,
   hasAppointmentMedicalRecord,
 } from "@/lib/medicalRecords";
+import { mockFetchOnce, lastFetch } from "../helpers/mockFetch";
+
+global.fetch = jest.fn();
 
 // Mock supabase
 const mockSupabaseChain = {
@@ -50,18 +53,11 @@ describe("Medical Records Unit Tests", () => {
     });
   });
 
+  // Clinical fields are encrypted at rest, so these functions go through
+  // the server (/api/clinical/medical-records) rather than Supabase.
   describe("createMedicalRecord()", () => {
-    it("should create medical record successfully", async () => {
-      const mockRecord = {
-        id: "rec123",
-        diagnosis: "Common cold",
-        treatment_plan: "Rest and fluids",
-      };
-      mockSupabaseChain.single.mockResolvedValueOnce({
-        data: mockRecord,
-        error: null,
-      });
-
+    it("POSTs the record to the encrypting API and returns it", async () => {
+      mockFetchOnce({ record: { id: "rec123", diagnosis: "Common cold" } }, 201);
       const result = await createMedicalRecord(
         {
           appointment_id: "apt123",
@@ -71,162 +67,89 @@ describe("Medical Records Unit Tests", () => {
           chief_complaint: "Cough and cold",
           diagnosis: "Common cold",
           treatment_plan: "Rest and fluids",
-        },
+        } as any,
         "doctor123",
       );
-
-      expect(result.success).toBe(true);
-      expect(result.data).toBeDefined();
+      expect(result).toEqual({ success: true, data: { id: "rec123", diagnosis: "Common cold" } });
+      const call = lastFetch();
+      expect(call.url).toBe("/api/clinical/medical-records");
+      expect(call.method).toBe("POST");
+      expect(call.body.diagnosis).toBe("Common cold");
     });
 
-    it("should handle creation error", async () => {
-      mockSupabaseChain.single.mockResolvedValueOnce({
-        data: null,
-        error: { message: "Insert failed" },
-      });
-
-      const result = await createMedicalRecord(
-        {
-          appointment_id: "apt123",
-          patient_id: "patient123",
-          doctor_id: "doctor123",
-          record_date: "2026-01-15",
-          chief_complaint: "Test complaint",
-          diagnosis: "Test",
-          treatment_plan: "Test plan",
-        },
-        "doctor123",
-      );
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
-    });
-
-    it("should include optional notes when provided", async () => {
-      mockSupabaseChain.single.mockResolvedValueOnce({
-        data: { id: "rec123" },
-        error: null,
-      });
-
-      await createMedicalRecord(
-        {
-          appointment_id: "apt123",
-          patient_id: "patient123",
-          doctor_id: "doctor123",
-          record_date: "2026-01-15",
-          chief_complaint: "Test complaint",
-          diagnosis: "Test",
-          treatment_plan: "Test plan",
-          notes: "Follow up in 2 weeks",
-        },
-        "doctor123",
-      );
-
-      expect(mockSupabaseChain.insert).toHaveBeenCalled();
+    it("surfaces the server's error message", async () => {
+      mockFetchOnce({ error: "Could not create medical record" }, 403);
+      const result = await createMedicalRecord({ patient_id: "p" } as any, "d");
+      expect(result).toEqual({ success: false, error: "Could not create medical record" });
     });
   });
 
   describe("getPatientMedicalRecords()", () => {
-    it("should return patient medical records", async () => {
-      const mockRecords = [
-        { id: "rec1", diagnosis: "Flu" },
-        { id: "rec2", diagnosis: "Cold" },
-      ];
-      mockSupabaseChain.order.mockResolvedValueOnce({
-        data: mockRecords,
-        error: null,
+    it("fetches decrypted records for the patient and adds display fields", async () => {
+      mockFetchOnce({
+        records: [
+          {
+            id: "rec1",
+            diagnosis: "Flu",
+            doctors: { first_name: "John", last_name: "Doe", specialization: "GP" },
+            appointments: { appointment_date: "2026-01-15", appointment_time: "10:00" },
+          },
+        ],
       });
-
-      const result = await getPatientMedicalRecords("patient123");
-
-      expect(Array.isArray(result)).toBe(true);
+      const records = await getPatientMedicalRecords("patient123");
+      expect(lastFetch().url).toBe("/api/clinical/medical-records?patientId=patient123");
+      expect(records[0]).toMatchObject({
+        diagnosis: "Flu",
+        doctor_name: "John Doe",
+        doctor_specialization: "GP",
+        appointment_date: "2026-01-15",
+      });
     });
 
-    it("should return empty array on error", async () => {
-      mockSupabaseChain.order.mockResolvedValueOnce({
-        data: null,
-        error: { message: "Query failed" },
-      });
-
-      const result = await getPatientMedicalRecords("patient123");
-
-      expect(result).toEqual([]);
-    });
-
-    it("should accept user role and userId for access logging", async () => {
-      mockSupabaseChain.order.mockResolvedValueOnce({
-        data: [],
-        error: null,
-      });
-
-      await getPatientMedicalRecords("patient123", "doctor", "doctor123");
-
-      // Function should complete without errors
-      expect(true).toBe(true);
+    it("returns an empty list when the request fails", async () => {
+      mockFetchOnce({ error: "denied" }, 403);
+      expect(await getPatientMedicalRecords("patient123")).toEqual([]);
     });
   });
 
   describe("getMedicalRecordById()", () => {
-    it("should return medical record by ID", async () => {
-      const mockRecord = { id: "rec123", diagnosis: "Test" };
-      mockSupabaseChain.single.mockResolvedValueOnce({
-        data: mockRecord,
-        error: null,
-      });
-
-      const result = await getMedicalRecordById("rec123", "user123");
-
+    it("returns the record by ID", async () => {
+      mockFetchOnce({ records: [{ id: "rec123", diagnosis: "Flu", patients: { first_name: "A", last_name: "B" } }] });
+      const result = await getMedicalRecordById("rec123", "user1");
+      expect(lastFetch().url).toBe("/api/clinical/medical-records?id=rec123");
       expect(result.success).toBe(true);
-      expect(result.data).toBeDefined();
+      expect(result.data).toMatchObject({ id: "rec123", patient_name: "A B" });
     });
 
-    it("should handle record not found", async () => {
-      mockSupabaseChain.single.mockResolvedValueOnce({
-        data: null,
-        error: { message: "Not found" },
+    it("reports not found when RLS hides the record", async () => {
+      mockFetchOnce({ records: [] });
+      expect(await getMedicalRecordById("rec999", "user1")).toEqual({
+        success: false,
+        error: "Record not found",
       });
-
-      const result = await getMedicalRecordById("invalid123", "user123");
-
-      expect(result.success).toBe(false);
     });
   });
 
   describe("updateMedicalRecord()", () => {
-    it("should update medical record successfully", async () => {
-      mockSupabaseChain.single.mockResolvedValueOnce({
-        data: { id: "rec123", diagnosis: "Updated diagnosis" },
-        error: null,
-      });
-
+    it("PATCHes only the updates to the encrypting API", async () => {
+      mockFetchOnce({ record: { id: "rec123", diagnosis: "Updated", treatment_plan: "New plan" } });
       const result = await updateMedicalRecord(
         "rec123",
-        { diagnosis: "Updated diagnosis" },
+        { diagnosis: "Updated", treatment_plan: "New plan" },
         "doctor123",
       );
-
       expect(result.success).toBe(true);
+      expect(lastFetch()).toEqual({
+        url: "/api/clinical/medical-records",
+        method: "PATCH",
+        body: { id: "rec123", updates: { diagnosis: "Updated", treatment_plan: "New plan" } },
+      });
     });
 
-
-
-    it("should update multiple fields", async () => {
-      mockSupabaseChain.single.mockResolvedValueOnce({
-        data: { id: "rec123" },
-        error: null,
-      });
-
-      await updateMedicalRecord(
-        "rec123",
-        {
-          diagnosis: "New diagnosis",
-          treatment_plan: "New treatment",
-          notes: "Additional notes",
-        },
-        "doctor123",
-      );
-
-      expect(mockSupabaseChain.update).toHaveBeenCalled();
+    it("returns the error when the update is refused", async () => {
+      mockFetchOnce({ error: "Could not update medical record" }, 403);
+      const result = await updateMedicalRecord("rec123", { diagnosis: "x" }, "doctor123");
+      expect(result.success).toBe(false);
     });
   });
 

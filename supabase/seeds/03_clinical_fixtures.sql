@@ -35,3 +35,10 @@ insert into public.patient_vitals (patient_id, heart_rate, blood_pressure_systol
 select id, 80, 118, 76, 'nurse' from public.patients where patient_id = 'P002';
 insert into public.patient_vitals (patient_id, heart_rate, blood_pressure_systolic, blood_pressure_diastolic, recorded_by)
 select id, 95, 150, 95, 'patient' from public.patients where patient_id = 'P003';
+
+-- Seeded dev accounts count as freshly set passwords, so a new local
+-- database doesn't force every demo user through a password change.
+update public.patients set password_changed_at = now() where password_changed_at is null;
+update public.doctors  set password_changed_at = now() where password_changed_at is null;
+update public.nurses   set password_changed_at = now() where password_changed_at is null;
+update public.staff    set password_changed_at = now() where password_changed_at is null;

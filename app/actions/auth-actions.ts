@@ -2,7 +2,7 @@
 
 import { supabaseAdmin as supabase } from "@/lib/supabase-admin";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { ROLE_TABLES, MFA_REQUIRED_ROLES, syncAuthPassword } from "@/lib/auth-provisioning";
+import { ROLE_TABLES, MFA_REQUIRED_ROLES } from "@/lib/auth-provisioning";
 import { UserRole } from "@/lib/database.types";
 import { logAction } from "@/lib/logging";
 import {
@@ -291,7 +291,11 @@ export async function updatePassword(
       }
     }
 
-    await syncAuthPassword(supabase, role, user.id, newPassword);
+    // Change it as the user, not through the admin API: Supabase Auth keeps
+    // this session and revokes the user's other sessions. (An admin password
+    // update revokes every session, which silently signed the user out.)
+    const { error: authUpdateError } = await authClient.auth.updateUser({ password: newPassword });
+    if (authUpdateError) throw authUpdateError;
 
     // password_hash is kept only for the reuse check above.
     const newPasswordHash = await hashPassword(newPassword);
