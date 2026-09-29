@@ -12,10 +12,13 @@
     "test-db": "ts-node scripts/test-database.ts",
     "test-appointments": "ts-node scripts/test-appointments.ts",
     "test": "jest --silent",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "auth:sync": "tsx scripts/sync-auth-users.ts",
+    "db:reset": "supabase db reset --local && npm run auth:sync"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.90.1",
     "@types/nodemailer": "^7.0.9",
     "@zoom/meetingsdk": "^5.1.2",
@@ -50,6 +53,7 @@
     "supabase": "^2.118.0",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }
