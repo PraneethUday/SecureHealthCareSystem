@@ -55,9 +55,15 @@ export async function signIn(user: TestUser, opts: { mfa?: boolean } = {}): Prom
 
   let factorId: string | undefined;
   if (opts.mfa) {
-    // Remove factors left behind by an earlier aborted run.
+    // Start from a clean slate: remove factors left by earlier runs or by a
+    // browser enrolment (a user can't drop a verified factor at aal1).
     const { data: factors } = await client.auth.mfa.listFactors();
-    for (const f of factors?.all ?? []) await client.auth.mfa.unenroll({ factorId: f.id });
+    const {
+      data: { user: me },
+    } = await client.auth.getUser();
+    for (const f of factors?.all ?? []) {
+      await admin().auth.admin.mfa.deleteFactor({ id: f.id, userId: me!.id });
+    }
     const { data: f, error: enrollError } = await client.auth.mfa.enroll({ factorType: "totp" });
     if (enrollError) throw enrollError;
     factorId = f.id;

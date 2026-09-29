@@ -49,11 +49,8 @@ export default function NurseDashboard() {
 
   const fetchHospitalName = async (nurseId: string) => {
     try {
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      );
+      // Shared client: carries the signed-in session, so RLS applies.
+      const { supabase } = await import("@/lib/supabase");
       const { data } = await supabase
         .from("nurse_hospitals")
         .select("hospitals(name)")
