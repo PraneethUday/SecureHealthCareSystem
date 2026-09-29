@@ -7,163 +7,82 @@ import {
   UserRole,
 } from "./database.types";
 
+// Clinical fields are encrypted at rest, so records are read and written
+// through the server (app/api/clinical/*), which encrypts/decrypts them for
+// callers RLS allows. The browser never sees ciphertext or keys.
+async function clinicalFetch(path: string, init?: RequestInit) {
+  const res = await fetch(path, {
+    ...init,
+    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || `Request failed (${res.status})`);
+  return body;
+}
+
+function withRecordDetails(record: any): MedicalRecordWithDetails {
+  return {
+    ...record,
+    doctor_name: record.doctors
+      ? `${record.doctors.first_name} ${record.doctors.last_name}`
+      : undefined,
+    doctor_specialization: record.doctors?.specialization,
+    patient_name: record.patients
+      ? `${record.patients.first_name} ${record.patients.last_name}`
+      : undefined,
+    appointment_date: record.appointments?.appointment_date,
+    appointment_time: record.appointments?.appointment_time,
+  };
+}
+
+
 // Create a new medical record
 export async function createMedicalRecord(
   recordData: Omit<MedicalRecord, "id" | "created_at" | "updated_at">,
-  doctorId: string
+  _doctorId: string
 ): Promise<{ success: boolean; data?: MedicalRecord; error?: string }> {
   try {
-    console.log("Creating medical record:", recordData);
-
-    const { data, error } = await supabase
-      .from("medical_records")
-      .insert([recordData])
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error creating medical record:", error);
-      const errorMessage =
-        error.message || error.details || JSON.stringify(error);
-      return {
-        success: false,
-        error: `Failed to create medical record: ${errorMessage}`,
-      };
-    }
-
-    if (!data) {
-      return { success: false, error: "No data returned from insert" };
-    }
-
-    console.log("Medical record created successfully:", data);
-
-    // Log the creation
-    await supabase.from("medical_record_logs").insert({
-      medical_record_id: data.id,
-      action_type: "created",
-      performed_by_user_id: doctorId,
-      performed_by_role: "doctor",
-      new_data: data,
-      metadata: { appointment_id: recordData.appointment_id },
+    const { record } = await clinicalFetch("/api/clinical/medical-records", {
+      method: "POST",
+      body: JSON.stringify(recordData),
     });
-
-    return { success: true, data };
+    return { success: true, data: record };
   } catch (error: any) {
-    console.error("Caught error in createMedicalRecord:", error);
-    const errorMessage =
-      error.message || error.toString() || "Unknown error occurred";
-    return { success: false, error: errorMessage };
+    return { success: false, error: error.message };
   }
 }
 
-// Get patient medical records
 export async function getPatientMedicalRecords(
   patientId: string,
-  userRole: UserRole | string = "patient", // Default to patient for backward compatibility
-  userId: string = patientId    // Default to patientId if not provided
+  _userRole: UserRole | string = "patient",
+  _userId: string = patientId
 ): Promise<MedicalRecordWithDetails[]> {
   try {
-    // Audited read: the RPC appends to the hash-chained audit_log under the
-    // caller's identity, then returns what RLS allows.
-    const { data, error } = await supabase
-      .rpc("read_medical_records", { p_patient_id: patientId })
-      .select(
-        `
-        *,
-        doctors (
-          first_name,
-          last_name,
-          specialization
-        ),
-        appointments (
-          appointment_date,
-          appointment_time
-        )
-      `
-      );
-
-    if (error) {
-      console.error("Error fetching medical records:", error.message);
-      return [];
-    }
-
-    return (data || []).map((record: any) => ({
-      ...record,
-      doctor_name: record.doctors
-        ? `${record.doctors.first_name} ${record.doctors.last_name}`
-        : undefined,
-      doctor_specialization: record.doctors?.specialization,
-      appointment_date: record.appointments?.appointment_date,
-      appointment_time: record.appointments?.appointment_time,
-    }));
+    const { records } = await clinicalFetch(
+      `/api/clinical/medical-records?patientId=${encodeURIComponent(patientId)}`,
+    );
+    return (records ?? []).map(withRecordDetails);
   } catch (error) {
-    console.error("❌ Caught error in getPatientMedicalRecords:", error);
+    console.error("Error fetching medical records:", error);
     return [];
   }
 }
 
-// Get medical record by ID
 export async function getMedicalRecordById(
   recordId: string,
-  userId: string
+  _userId: string
 ): Promise<{
   success: boolean;
   data?: MedicalRecordWithDetails;
   error?: string;
 }> {
   try {
-    const { data, error } = await supabase
-      .from("medical_records")
-      .select(
-        `
-        *,
-        doctors (
-          first_name,
-          last_name,
-          specialization
-        ),
-        patients (
-          first_name,
-          last_name
-        ),
-        appointments (
-          appointment_date,
-          appointment_time
-        )
-      `
-      )
-      .eq("id", recordId)
-      .single();
-
-    if (error) {
-      console.error("Error fetching medical record:", error);
-      return { success: false, error: error.message };
-    }
-
-    // Log the view
-    await supabase.from("medical_record_logs").insert({
-      medical_record_id: recordId,
-      action_type: "viewed",
-      performed_by_user_id: userId,
-      performed_by_role: "patient",
-    });
-
-    const record: MedicalRecordWithDetails = {
-      ...data,
-      doctor_name: data.doctors
-        ? `${data.doctors.first_name} ${data.doctors.last_name}`
-        : undefined,
-      doctor_specialization: data.doctors?.specialization,
-      patient_name: data.patients
-        ? `${data.patients.first_name} ${data.patients.last_name}`
-        : undefined,
-      appointment_date: data.appointments?.appointment_date,
-      appointment_time: data.appointments?.appointment_time,
-    };
-
-    return { success: true, data: record };
+    const { records } = await clinicalFetch(
+      `/api/clinical/medical-records?id=${encodeURIComponent(recordId)}`,
+    );
+    if (!records?.length) return { success: false, error: "Record not found" };
+    return { success: true, data: withRecordDetails(records[0]) };
   } catch (error: any) {
-    console.error("Error in getMedicalRecordById:", error);
     return { success: false, error: error.message };
   }
 }
@@ -172,41 +91,15 @@ export async function getMedicalRecordById(
 export async function updateMedicalRecord(
   recordId: string,
   updates: Partial<MedicalRecord>,
-  doctorId: string
+  _doctorId: string
 ): Promise<{ success: boolean; data?: MedicalRecord; error?: string }> {
   try {
-    // Get old data first
-    const { data: oldData } = await supabase
-      .from("medical_records")
-      .select("*")
-      .eq("id", recordId)
-      .single();
-
-    const { data, error } = await supabase
-      .from("medical_records")
-      .update(updates)
-      .eq("id", recordId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error updating medical record:", error);
-      return { success: false, error: error.message };
-    }
-
-    // Log the update
-    await supabase.from("medical_record_logs").insert({
-      medical_record_id: recordId,
-      action_type: "updated",
-      performed_by_user_id: doctorId,
-      performed_by_role: "doctor",
-      old_data: oldData,
-      new_data: data,
+    const { record } = await clinicalFetch("/api/clinical/medical-records", {
+      method: "PATCH",
+      body: JSON.stringify({ id: recordId, updates }),
     });
-
-    return { success: true, data };
+    return { success: true, data: record };
   } catch (error: any) {
-    console.error("Error in updateMedicalRecord:", error);
     return { success: false, error: error.message };
   }
 }

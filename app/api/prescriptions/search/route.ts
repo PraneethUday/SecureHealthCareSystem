@@ -1,146 +1,54 @@
 import { NextRequest, NextResponse } from "next/server";
 import { guard } from "@/lib/supabase/server";
+import { listPrescriptions } from "@/lib/clinical/records";
+import { clinicalError } from "@/lib/clinical/respond";
 
+// Pharmacy search. RLS limits patients to those the caller serves; the
+// prescriptions come back decrypted through the audited read path.
 export async function GET(request: NextRequest) {
-  try {
-    // Pharmacy staff and clinicians; RLS limits rows to patients they serve.
-    const auth = await guard("staff", "doctor", "nurse");
-    if (auth instanceof Response) return auth;
-    const supabase = auth.supabase;
+  const auth = await guard("staff", "doctor", "nurse");
+  if (auth instanceof Response) return auth;
 
+  try {
     const searchParams = request.nextUrl.searchParams;
-    const patientId = searchParams.get("patientId");
+    const patientCode = searchParams.get("patientId");
     // Strip PostgREST filter syntax so input can't add conditions to .or().
     const patientName = searchParams
       .get("patientName")
-      ?.replace(/[^\p{L}\p{N}\s-]/gu, "");
-    const status = searchParams.get("status");
+      ?.replace(/[^\p{L}\p{N}\s-]/gu, "")
+      .trim();
+    const status = searchParams.get("status") ?? undefined;
 
-    // Build the query
-    let query = supabase
-      .from("prescriptions")
-      .select(
-        `
-        *,
-        doctors!inner (
-          doctor_id,
-          first_name,
-          last_name,
-          specialization
-        ),
-        patients:patient_directory!inner (
-          patient_id,
-          first_name,
-          last_name,
-          email,
-          phone_number
-        )
-      `
-      )
-      .order("prescribed_date", { ascending: false });
-
-    // Filter by patient ID
-    if (patientId) {
-      // First, get the UUID for this patient_id
-      const { data: patientData, error: patientError } = await supabase
-        .from("patients")
-        .select("id")
-        .eq("patient_id", patientId)
-        .single();
-
-      if (patientError || !patientData) {
-        console.log("⚠️ [Prescription Search] Patient not found:", patientId);
-        return NextResponse.json({ prescriptions: [] });
-      }
-
-      console.log(
-        "✅ [Prescription Search] Found patient UUID:",
-        patientData.id
-      );
-      query = query.eq("patient_id", patientData.id);
+    let patients = auth.supabase.from("patients").select("id").limit(25);
+    if (patientCode) {
+      patients = patients.eq("patient_id", patientCode);
+    } else if (patientName) {
+      patients = patients.or(`first_name.ilike.%${patientName}%,last_name.ilike.%${patientName}%`);
+    } else {
+      return NextResponse.json({ prescriptions: [] });
     }
 
-    // Filter by patient name (search in the related patients table)
-    if (patientName && !patientId) {
-      // First get patients matching the name
-      const { data: patients, error: patientError } = await supabase
-        .from("patients")
-        .select("id")
-        .or(
-          `first_name.ilike.%${patientName}%,last_name.ilike.%${patientName}%`
-        );
-
-      if (patientError) {
-        console.error(
-          "❌ [Prescription Search] Error searching patients:",
-          patientError
-        );
-        return NextResponse.json(
-          { error: "Failed to search patients" },
-          { status: 500 }
-        );
-      }
-
-      if (patients && patients.length > 0) {
-        const patientUUIDs = patients.map((p) => p.id);
-        console.log(
-          "✅ [Prescription Search] Found",
-          patients.length,
-          "matching patients"
-        );
-        query = query.in("patient_id", patientUUIDs);
-      } else {
-        // No patients found with that name
-        console.log(
-          "⚠️ [Prescription Search] No patients found with name:",
-          patientName
-        );
-        return NextResponse.json({ prescriptions: [] });
-      }
-    }
-
-    // Filter by status
-    if (status && status !== "all") {
-      query = query.eq("status", status);
-    }
-
-    const { data, error } = await query;
-
+    const { data: matches, error } = await patients;
     if (error) {
-      console.error("❌ [Prescription Search] Error:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch prescriptions" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Failed to search patients" }, { status: 500 });
     }
 
-    console.log(
-      "✅ [Prescription Search] Found:",
-      data?.length || 0,
-      "prescriptions"
+    const lists = await Promise.all(
+      (matches ?? []).map((p) => listPrescriptions(auth.supabase, { patientId: p.id, status })),
     );
 
-    // Transform the data to include doctor and patient details
-    const prescriptions = (data || []).map((rx: any) => ({
+    const prescriptions = lists.flat().map((rx: any) => ({
       ...rx,
-      patient_id: rx.patients?.patient_id || "", // Use the string patient_id, not UUID
-      doctor_name: rx.doctors
-        ? `Dr. ${rx.doctors.first_name} ${rx.doctors.last_name}`
-        : "Unknown Doctor",
+      patient_id: rx.patients?.patient_id || "",
+      doctor_name: rx.doctors ? `Dr. ${rx.doctors.first_name} ${rx.doctors.last_name}` : "Unknown Doctor",
       doctor_specialization: rx.doctors?.specialization || "N/A",
-      patient_name: rx.patients
-        ? `${rx.patients.first_name} ${rx.patients.last_name}`
-        : "Unknown Patient",
+      patient_name: rx.patients ? `${rx.patients.first_name} ${rx.patients.last_name}` : "Unknown Patient",
       patient_email: rx.patients?.email || "",
       patient_phone: rx.patients?.phone_number || "",
     }));
 
     return NextResponse.json({ prescriptions });
-  } catch (error: any) {
-    console.error("❌ [Prescription Search] Exception:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+  } catch (err) {
+    return clinicalError(err);
   }
 }

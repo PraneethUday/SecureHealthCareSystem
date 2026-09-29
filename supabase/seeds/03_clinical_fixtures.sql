@@ -25,41 +25,8 @@ where id = 'a0000000-0000-0000-0000-000000000001';
 update public.appointments set nurse_id = (select id from public.nurses where nurse_id = 'N004')
 where id = 'a0000000-0000-0000-0000-000000000002';
 
-insert into public.medical_records (id, appointment_id, patient_id, doctor_id, chief_complaint, diagnosis, symptoms, treatment_plan, notes)
-select 'b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', p.id, d.id,
-  'Chest pain on exertion', 'Stable angina pectoris',
-  'Retrosternal tightness climbing stairs, relieved by rest',
-  'Start aspirin and a beta blocker; stress ECG in 2 weeks',
-  'Patient reports family history of CAD. Contact on 9876543101 for ECG slot.'
-from public.patients p, public.doctors d where p.patient_id = 'P001' and d.doctor_id = 'D001'
-on conflict (id) do nothing;
-
-insert into public.medical_records (id, appointment_id, patient_id, doctor_id, chief_complaint, diagnosis, symptoms, treatment_plan, notes)
-select 'b0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000002', p.id, d.id,
-  'Knee pain after fall', 'Grade II medial collateral ligament sprain',
-  'Swelling and medial joint-line tenderness, stable to varus stress',
-  'Hinged knee brace, physiotherapy 3x weekly, review in 3 weeks',
-  'Allergic to penicillin - avoid in any post-op antibiotic plan.'
-from public.patients p, public.doctors d where p.patient_id = 'P002' and d.doctor_id = 'D004'
-on conflict (id) do nothing;
-
-insert into public.prescriptions (id, appointment_id, patient_id, doctor_id, medication_name, dosage, frequency, duration, instructions)
-select 'c0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', p.id, d.id,
-  'Aspirin', '75 mg', 'Once daily', '90 days', 'Take after breakfast'
-from public.patients p, public.doctors d where p.patient_id = 'P001' and d.doctor_id = 'D001'
-on conflict (id) do nothing;
-
-insert into public.prescriptions (id, appointment_id, patient_id, doctor_id, medication_name, dosage, frequency, duration, instructions)
-select 'c0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', p.id, d.id,
-  'Metoprolol', '25 mg', 'Twice daily', '90 days', 'Hold if pulse below 55'
-from public.patients p, public.doctors d where p.patient_id = 'P001' and d.doctor_id = 'D001'
-on conflict (id) do nothing;
-
-insert into public.prescriptions (id, appointment_id, patient_id, doctor_id, medication_name, dosage, frequency, duration, instructions)
-select 'c0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000002', p.id, d.id,
-  'Ibuprofen', '400 mg', 'Three times daily', '7 days', 'Take with food'
-from public.patients p, public.doctors d where p.patient_id = 'P002' and d.doctor_id = 'D004'
-on conflict (id) do nothing;
+-- medical_records and prescriptions are encrypted at the application layer,
+-- so they are created by scripts/seed-clinical.ts (npm run db:reset).
 
 -- P003 only has self-recorded vitals; nobody on staff is assigned to them.
 insert into public.patient_vitals (patient_id, heart_rate, blood_pressure_systolic, blood_pressure_diastolic, recorded_by)

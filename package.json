@@ -14,7 +14,10 @@
     "test": "jest --silent",
     "test:watch": "jest --watch",
     "auth:sync": "tsx scripts/sync-auth-users.ts",
-    "db:reset": "supabase db reset --local && npm run auth:sync"
+    "db:reset": "supabase db reset --local && npm run auth:sync && npm run seed:clinical",
+    "seed:clinical": "tsx scripts/seed-clinical.ts",
+    "encrypt:backfill": "tsx scripts/encrypt-existing-records.ts",
+    "kek:rotate": "tsx scripts/rotate-kek.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
