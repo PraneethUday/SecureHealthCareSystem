@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, Smartphone, Lock, ArrowLeft, Copy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -23,8 +23,13 @@ export default function MFAPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [role, setRole] = useState<string>("");
+  // Enrolment must run once: React Strict Mode double-invokes effects in
+  // development, and a second enroll() races the first.
+  const started = useRef(false);
 
   useEffect(() => {
+    if (started.current) return;
+    started.current = true;
     (async () => {
       const {
         data: { user },
@@ -51,7 +56,7 @@ export default function MFAPage() {
       }
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
-        friendlyName: `MediSecure ${new Date().toISOString().slice(0, 10)}`,
+        friendlyName: `MediSecure ${new Date().toISOString().slice(0, 16).replace("T", " ")} ${crypto.randomUUID().slice(0, 4)}`,
       });
       if (error || !data) {
         setError(error?.message ?? "Could not start enrolment");
@@ -76,8 +81,9 @@ export default function MFAPage() {
       setError("That code didn't match. Codes change every 30 seconds; try the current one.");
       return;
     }
-    // The session is now aal2; RLS will release clinical data.
-    router.replace(role ? `/dashboard/${role}` : "/login");
+    // The session is now aal2; RLS will release clinical data. Full
+    // navigation so middleware sees the freshly written session cookie.
+    window.location.assign(role ? `/dashboard/${role}` : "/login");
   };
 
   const cancel = async () => {
