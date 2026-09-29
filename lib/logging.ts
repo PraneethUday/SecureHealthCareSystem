@@ -42,6 +42,20 @@ export async function logAction(params: LogActionParams): Promise<void> {
       if (error) {
         console.error("Server-side audit log failed:", error);
       }
+
+      // Same event into the tamper-evident chain (no PHI in details).
+      const { error: chainError } = await supabaseAdmin.rpc("append_audit_as", {
+        p_actor_id: params.userId,
+        p_actor_role: params.userRole,
+        p_action: params.action,
+        p_target_table: params.resourceType ?? null,
+        p_target_id: params.resourceId ?? null,
+        p_ip: params.ipAddress ?? null,
+        p_details: { status: params.status ?? null },
+      });
+      if (chainError) {
+        console.error("Audit chain append failed:", chainError);
+      }
       return;
     } catch (err) {
       console.error("Server-side audit logging crashed:", err);
@@ -100,21 +114,3 @@ export async function getAllLogs(limit = 50) {
 /**
  * Fetch access logs for a specific patient
  */
-export async function getPatientAccessLogs(patientId: string) {
-  if (typeof window === "undefined") {
-    const { data, error } = await supabase
-      .from("access_logs")
-      .select("*")
-      .eq("user_id", patientId)
-      .order("timestamp", { ascending: false })
-      .limit(100);
-
-    if (error) throw error;
-    return data;
-  }
-
-  const res = await fetch(`/api/audit/logs?patientId=${patientId}&limit=100`);
-  if (!res.ok) throw new Error("Failed to fetch patient access logs");
-  const data = await res.json();
-  return data.logs;
-}

@@ -63,10 +63,10 @@ export async function getPatientMedicalRecords(
   userId: string = patientId    // Default to patientId if not provided
 ): Promise<MedicalRecordWithDetails[]> {
   try {
-    console.log("🏥 Fetching medical records for patient UUID:", patientId);
-
+    // Audited read: the RPC appends to the hash-chained audit_log under the
+    // caller's identity, then returns what RLS allows.
     const { data, error } = await supabase
-      .from("medical_records")
+      .rpc("read_medical_records", { p_patient_id: patientId })
       .select(
         `
         *,
@@ -80,37 +80,11 @@ export async function getPatientMedicalRecords(
           appointment_time
         )
       `
-      )
-      .eq("patient_id", patientId)
-      .order("record_date", { ascending: false });
+      );
 
     if (error) {
-      console.error("❌ Error fetching medical records:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
+      console.error("Error fetching medical records:", error.message);
       return [];
-    }
-
-    console.log(`✅ Found ${data?.length || 0} medical records`);
-
-    // Log the view action if records were found (or even if empty, strictly speaking a search occurred)
-    // We log "view_all_records" or "access_records"
-    if (userId && userRole) {
-      // Don't await strictly to not block UI? Or await to ensure audit?
-      // Await is safer for "Audit First" philosophy, but logging.ts handles it.
-      // We'll fire and forget (no await) or await?
-      // logAction itself is async.
-      // Let's await it to be safe.
-      // BUT, userId might be creating concurrency issues if user spams refresh?
-      // The logger has retry logic now.
-
-      // We need 'logAction' function to be imported. I added import in previous step.
-      logAction({
-        userId: userId,
-        userRole: userRole as UserRole,
-        action: "view_records_list",
-        resourceType: "medical_records", // Plural
-        resourceId: patientId, // The target patient
-      }).catch(err => console.error("Failed to log view action:", err));
     }
 
     return (data || []).map((record: any) => ({

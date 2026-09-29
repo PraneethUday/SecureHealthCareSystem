@@ -93,19 +93,9 @@ export async function getPatientPrescriptions(
   userId: string = patientId // Default to patientId
 ): Promise<PrescriptionWithDetails[]> {
   try {
-    // Log the view action
-    if (userId && userRole) {
-      logAction({
-        userId: userId,
-        userRole: userRole as UserRole,
-        action: "view_prescriptions_list",
-        resourceType: "prescriptions",
-        resourceId: patientId,
-      }).catch((err) => console.error("Failed to log prescription view:", err));
-    }
-
+    // Audited read (see read_prescriptions in the audit_chain migration).
     const { data, error } = await supabase
-      .from("prescriptions")
+      .rpc("read_prescriptions", { p_patient_id: patientId })
       .select(
         `
         *,
@@ -115,9 +105,7 @@ export async function getPatientPrescriptions(
           specialization
         )
       `
-      )
-      .eq("patient_id", patientId)
-      .order("prescribed_date", { ascending: false });
+      );
 
     if (error) {
       console.error("Error fetching prescriptions:", error);

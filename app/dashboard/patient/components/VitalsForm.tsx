@@ -108,12 +108,11 @@ export default function VitalsForm({
   const loadLatestVitals = async () => {
     try {
       const { data, error } = await supabase
-        .from("patient_vitals")
+        .rpc("read_vitals", { p_patient_id: patientId })
         .select("*")
-        .eq("patient_id", patientId)
         .order("recorded_at", { ascending: false })
         .limit(1)
-        .single();
+        .single<Record<string, any>>();
 
       if (data && !error) {
         // Pre-fill form with latest values
