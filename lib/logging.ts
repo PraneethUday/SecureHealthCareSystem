@@ -94,23 +94,8 @@ export async function logAction(params: LogActionParams): Promise<void> {
  * Fetch all audit logs (admin only)
  */
 export async function getAllLogs(limit = 50) {
-  if (typeof window === "undefined") {
-    const { data, error } = await supabase
-      .from("access_logs")
-      .select("*")
-      .order("timestamp", { ascending: false })
-      .limit(limit);
-
-    if (error) throw error;
-    return data;
-  }
-
   const res = await fetch(`/api/audit/logs?limit=${limit}`);
   if (!res.ok) throw new Error("Failed to fetch audit logs");
   const data = await res.json();
   return data.logs;
 }
-
-/**
- * Fetch access logs for a specific patient
- */
