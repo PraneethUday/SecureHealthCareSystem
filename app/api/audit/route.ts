@@ -1,28 +1,33 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getCurrentUser } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
-  console.log("AUDIT API HIT – SERVER SIDE");
-
   try {
+    // Who did it comes from the session, never from the request body.
+    const caller = await getCurrentUser();
+    if (!caller) {
+      return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+    }
+    const user_id = caller.businessId;
+    const user_role = caller.role;
+
     const body = await req.json();
 
     const {
-      user_id,
-      user_role,
       action,
       resource_type,
       resource_id,
       details,
       status,
-      ip_address,
-      user_agent,
     } = body;
+    const ip_address = req.headers.get("x-forwarded-for") ?? null;
+    const user_agent = req.headers.get("user-agent") ?? null;
 
     const timestamp = new Date().toISOString();
 
     // 1️⃣ Insert into Supabase (Standard Logging)
-    const { error } = await supabase.from("access_logs").insert({
+    const { error } = await supabaseAdmin.from("access_logs").insert({
       user_id,
       user_role,
       action,
@@ -40,8 +45,6 @@ export async function POST(req: Request) {
       console.error("Supabase audit insert failed:", error);
       return NextResponse.json({ error: "DB insert failed" }, { status: 500 });
     }
-
-    console.log("✅ DB LOGGED (STANDARD)");
 
     return NextResponse.json({
       ok: true,

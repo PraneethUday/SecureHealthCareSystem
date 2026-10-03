@@ -1,3 +1,4 @@
+import { guard } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import {
   getRetentionPolicies,
@@ -6,6 +7,8 @@ import {
 } from "@/lib/security-monitoring";
 
 export async function GET() {
+  const auth = await guard("admin");
+  if (auth instanceof Response) return auth;
   try {
     const policies = await getRetentionPolicies();
     return NextResponse.json({ policies });
@@ -16,6 +19,8 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  const auth = await guard("admin");
+  if (auth instanceof Response) return auth;
   try {
     const body = await request.json();
     const { policyId, retention_days, archive_before_delete, is_active } = body;
@@ -38,6 +43,8 @@ export async function PUT(request: Request) {
 }
 
 export async function POST() {
+  const auth = await guard("admin");
+  if (auth instanceof Response) return auth;
   try {
     const results = await executeRetentionPolicies();
     const totalDeleted = results.reduce((sum, r) => sum + (r.records_deleted || 0), 0);

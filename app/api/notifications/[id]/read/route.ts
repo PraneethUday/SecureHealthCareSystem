@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { guard } from "@/lib/supabase/server";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const auth = await guard();
+    if (auth instanceof Response) return auth;
+    const supabase = auth.supabase;
     const { id: notificationId } = await params;
 
     if (!notificationId) {

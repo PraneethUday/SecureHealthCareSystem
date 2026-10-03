@@ -5,38 +5,41 @@ import {
   PrescriptionLog,
   UserRole,
 } from "./database.types";
-import { logAction } from "./logging";
+
+// Prescription details are encrypted at rest; reads and writes go through
+// the server (app/api/clinical/prescriptions).
+async function clinicalFetch(path: string, init?: RequestInit) {
+  const res = await fetch(path, {
+    ...init,
+    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || `Request failed (${res.status})`);
+  return body;
+}
+
+function withRxDetails(rx: any): PrescriptionWithDetails {
+  return {
+    ...rx,
+    doctor_name: rx.doctors ? `Dr. ${rx.doctors.first_name} ${rx.doctors.last_name}` : "Unknown Doctor",
+    doctor_specialization: rx.doctors?.specialization,
+    patient_name: rx.patients ? `${rx.patients.first_name} ${rx.patients.last_name}` : undefined,
+  };
+}
+
 
 // Create a new prescription
 export async function createPrescription(
   prescriptionData: Omit<Prescription, "id" | "created_at" | "updated_at">,
-  doctorId: string
+  _doctorId: string
 ): Promise<{ success: boolean; data?: Prescription; error?: string }> {
   try {
-    const { data, error } = await supabase
-      .from("prescriptions")
-      .insert([prescriptionData])
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error creating prescription:", error);
-      return { success: false, error: error.message };
-    }
-
-    // Log the prescription creation
-    await supabase.from("prescription_logs").insert({
-      prescription_id: data.id,
-      action_type: "created",
-      performed_by_user_id: doctorId,
-      performed_by_role: "doctor",
-      new_data: data,
-      metadata: { appointment_id: prescriptionData.appointment_id },
+    const { prescription } = await clinicalFetch("/api/clinical/prescriptions", {
+      method: "POST",
+      body: JSON.stringify(prescriptionData),
     });
-
-    return { success: true, data };
+    return { success: true, data: prescription };
   } catch (error: any) {
-    console.error("Error creating prescription:", error);
     return { success: false, error: error.message };
   }
 }
@@ -89,46 +92,14 @@ export async function getAppointmentPrescriptionCount(
 // Get patient prescriptions
 export async function getPatientPrescriptions(
   patientId: string,
-  userRole: UserRole | string = "patient", // Default to patient
-  userId: string = patientId // Default to patientId
+  _userRole: UserRole | string = "patient",
+  _userId: string = patientId
 ): Promise<PrescriptionWithDetails[]> {
   try {
-    // Log the view action
-    if (userId && userRole) {
-      logAction({
-        userId: userId,
-        userRole: userRole as UserRole,
-        action: "view_prescriptions_list",
-        resourceType: "prescriptions",
-        resourceId: patientId,
-      }).catch((err) => console.error("Failed to log prescription view:", err));
-    }
-
-    const { data, error } = await supabase
-      .from("prescriptions")
-      .select(
-        `
-        *,
-        doctors (
-          first_name,
-          last_name,
-          specialization
-        )
-      `
-      )
-      .eq("patient_id", patientId)
-      .order("prescribed_date", { ascending: false });
-
-    if (error) {
-      console.error("Error fetching prescriptions:", error);
-      return [];
-    }
-
-    return (data || []).map((rx: any) => ({
-      ...rx,
-      doctor_name: `Dr. ${rx.doctors.first_name} ${rx.doctors.last_name}`,
-      doctor_specialization: rx.doctors.specialization,
-    }));
+    const { prescriptions } = await clinicalFetch(
+      `/api/clinical/prescriptions?patientId=${encodeURIComponent(patientId)}`,
+    );
+    return (prescriptions ?? []).map(withRxDetails);
   } catch (error) {
     console.error("Error fetching prescriptions:", error);
     return [];
@@ -140,88 +111,29 @@ export async function getAppointmentPrescriptions(
   appointmentId: string
 ): Promise<PrescriptionWithDetails[]> {
   try {
-    const { data, error } = await supabase
-      .from("prescriptions")
-      .select(
-        `
-        *,
-        doctors (
-          first_name,
-          last_name,
-          specialization
-        ),
-        patients (
-          first_name,
-          last_name
-        )
-      `
-      )
-      .eq("appointment_id", appointmentId)
-      .order("prescribed_date", { ascending: false });
-
-    if (error) {
-      console.error("Error fetching appointment prescriptions:", error);
-      return [];
-    }
-
-    return (data || []).map((rx: any) => ({
-      ...rx,
-      doctor_name: `Dr. ${rx.doctors.first_name} ${rx.doctors.last_name}`,
-      doctor_specialization: rx.doctors.specialization,
-      patient_name: `${rx.patients.first_name} ${rx.patients.last_name}`,
-    }));
+    const { prescriptions } = await clinicalFetch(
+      `/api/clinical/prescriptions?appointmentId=${encodeURIComponent(appointmentId)}`,
+    );
+    return (prescriptions ?? []).map(withRxDetails);
   } catch (error) {
     console.error("Error fetching appointment prescriptions:", error);
     return [];
   }
 }
 
-// Update prescription status
 export async function updatePrescriptionStatus(
   prescriptionId: string,
   status: "active" | "completed" | "discontinued",
-  doctorId: string,
+  _doctorId: string,
   notes?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Get current prescription
-    const { data: oldData } = await supabase
-      .from("prescriptions")
-      .select("*")
-      .eq("id", prescriptionId)
-      .single();
-
-    const updateData: any = { status, updated_at: new Date().toISOString() };
-    if (notes) {
-      updateData.notes = notes;
-    }
-
-    const { error } = await supabase
-      .from("prescriptions")
-      .update(updateData)
-      .eq("id", prescriptionId);
-
-    if (error) {
-      console.error("Error updating prescription:", error);
-      return { success: false, error: error.message };
-    }
-
-    // Log the update
-    if (oldData) {
-      await supabase.from("prescription_logs").insert({
-        prescription_id: prescriptionId,
-        action_type: status === "discontinued" ? "discontinued" : "updated",
-        performed_by_user_id: doctorId,
-        performed_by_role: "doctor",
-        old_data: oldData,
-        new_data: { ...oldData, ...updateData },
-        metadata: notes ? { notes } : undefined,
-      });
-    }
-
+    await clinicalFetch("/api/clinical/prescriptions", {
+      method: "PATCH",
+      body: JSON.stringify({ id: prescriptionId, status, notes }),
+    });
     return { success: true };
   } catch (error: any) {
-    console.error("Error updating prescription:", error);
     return { success: false, error: error.message };
   }
 }
@@ -440,7 +352,7 @@ export async function getVideoCallLogs(filters?: {
           appointment_time,
           is_telemedicine
         ),
-        patients (
+        patients:patient_directory (
           first_name,
           last_name,
           email
@@ -522,54 +434,16 @@ export async function searchPrescriptionsForPharmacy(filters: {
 // Mark prescription as dispensed (pharmacy staff)
 export async function markPrescriptionDispensed(
   prescriptionId: string,
-  staffId: string,
+  _staffId: string,
   notes?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Get current prescription
-    const { data: oldData } = await supabase
-      .from("prescriptions")
-      .select("*")
-      .eq("id", prescriptionId)
-      .single();
-
-    const updateData: any = {
-      status: "completed",
-      updated_at: new Date().toISOString(),
-    };
-
-    if (notes) {
-      updateData.notes = oldData?.notes
-        ? `${oldData.notes}\n[Pharmacy] ${notes}`
-        : `[Pharmacy] ${notes}`;
-    }
-
-    const { error } = await supabase
-      .from("prescriptions")
-      .update(updateData)
-      .eq("id", prescriptionId);
-
-    if (error) {
-      console.error("Error marking prescription as dispensed:", error);
-      return { success: false, error: error.message };
-    }
-
-    // Log the dispensing action
-    if (oldData) {
-      await supabase.from("prescription_logs").insert({
-        prescription_id: prescriptionId,
-        action_type: "updated",
-        performed_by_user_id: staffId,
-        performed_by_role: "staff",
-        old_data: oldData,
-        new_data: { ...oldData, ...updateData },
-        metadata: { action: "dispensed", notes },
-      });
-    }
-
+    await clinicalFetch("/api/clinical/prescriptions", {
+      method: "PATCH",
+      body: JSON.stringify({ id: prescriptionId, dispense: true, notes }),
+    });
     return { success: true };
   } catch (error: any) {
-    console.error("Error marking prescription as dispensed:", error);
     return { success: false, error: error.message };
   }
 }

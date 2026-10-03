@@ -18,6 +18,7 @@ import {
   Files,
   Clock,
   CheckCircle,
+  Siren,
 } from "lucide-react";
 import DoctorAppointmentCard from "./components/DoctorAppointmentCard";
 import { IncomingCallModal } from "./components/IncomingCallModal";
@@ -25,6 +26,7 @@ import PrescriptionForm from "./components/PrescriptionForm";
 import AppointmentsCalendar from "./components/AppointmentsCalendar";
 import MedicalRecordForm from "./components/MedicalRecordForm";
 import { MedicalReportsViewer } from "./components/MedicalReportsViewer";
+import BreakGlassPanel from "./components/BreakGlassPanel";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import NotificationBell from "@/app/dashboard/components/NotificationBell";
 
@@ -36,7 +38,7 @@ export default function DoctorDashboard() {
   );
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "today" | "upcoming" | "past" | "reports"
+    "today" | "upcoming" | "past" | "reports" | "emergency"
   >("today");
   const [
     selectedAppointmentForPrescription,
@@ -288,6 +290,7 @@ export default function DoctorDashboard() {
                 { id: "upcoming", label: "Upcoming", icon: Calendar },
                 { id: "past", label: "Past History", icon: Files },
                 { id: "reports", label: "Patient Reports", icon: FileText },
+                { id: "emergency", label: "Emergency Access", icon: Siren },
               ].map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -308,7 +311,7 @@ export default function DoctorDashboard() {
             </div>
 
             {/* Search Bar - Only show for appointment tabs */}
-            {activeTab !== "reports" && (
+            {activeTab !== "reports" && activeTab !== "emergency" && (
               <div className="mt-4 md:mt-0 relative w-full md:w-64">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
@@ -328,6 +331,8 @@ export default function DoctorDashboard() {
               <div>
                 <MedicalReportsViewer doctorId={user.doctor_id} />
               </div>
+            ) : activeTab === "emergency" ? (
+              <BreakGlassPanel />
             ) : loadingAppointments ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-4" />

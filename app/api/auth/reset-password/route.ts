@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { hashPassword } from "@/lib/security";
+import { syncAuthPassword } from "@/lib/auth-provisioning";
+import type { UserRole } from "@/lib/database.types";
 import crypto from "crypto";
 
 // Define user tables and their email fields
@@ -52,6 +54,7 @@ export async function POST(request: NextRequest) {
     // Determine which table to search based on role, or search all tables
     let user: any = null;
     let userTable: string = "";
+    let userRole: UserRole = "patient";
 
     if (role && ROLE_TABLES[role]) {
       // If role is provided, search only that table
@@ -66,6 +69,7 @@ export async function POST(request: NextRequest) {
       if (data && !error) {
         user = data;
         userTable = table;
+        userRole = role as UserRole;
       }
     } else {
       // Search all tables if role is not provided
@@ -80,6 +84,7 @@ export async function POST(request: NextRequest) {
         if (data && !error) {
           user = data;
           userTable = table;
+          userRole = roleName as UserRole;
           console.log(`[Reset Password] User found in ${table}`);
           break;
         }
@@ -109,6 +114,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Password must be at least 12 characters long for high security" },
         { status: 400 },
+      );
+    }
+
+    // Supabase Auth is the source of truth for sign-in.
+    try {
+      await syncAuthPassword(supabase, userRole, user.id, password);
+    } catch (syncError) {
+      console.error("[Reset Password] Error updating auth password:", syncError);
+      return NextResponse.json(
+        { error: "Failed to reset password" },
+        { status: 500 },
       );
     }
 

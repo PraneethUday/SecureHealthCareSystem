@@ -1,14 +1,18 @@
+import { guard } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { generateBreachReport } from "@/lib/security-monitoring";
 
 export async function POST(request: Request) {
+  const auth = await guard("admin");
+  if (auth instanceof Response) return auth;
   try {
     const body = await request.json();
-    const { incidentId, startDate, endDate, generatedBy } = body;
+    const { incidentId, startDate, endDate } = body;
+    const generatedBy = auth.businessId;
 
-    if (!startDate || !endDate || !generatedBy) {
+    if (!startDate || !endDate) {
       return NextResponse.json(
-        { error: "Missing required fields: startDate, endDate, generatedBy" },
+        { error: "Missing required fields: startDate, endDate" },
         { status: 400 },
       );
     }

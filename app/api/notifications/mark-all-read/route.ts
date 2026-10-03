@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { guard } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { userId, userRole } = body;
-
-    if (!userId || !userRole) {
-      return NextResponse.json(
-        { error: "Missing userId or userRole" },
-        { status: 400 },
-      );
-    }
+    const auth = await guard();
+    if (auth instanceof Response) return auth;
+    const supabase = auth.supabase;
+    const userId = auth.profileId;
+    const userRole = auth.role;
 
     const { error } = await supabase
       .from("notifications")

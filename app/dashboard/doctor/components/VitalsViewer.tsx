@@ -83,9 +83,8 @@ export default function VitalsViewer({
   const loadVitals = async () => {
     try {
       const { data, error } = await supabase
-        .from("patient_vitals")
+        .rpc("read_vitals", { p_patient_id: patientId })
         .select("*")
-        .eq("patient_id", patientId)
         .order("recorded_at", { ascending: false })
         .limit(10);
 

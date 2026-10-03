@@ -18,8 +18,10 @@ const customJestConfig = {
     "^@/(.*)$": "<rootDir>/$1",
   },
 
-  // Ignore certain test files that require specific environments
-  testPathIgnorePatterns: ["<rootDir>/node_modules/"],
+  testMatch: ["**/__tests__/**/*.test.[jt]s?(x)"],
+  // The access-control suite needs a live Supabase stack; it has its own
+  // config (jest.access.config.js, `npm run test:access`).
+  testPathIgnorePatterns: ["<rootDir>/node_modules/", "<rootDir>/__tests__/access-control/"],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config

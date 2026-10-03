@@ -51,11 +51,8 @@ export default function StaffDashboard() {
 
   const fetchHospitalName = async (staffId: string) => {
     try {
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      );
+      // Shared client: carries the signed-in session, so RLS applies.
+      const { supabase } = await import("@/lib/supabase");
 
       // First get the UUID from staff table using staff_id
       const { data: staffData } = await supabase

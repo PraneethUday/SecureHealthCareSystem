@@ -58,6 +58,8 @@ jest.mock("@supabase/supabase-js", () => ({
 import {
   encryptMessage,
   decryptMessage,
+  ChatEncryptionConfigError,
+  UNREADABLE_MESSAGE,
   validateFile,
   ALLOWED_FILE_TYPES,
   MAX_FILE_SIZE,
@@ -73,8 +75,8 @@ describe("Chat Encryption", () => {
       const parts = encrypted.split(":");
       expect(parts.length).toBe(3);
 
-      // IV should be 32 hex characters (16 bytes)
-      expect(parts[0].length).toBe(32);
+      // IV should be 24 hex characters (12 bytes, the GCM standard)
+      expect(parts[0].length).toBe(24);
 
       // Auth tag should be 32 hex characters (16 bytes)
       expect(parts[1].length).toBe(32);
@@ -133,6 +135,35 @@ describe("Chat Encryption", () => {
 
       expect(decrypted).toBe(message);
     });
+  });
+});
+
+describe("Chat encryption fails closed", () => {
+  const original = process.env.CHAT_ENCRYPTION_KEY;
+  afterEach(() => {
+    process.env.CHAT_ENCRYPTION_KEY = original;
+  });
+
+  it("refuses to encrypt when the key is missing", () => {
+    delete process.env.CHAT_ENCRYPTION_KEY;
+    expect(() => encryptMessage("hello")).toThrow(ChatEncryptionConfigError);
+  });
+
+  it("refuses to encrypt with a malformed key", () => {
+    process.env.CHAT_ENCRYPTION_KEY = "too-short";
+    expect(() => encryptMessage("hello")).toThrow(ChatEncryptionConfigError);
+  });
+
+  it("refuses to decrypt when the key is missing", () => {
+    const ciphertext = encryptMessage("hello");
+    delete process.env.CHAT_ENCRYPTION_KEY;
+    expect(() => decryptMessage(ciphertext)).toThrow(ChatEncryptionConfigError);
+  });
+
+  it("never returns ciphertext when authentication fails", () => {
+    const [iv, tag, ct] = encryptMessage("secret").split(":");
+    const tampered = `${iv}:${tag.replace(/^./, tag[0] === "0" ? "1" : "0")}:${ct}`;
+    expect(decryptMessage(tampered)).toBe(UNREADABLE_MESSAGE);
   });
 });
 

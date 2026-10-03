@@ -28,8 +28,9 @@ import type {
   AnomalyDetectionResult,
   BreachReport,
 } from "@/lib/database.types";
+import AuditAccessPanel from "./AuditAccessPanel";
 
-type SecurityTab = "threats" | "incidents" | "breach" | "retention";
+type SecurityTab = "threats" | "audit" | "incidents" | "breach" | "retention";
 
 interface SecurityMonitoringPanelProps {
   adminId: string;
@@ -168,7 +169,7 @@ export default function SecurityMonitoringPanel({
       await fetch("/api/security/alerts", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ alertId, dismissedBy: adminId }),
+        body: JSON.stringify({ alertId }),
       });
       fetchData();
     } catch (err) {
@@ -294,6 +295,7 @@ export default function SecurityMonitoringPanel({
         icon: SearchIcon,
         count: alerts.length,
       },
+      { key: "audit", label: "Audit & Access", icon: Shield },
       {
         key: "incidents",
         label: "Incidents",
@@ -336,6 +338,8 @@ export default function SecurityMonitoringPanel({
       )}
 
       {/* ── THREAT DETECTION TAB ── */}
+      {activeTab === "audit" && <AuditAccessPanel />}
+
       {activeTab === "threats" && !loading && (
         <div className="space-y-4">
           {/* Active Alerts */}
@@ -422,10 +426,11 @@ export default function SecurityMonitoringPanel({
                         </div>
                         <button
                           onClick={() => dismissAlertHandler(alert.id)}
-                          className="ml-2 p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-black/20 transition-colors flex-shrink-0"
-                          title="Dismiss alert"
+                          className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border border-current/20 hover:bg-white/50 dark:hover:bg-black/20 transition-colors flex-shrink-0"
+                          title="Acknowledge alert"
                         >
-                          <XCircle className="w-4 h-4" />
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          Acknowledge
                         </button>
                       </div>
                     </div>

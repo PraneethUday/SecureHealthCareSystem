@@ -1,4 +1,5 @@
-import { supabase } from "./supabase";
+// Server-only: callers (admin API routes) authorize the admin first.
+import { supabaseAdmin as supabase } from "./supabase-admin";
 import { Notification, NotificationType, UserRole } from "./database.types";
 
 export interface CreateNotificationParams {

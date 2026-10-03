@@ -4,307 +4,207 @@
 
 /**
  * API Route Tests for app/api/medical-reports/* endpoints
- * Tests medical reports upload, fetch, download, and view logging
+ *
+ * Authorization model under test: the report/patient row must be visible to
+ * the caller under RLS (their own client) before any storage operation, and
+ * files are only ever handed out as short-lived signed URLs.
  */
 
 import { NextRequest } from "next/server";
 
-// Mock data state
-let mockSingleResults: any[] = [];
-let mockSingleIndex = 0;
-let mockQueryResult: any = { data: [], error: null };
+jest.mock("@/lib/supabase/server", () => require("../helpers/serverAuthMock"));
+jest.mock("@/lib/logging", () => ({ logAction: jest.fn().mockResolvedValue(undefined) }));
 
-// Create a chainable mock
-const createChainableMock = () => {
+// Per-table results for the caller's (RLS-scoped) client.
+let rows: Record<string, any> = {};
+const inserts: Record<string, any[]> = {};
+const clientChain = (table: string): any => {
   const chain: any = {
     select: jest.fn(() => chain),
     eq: jest.fn(() => chain),
     order: jest.fn(() => chain),
-    single: jest.fn(() => {
-      const result = mockSingleResults[mockSingleIndex] || {
-        data: null,
-        error: null,
-      };
-      mockSingleIndex++;
-      return Promise.resolve(result);
+    maybeSingle: jest.fn(() => Promise.resolve({ data: rows[table] ?? null, error: null })),
+    single: jest.fn(() => Promise.resolve(rows[`${table}:insert`] ?? { data: null, error: { message: "denied" } })),
+    insert: jest.fn((row: any) => {
+      (inserts[table] ??= []).push(row);
+      if (table === "medical_report_logs") return Promise.resolve(rows["medical_report_logs:insert"] ?? { error: null });
+      return chain;
     }),
-    insert: jest.fn(() => chain),
-    then: (resolve: any) => resolve(mockQueryResult),
+    then: (resolve: any) => resolve({ data: rows[`${table}:list`] ?? [], error: null }),
   };
   return chain;
 };
+const mockClient = { from: jest.fn((t: string) => clientChain(t)) };
 
 const mockStorage = {
-  upload: jest
-    .fn()
-    .mockResolvedValue({ data: { path: "test/file.pdf" }, error: null }),
-  getPublicUrl: jest
-    .fn()
-    .mockReturnValue({ data: { publicUrl: "https://example.com/file.pdf" } }),
-  createSignedUrl: jest.fn().mockResolvedValue({
-    data: { signedUrl: "https://example.com/signed/file.pdf" },
-    error: null,
-  }),
+  upload: jest.fn().mockResolvedValue({ data: { path: "x" }, error: null }),
+  createSignedUrl: jest.fn().mockResolvedValue({ data: { signedUrl: "https://signed.example/file" }, error: null }),
   remove: jest.fn().mockResolvedValue({ error: null }),
 };
-
-jest.mock("@/lib/supabase", () => ({
-  supabase: {
-    from: jest.fn(() => createChainableMock()),
-    storage: {
-      from: jest.fn(() => mockStorage),
-    },
-  },
+jest.mock("@/lib/supabase-admin", () => ({
+  supabaseAdmin: { storage: { from: jest.fn(() => mockStorage) } },
 }));
 
-// Import routes
-import {
-  POST as uploadReport,
-  GET as getReports,
-} from "@/app/api/medical-reports/route";
+import { POST as uploadReport, GET as getReports } from "@/app/api/medical-reports/route";
 import { GET as downloadReport } from "@/app/api/medical-reports/download/route";
 import { POST as logView } from "@/app/api/medical-reports/log-view/route";
+import { setCurrentUser } from "../helpers/serverAuthMock";
+
+function uploadRequest(fields: Record<string, string>, withFile = true) {
+  const fd = new FormData();
+  Object.entries(fields).forEach(([k, v]) => fd.append(k, v));
+  if (withFile) fd.append("file", new File(["%PDF-1.4"], "blood test.pdf", { type: "application/pdf" }));
+  return new NextRequest("http://localhost:3000/api/medical-reports", { method: "POST", body: fd });
+}
 
 describe("Medical Reports API Route Tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockSingleResults = [];
-    mockSingleIndex = 0;
-    mockQueryResult = { data: [], error: null };
+    rows = {};
+    for (const k of Object.keys(inserts)) delete inserts[k];
+    setCurrentUser({ role: "nurse", profileId: "nurse-uuid", supabase: mockClient });
   });
 
-  describe("POST /api/medical-reports (Upload)", () => {
-    it("should return 400 for missing required fields", async () => {
-      const formData = new FormData();
-      formData.append("patientId", "P001");
-      // Missing other required fields
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/medical-reports",
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-
-      const response = await uploadReport(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.error).toContain("required");
+  describe("POST /api/medical-reports (upload)", () => {
+    it("rejects unauthenticated callers", async () => {
+      setCurrentUser(null);
+      expect((await uploadReport(uploadRequest({ patientId: "P001" }))).status).toBe(401);
     });
 
-    it("should return 404 for non-existent patient", async () => {
-      mockSingleResults = [{ data: null, error: { message: "Not found" } }];
-
-      const formData = new FormData();
-      formData.append("patientId", "INVALID");
-      formData.append("reportType", "lab_test");
-      formData.append("reportName", "Blood Test");
-      formData.append("uploadedByUserId", "doctor123");
-      formData.append("uploadedByRole", "doctor");
-      formData.append(
-        "file",
-        new Blob(["test content"], { type: "application/pdf" }),
-        "test.pdf",
-      );
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/medical-reports",
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-
-      const response = await uploadReport(request);
-
-      expect(response.status).toBe(404);
+    it.each(["staff", "admin"])("forbids %s", async (role) => {
+      setCurrentUser({ role, supabase: mockClient });
+      expect((await uploadReport(uploadRequest({ patientId: "P001" }))).status).toBe(403);
     });
 
-    it("should upload report successfully", async () => {
-      mockSingleResults = [
-        { data: { id: "uuid-123" }, error: null }, // patient lookup
-        { data: { id: "report123" }, error: null }, // insert().select().single()
-      ];
+    it("returns 400 for missing required fields", async () => {
+      const res = await uploadReport(uploadRequest({ patientId: "P001" }, false));
+      expect(res.status).toBe(400);
+    });
 
-      const formData = new FormData();
-      formData.append("patientId", "P001");
-      formData.append("reportType", "lab_test");
-      formData.append("reportName", "Blood Test");
-      formData.append("uploadedByUserId", "doctor123");
-      formData.append("uploadedByRole", "doctor");
-      formData.append("description", "Annual blood work");
-      formData.append("reportDate", "2026-01-15");
-      formData.append(
-        "file",
-        new Blob(["test content"], { type: "application/pdf" }),
-        "bloodtest.pdf",
+    it("returns 404 when the patient is not visible to the caller (RLS)", async () => {
+      const res = await uploadReport(uploadRequest({ patientId: "P002", reportType: "lab", reportName: "CBC" }));
+      expect(res.status).toBe(404);
+      expect(mockStorage.upload).not.toHaveBeenCalled();
+    });
+
+    it("uploads privately and records the uploader from the session", async () => {
+      rows = {
+        patients: { id: "patient-uuid" },
+        "medical_reports:insert": { data: { id: "rep1" }, error: null },
+      };
+      const res = await uploadReport(
+        uploadRequest({
+          patientId: "P001",
+          reportType: "lab",
+          reportName: "CBC",
+          uploadedByUserId: "someone-else",
+          uploadedByRole: "admin",
+        }),
       );
+      expect(res.status).toBe(200);
+      const [path] = mockStorage.upload.mock.calls[0];
+      expect(path).toMatch(/^patient-uuid\/\d+_blood_test\.pdf$/);
+      expect(inserts.medical_reports[0]).toMatchObject({
+        patient_id: "patient-uuid",
+        uploaded_by_user_id: "nurse-uuid",
+        uploaded_by_role: "nurse",
+        file_url: path, // object path, not a public URL
+      });
+    });
 
-      const request = new NextRequest(
-        "http://localhost:3000/api/medical-reports",
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-
-      const response = await uploadReport(request);
-
-      // May succeed or fail depending on storage mock - accept 200 or 500 with specific error
-      expect([200, 500]).toContain(response.status);
+    it("removes the stored file when the insert is refused", async () => {
+      rows = { patients: { id: "patient-uuid" } }; // insert resolves with an error
+      const res = await uploadReport(uploadRequest({ patientId: "P001", reportType: "lab", reportName: "CBC" }));
+      expect(res.status).toBe(403);
+      expect(mockStorage.remove).toHaveBeenCalled();
     });
   });
 
   describe("GET /api/medical-reports", () => {
-    it("should return empty array when no reports found", async () => {
-      mockSingleResults = [{ data: { id: "uuid-123" }, error: null }];
-      mockQueryResult = { data: [], error: null };
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/medical-reports?patientId=P001",
-      );
-
-      const response = await getReports(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.reports).toEqual([]);
+    it("rejects unauthenticated callers", async () => {
+      setCurrentUser(null);
+      expect((await getReports(new NextRequest("http://localhost:3000/api/medical-reports"))).status).toBe(401);
     });
 
-    it("should return reports for patient", async () => {
-      const mockReports = [
-        {
-          id: "1",
-          report_name: "Blood Test",
-          patients: { first_name: "John", last_name: "Doe" },
-        },
-      ];
-      mockSingleResults = [{ data: { id: "uuid-123" }, error: null }];
-      mockQueryResult = { data: mockReports, error: null };
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/medical-reports?patientId=P001",
-      );
-
-      const response = await getReports(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(Array.isArray(data.reports)).toBe(true);
+    it("returns 403 for a patient outside the caller's care", async () => {
+      const res = await getReports(new NextRequest("http://localhost:3000/api/medical-reports?patientId=P002"));
+      expect(res.status).toBe(403);
+      expect((await res.json()).accessDenied).toBe(true);
     });
 
-    it("should filter by report type", async () => {
-      mockQueryResult = { data: [], error: null };
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/medical-reports?reportType=lab_test",
-      );
-
-      const response = await getReports(request);
-
-      expect(response.status).toBe(200);
+    it("returns reports with short-lived signed URLs", async () => {
+      rows = {
+        patients: { id: "patient-uuid" },
+        "medical_reports:list": [
+          {
+            id: "rep1",
+            file_url: "patient-uuid/1_cbc.pdf",
+            file_name: "cbc.pdf",
+            patients: { patient_id: "P001", first_name: "Arun", last_name: "K", email: "a***@email.com" },
+          },
+        ],
+      };
+      const res = await getReports(new NextRequest("http://localhost:3000/api/medical-reports?patientId=P001"));
+      const { reports } = await res.json();
+      expect(reports[0]).toMatchObject({ file_url: "https://signed.example/file", patient_name: "Arun K" });
+      expect(mockStorage.createSignedUrl).toHaveBeenCalledWith("patient-uuid/1_cbc.pdf", 3600);
     });
   });
 
   describe("GET /api/medical-reports/download", () => {
-    it("should return 400 for missing parameters", async () => {
-      const request = new NextRequest(
-        "http://localhost:3000/api/medical-reports/download",
+    it("requires a reportId (arbitrary file paths are not accepted)", async () => {
+      const res = await downloadReport(
+        new NextRequest("http://localhost:3000/api/medical-reports/download?fileName=P002/secret.pdf"),
       );
-
-      const response = await downloadReport(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.error).toContain("required");
+      expect(res.status).toBe(400);
+      expect(mockStorage.createSignedUrl).not.toHaveBeenCalled();
     });
 
-    it("should return 404 for non-existent report", async () => {
-      mockSingleResults = [{ data: null, error: { message: "Not found" } }];
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/medical-reports/download?reportId=invalid123",
+    it("returns 404 when the report is not visible to the caller", async () => {
+      const res = await downloadReport(
+        new NextRequest("http://localhost:3000/api/medical-reports/download?reportId=rep9"),
       );
-
-      const response = await downloadReport(request);
-
-      expect(response.status).toBe(404);
+      expect(res.status).toBe(404);
+      expect(mockStorage.createSignedUrl).not.toHaveBeenCalled();
     });
 
-    it("should return signed URL for valid report", async () => {
-      mockSingleResults = [
-        {
-          data: {
-            file_name: "test.pdf",
-            file_url: "https://example.com/medical-reports/test.pdf",
-          },
-          error: null,
-        },
-      ];
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/medical-reports/download?reportId=report123",
+    it("signs a 5-minute URL for a visible report", async () => {
+      rows = { medical_reports: { file_url: "patient-uuid/1_cbc.pdf", file_name: "cbc.pdf" } };
+      const res = await downloadReport(
+        new NextRequest("http://localhost:3000/api/medical-reports/download?reportId=rep1"),
       );
-
-      const response = await downloadReport(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.downloadUrl).toBeDefined();
-    });
-
-    it("should accept fileName parameter", async () => {
-      const request = new NextRequest(
-        "http://localhost:3000/api/medical-reports/download?fileName=test/file.pdf",
-      );
-
-      const response = await downloadReport(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.downloadUrl).toBeDefined();
+      expect(await res.json()).toEqual({ downloadUrl: "https://signed.example/file", fileName: "cbc.pdf" });
+      expect(mockStorage.createSignedUrl).toHaveBeenCalledWith("patient-uuid/1_cbc.pdf", 300);
     });
   });
 
   describe("POST /api/medical-reports/log-view", () => {
-    it("should return 400 for missing fields", async () => {
-      const request = new NextRequest(
-        "http://localhost:3000/api/medical-reports/log-view",
-        {
+    const post = (body: any) =>
+      logView(
+        new NextRequest("http://localhost:3000/api/medical-reports/log-view", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        },
+          body: JSON.stringify(body),
+        }),
       );
 
-      const response = await logView(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.error).toContain("required");
+    it("returns 400 without a reportId", async () => {
+      expect((await post({})).status).toBe(400);
     });
 
-    it("should log view action successfully", async () => {
-      const request = new NextRequest(
-        "http://localhost:3000/api/medical-reports/log-view",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            reportId: "report123",
-            userId: "user123",
-            userRole: "patient",
-          }),
-        },
-      );
+    it("logs the view as the signed-in user", async () => {
+      const res = await post({ reportId: "rep1", userId: "forged", userRole: "admin" });
+      expect(res.status).toBe(200);
+      expect(inserts.medical_report_logs[0]).toMatchObject({
+        report_id: "rep1",
+        action_type: "viewed",
+        performed_by_user_id: "nurse-uuid",
+        performed_by_role: "nurse",
+      });
+    });
 
-      const response = await logView(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
+    it("returns 403 when the report is not visible (insert refused by RLS)", async () => {
+      rows = { "medical_report_logs:insert": { error: { message: "rls" } } };
+      expect((await post({ reportId: "rep9" })).status).toBe(403);
     });
   });
 });

@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getSession } from "@/lib/auth";
-import { getPatientAccessLogs } from "@/lib/logging";
-import { AccessLog } from "@/lib/database.types";
+import { supabase } from "@/lib/supabase";
 import {
   ShieldCheck,
   Eye,
@@ -15,15 +14,34 @@ import {
   Download,
   Edit3,
   Activity,
+  Siren,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+// One row of public.my_record_access_log(): who touched this patient's
+// data, resolved from the hash-chained audit_log.
+interface AccessEntry {
+  ts: string;
+  actor_name: string;
+  actor_role: string;
+  action: string;
+  target_table: string | null;
+  break_glass: boolean;
+}
+
+const TABLE_LABELS: Record<string, string> = {
+  medical_records: "medical records",
+  prescriptions: "prescriptions",
+  patient_vitals: "vitals",
+  medical_reports: "reports",
+  record_chunks: "records (via AI assistant)",
+};
+
 export default function AccessHistoryPage() {
   const router = useRouter();
-  const [logs, setLogs] = useState<AccessLog[]>([]);
+  const [logs, setLogs] = useState<AccessEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [patientId, setPatientId] = useState<string | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -32,17 +50,18 @@ export default function AccessHistoryPage() {
         router.push("/login");
         return;
       }
-      setPatientId(session.user.patient_id || session.user.id);
-      loadLogs(session.user.patient_id || session.user.id);
+      loadLogs();
     };
     init();
   }, [router]);
 
-  const loadLogs = async (id: string) => {
+  const loadLogs = async () => {
     try {
       setLoading(true);
-      const data = await getPatientAccessLogs(id);
-      setLogs(data);
+      // Scoped to the signed-in patient inside the function.
+      const { data, error } = await supabase.rpc("my_record_access_log");
+      if (error) throw error;
+      setLogs((data ?? []) as AccessEntry[]);
     } catch (err: any) {
       console.error("Failed to load logs:", err);
       setError("Failed to load access history. Please try again later.");
@@ -51,7 +70,21 @@ export default function AccessHistoryPage() {
     }
   };
 
-  const getActionConfig = (action: string) => {
+  const getActionConfig = (action: string, table: string | null) => {
+    if (action.startsWith("break_glass"))
+      return {
+        icon: Siren,
+        color: "text-red-600",
+        bg: "bg-red-100",
+        label: "Emergency access",
+      };
+    if (action === "read" || action === "ai_query")
+      return {
+        icon: table === "patient_vitals" ? Activity : Eye,
+        color: table === "patient_vitals" ? "text-purple-500" : "text-blue-500",
+        bg: table === "patient_vitals" ? "bg-purple-100" : "bg-blue-100",
+        label: `Viewed ${TABLE_LABELS[table ?? ""] ?? "record"}`,
+      };
     if (action.includes("vitals"))
       return {
         icon: Activity,
@@ -123,7 +156,7 @@ export default function AccessHistoryPage() {
                   Access History
                 </h1>
                 <p className="text-xs text-gray-500">
-                  Secure Audit Log (Immutable)
+                  Tamper-evident, hash-chained audit log
                 </p>
               </div>
             </div>
@@ -135,7 +168,7 @@ export default function AccessHistoryPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32">
             <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="mt-4 text-gray-500 font-medium">Decrypting logs...</p>
+            <p className="mt-4 text-gray-500 font-medium">Loading access history…</p>
           </div>
         ) : logs.length === 0 ? (
           <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-12 text-center shadow-xl border border-white/50">
@@ -144,7 +177,7 @@ export default function AccessHistoryPage() {
               No History Found
             </h3>
             <p className="text-gray-500 max-w-sm mx-auto mt-2">
-              Your records have not been accessed by any external parties yet.
+              Nobody has accessed your records yet.
             </p>
           </div>
         ) : (
@@ -154,12 +187,12 @@ export default function AccessHistoryPage() {
 
             <div className="space-y-8">
               {logs.map((log, index) => {
-                const config = getActionConfig(log.action);
+                const config = getActionConfig(log.action, log.target_table);
                 const Icon = config.icon;
 
                 return (
                   <div
-                    key={log.id}
+                    key={`${log.ts}-${index}`}
                     className="relative flex items-start gap-6 group"
                     style={{
                       animation: `fadeIn 0.5s ease-out forwards ${index * 0.1}s`,
@@ -182,35 +215,37 @@ export default function AccessHistoryPage() {
                           </h3>
                           <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-1">
                             <Clock className="w-3 h-3" />
-                            {new Date(log.timestamp || "").toLocaleString()}
+                            {new Date(log.ts).toLocaleString()}
                           </p>
                         </div>
                         <div
                           className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
                                                     ${
-                                                      log.user_role === "doctor"
+                                                      log.actor_role === "doctor"
                                                         ? "bg-blue-100 text-blue-700"
-                                                        : log.user_role ===
+                                                        : log.actor_role ===
                                                             "nurse"
                                                           ? "bg-pink-100 text-pink-700"
                                                           : "bg-gray-100 text-gray-700"
                                                     }`}
                         >
-                          {log.user_role}
+                          {log.actor_role}
                         </div>
                       </div>
 
                       <div className="bg-white/50 rounded-xl p-3 flex items-center gap-3 border border-dashed border-gray-200">
                         <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-sm">
-                          {log.user_id.slice(0, 2).toUpperCase()}
+                          {log.actor_name.replace(/^Dr\. /, "").slice(0, 2).toUpperCase()}
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-gray-700">
-                            Accessed by: {log.user_id}
+                            {log.actor_name}
                           </p>
-                          <p className="text-xs text-gray-500 truncate max-w-[200px]">
-                            Res_ID: {log.resource_id || "N/A"}
-                          </p>
+                          {log.break_glass && (
+                            <p className="text-xs font-semibold text-red-600">
+                              Emergency access. Flagged for review by the security team.
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>

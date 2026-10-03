@@ -12,7 +12,7 @@ interface LogActionParams {
   userAgent?: string;
 }
 
-import { supabase } from "./supabase";
+
 
 /**
  * Centralized audit logger
@@ -24,7 +24,9 @@ export async function logAction(params: LogActionParams): Promise<void> {
   // Instead of fetching /api/audit, we can just call the db directly if we have supabase access
   if (typeof window === "undefined") {
     try {
-      const { error } = await supabase.from("access_logs").insert({
+      // Audit writes are privileged; only server code may insert directly.
+      const { supabaseAdmin } = await import("./supabase-admin");
+      const { error } = await supabaseAdmin.from("access_logs").insert({
         user_id: params.userId,
         user_role: params.userRole,
         action: params.action,
@@ -39,6 +41,20 @@ export async function logAction(params: LogActionParams): Promise<void> {
 
       if (error) {
         console.error("Server-side audit log failed:", error);
+      }
+
+      // Same event into the tamper-evident chain (no PHI in details).
+      const { error: chainError } = await supabaseAdmin.rpc("append_audit_as", {
+        p_actor_id: params.userId,
+        p_actor_role: params.userRole,
+        p_action: params.action,
+        p_target_table: params.resourceType ?? null,
+        p_target_id: params.resourceId ?? null,
+        p_ip: params.ipAddress ?? null,
+        p_details: { status: params.status ?? null },
+      });
+      if (chainError) {
+        console.error("Audit chain append failed:", chainError);
       }
       return;
     } catch (err) {
@@ -78,41 +94,8 @@ export async function logAction(params: LogActionParams): Promise<void> {
  * Fetch all audit logs (admin only)
  */
 export async function getAllLogs(limit = 50) {
-  if (typeof window === "undefined") {
-    const { data, error } = await supabase
-      .from("access_logs")
-      .select("*")
-      .order("timestamp", { ascending: false })
-      .limit(limit);
-
-    if (error) throw error;
-    return data;
-  }
-
   const res = await fetch(`/api/audit/logs?limit=${limit}`);
   if (!res.ok) throw new Error("Failed to fetch audit logs");
-  const data = await res.json();
-  return data.logs;
-}
-
-/**
- * Fetch access logs for a specific patient
- */
-export async function getPatientAccessLogs(patientId: string) {
-  if (typeof window === "undefined") {
-    const { data, error } = await supabase
-      .from("access_logs")
-      .select("*")
-      .eq("user_id", patientId)
-      .order("timestamp", { ascending: false })
-      .limit(100);
-
-    if (error) throw error;
-    return data;
-  }
-
-  const res = await fetch(`/api/audit/logs?patientId=${patientId}&limit=100`);
-  if (!res.ok) throw new Error("Failed to fetch patient access logs");
   const data = await res.json();
   return data.logs;
 }

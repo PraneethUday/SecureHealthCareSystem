@@ -87,7 +87,7 @@ export function PatientCare({ nurseId }: PatientCareProps) {
           appointment_time,
           status,
           reason,
-          patients!inner (
+          patients:patient_directory!inner (
             id,
             patient_id,
             first_name,

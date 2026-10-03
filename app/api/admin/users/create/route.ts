@@ -1,3 +1,5 @@
+import { provisionAuthUser } from "@/lib/auth-provisioning";
+import { guard } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { logAction } from "@/lib/logging";
@@ -29,22 +31,12 @@ export async function POST(request: NextRequest) {
       // Hospital assignment (required for doctor, nurse, staff)
       hospitalId,
       // Admin authentication
-      adminId,
-    } = body;
+      } = body;
 
     // Validate admin authorization
-    if (!adminId || adminId !== "admin") {
-      await logAction({
-        userId: adminId || "unknown",
-        userRole: "admin",
-        action: "unauthorized_user_creation_attempt",
-        status: "failure",
-      });
-      return NextResponse.json(
-        { error: "Unauthorized. Admin access required." },
-        { status: 403 },
-      );
-    }
+    const auth = await guard("admin");
+    if (auth instanceof Response) return auth;
+    const adminId = auth.businessId;
 
     // Validate role
     if (!["doctor", "nurse", "staff"].includes(role)) {
@@ -226,6 +218,22 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json(
         { error: `Failed to create ${role} account` },
+        { status: 500 },
+      );
+    }
+
+    try {
+      await provisionAuthUser(supabaseAdmin, {
+        email,
+        role,
+        profileId: data.id,
+        password,
+      });
+    } catch (authError) {
+      console.error(`${role} auth provisioning error:`, authError);
+      await supabaseAdmin.from(table).delete().eq("id", data.id);
+      return NextResponse.json(
+        { error: `Failed to create ${role} login` },
         { status: 500 },
       );
     }

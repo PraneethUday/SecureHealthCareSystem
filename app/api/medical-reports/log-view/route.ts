@@ -1,57 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { guard } from "@/lib/supabase/server";
+import { logAction } from "@/lib/logging";
 
 export async function POST(request: NextRequest) {
-  try {
-    const { reportId, userId, userRole } = await request.json();
+  const auth = await guard();
+  if (auth instanceof Response) return auth;
 
-    console.log("👁️  [Log View] Logging view for report:", reportId);
-
-    if (!reportId || !userId || !userRole) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
-    }
-
-    // Log the view action
-    // Insert into database (medical_report_logs)
-    const { error: accessError } = await supabase.from("access_logs").insert({
-      user_id: userId,
-      user_role: userRole,
-      action: "view_report",
-      resource_type: "medical_report",
-      resource_id: reportId,
-      timestamp: new Date().toISOString()
-    });
-
-    if (accessError) console.error("Failed to insert into access_logs:", accessError);
-
-    const { error } = await supabase.from("medical_report_logs").insert([
-      {
-        report_id: reportId,
-        action_type: "viewed",
-        performed_by_user_id: userId,
-        performed_by_role: userRole,
-      },
-    ]);
-
-    if (error) {
-      console.error("❌ [Log View] Error:", error);
-      return NextResponse.json(
-        { error: `Failed to log view: ${error.message}` },
-        { status: 500 }
-      );
-    }
-
-    console.log("✅ [Log View] View logged successfully");
-
-    return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error("❌ [Log View] Exception:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
+  const { reportId, action } = await request.json();
+  if (!reportId) {
+    return NextResponse.json({ error: "Missing reportId" }, { status: 400 });
   }
+  const actionType = action === "downloaded" ? "downloaded" : "viewed";
+
+  // Runs as the caller: the insert policy requires the report to be visible
+  // and performed_by_user_id to be the caller.
+  const { error } = await auth.supabase.from("medical_report_logs").insert({
+    report_id: reportId,
+    action_type: actionType,
+    performed_by_user_id: auth.profileId,
+    performed_by_role: auth.role,
+  });
+  if (error) {
+    return NextResponse.json({ error: "Report not found or access denied" }, { status: 403 });
+  }
+
+  await logAction({
+    userId: auth.businessId,
+    userRole: auth.role,
+    action: `${actionType}_report`,
+    resourceType: "medical_report",
+    resourceId: reportId,
+    status: "success",
+  });
+  return NextResponse.json({ success: true });
 }

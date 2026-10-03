@@ -6,6 +6,7 @@
 // Mock supabase before importing auth
 jest.mock("@/lib/supabase", () => ({
     supabase: {
+        auth: { signOut: jest.fn().mockResolvedValue({ error: null }) },
         from: jest.fn(() => ({
             select: jest.fn(() => ({
                 eq: jest.fn(() => ({

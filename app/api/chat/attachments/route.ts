@@ -1,34 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { guard } from "@/lib/supabase/server";
 import {
     createAttachment,
-    getConversation,
     sendMessage,
-    validateFile,
+    signAttachmentUrl,
+    uploadChatFile,
     ALLOWED_FILE_TYPES,
     MAX_FILE_SIZE,
 } from "@/lib/chat";
-import { createClient } from "@supabase/supabase-js";
-import crypto from "crypto";
-
-// Get Supabase client
-function getSupabaseClient() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    return createClient(supabaseUrl, supabaseKey);
-}
 
 /**
  * POST /api/chat/attachments
  * Upload a file attachment
  */
 export async function POST(request: NextRequest) {
+    const auth = await guard("patient", "doctor");
+    if (auth instanceof Response) return auth;
+
     try {
         const formData = await request.formData();
         const file = formData.get("file") as File | null;
         const conversationId = formData.get("conversationId") as string | null;
-        const userId = formData.get("userId") as string | null;
-        const userRole = formData.get("userRole") as string | null;
 
         if (!file || !conversationId) {
             return NextResponse.json(
@@ -37,14 +29,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        if (!userId || !userRole) {
-            return NextResponse.json(
-                { error: "User ID and User Role are required" },
-                { status: 400 }
-            );
-        }
-
-        // Validate file
         if (!ALLOWED_FILE_TYPES.includes(file.type)) {
             return NextResponse.json(
                 { error: "File type not allowed. Please upload PDF, JPEG, PNG, GIF, or DOC/DOCX files." },
@@ -59,61 +43,19 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Verify user has access to this conversation
-        const conversationResult = await getConversation(conversationId);
-        if (!conversationResult.success || !conversationResult.conversation) {
-            return NextResponse.json(
-                { error: "Conversation not found" },
-                { status: 404 }
-            );
-        }
-
-        const conversation = conversationResult.conversation;
-
-        const isPatient = userRole === "patient" && conversation.patient_id === userId;
-        const isDoctor = userRole === "doctor" && conversation.doctor_id === userId;
-
-        if (!isPatient && !isDoctor) {
+        // Fails unless the conversation is visible to the caller under RLS.
+        const upload = await uploadChatFile(file, conversationId);
+        if (!upload.success || !upload.url) {
             return NextResponse.json(
                 { error: "You are not authorized to upload files to this conversation" },
                 { status: 403 }
             );
         }
 
-        // Upload file to Supabase Storage
-        const supabase = getSupabaseClient();
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${conversationId}/${Date.now()}-${crypto.randomBytes(8).toString("hex")}.${fileExt}`;
-
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
-            .from("chat-attachments")
-            .upload(fileName, buffer, {
-                contentType: file.type,
-                cacheControl: "3600",
-                upsert: false,
-            });
-
-        if (uploadError) {
-            console.error("Upload error:", uploadError);
-            return NextResponse.json(
-                { error: "Failed to upload file" },
-                { status: 500 }
-            );
-        }
-
-        // Get public URL
-        const { data: urlData } = supabase.storage
-            .from("chat-attachments")
-            .getPublicUrl(uploadData.path);
-
-        // Create a message for this attachment
         const messageResult = await sendMessage(
             conversationId,
-            userId,
-            userRole as "patient" | "doctor",
+            auth.profileId,
+            auth.role as "patient" | "doctor",
             `📎 Shared a file: ${file.name}`
         );
 
@@ -124,13 +66,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Create attachment record
         const attachmentResult = await createAttachment(
             messageResult.message.id,
             file.name,
             file.type,
             file.size,
-            urlData.publicUrl
+            upload.url
         );
 
         if (!attachmentResult.success) {
@@ -144,7 +85,6 @@ export async function POST(request: NextRequest) {
             message: messageResult.message,
             attachment: attachmentResult.attachment,
         });
-
     } catch (error) {
         console.error("Error uploading attachment:", error);
         return NextResponse.json(
@@ -156,75 +96,38 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/chat/attachments
- * Get attachment download URL
+ * Get a short-lived download URL for an attachment
  */
 export async function GET(request: NextRequest) {
-    try {
-        const { searchParams } = new URL(request.url);
-        const attachmentId = searchParams.get("attachmentId");
-        const userId = searchParams.get("userId");
-        const userRole = searchParams.get("userRole");
+    const auth = await guard("patient", "doctor");
+    if (auth instanceof Response) return auth;
 
-        if (!userId || !userRole) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        if (!attachmentId) {
-            return NextResponse.json(
-                { error: "Attachment ID is required" },
-                { status: 400 }
-            );
-        }
-
-        const supabase = getSupabaseClient();
-
-        // Get attachment info
-        const { data: attachment, error: attachmentError } = await supabase
-            .from("chat_attachments")
-            .select(`
-        *,
-        chat_messages!inner (
-          conversation_id,
-          chat_conversations!inner (
-            patient_id,
-            doctor_id
-          )
-        )
-      `)
-            .eq("id", attachmentId)
-            .single();
-
-        if (attachmentError || !attachment) {
-            return NextResponse.json(
-                { error: "Attachment not found" },
-                { status: 404 }
-            );
-        }
-
-        // Verify user has access
-        const conversation = attachment.chat_messages.chat_conversations;
-
-        const isPatient = userRole === "patient" && conversation.patient_id === userId;
-        const isDoctor = userRole === "doctor" && conversation.doctor_id === userId;
-
-        if (!isPatient && !isDoctor) {
-            return NextResponse.json(
-                { error: "You are not authorized to access this attachment" },
-                { status: 403 }
-            );
-        }
-
-        return NextResponse.json({
-            url: attachment.file_url,
-            fileName: attachment.file_name,
-            fileType: attachment.file_type,
-            fileSize: attachment.file_size,
-        });
-    } catch (error) {
-        console.error("Error fetching attachment:", error);
+    const attachmentId = new URL(request.url).searchParams.get("attachmentId");
+    if (!attachmentId) {
         return NextResponse.json(
-            { error: "Failed to fetch attachment" },
-            { status: 500 }
+            { error: "Attachment ID is required" },
+            { status: 400 }
         );
     }
+
+    // RLS only returns attachments in the caller's own conversations.
+    const { data: attachment } = await auth.supabase
+        .from("chat_attachments")
+        .select("file_url, file_name, file_type, file_size")
+        .eq("id", attachmentId)
+        .maybeSingle();
+
+    if (!attachment) {
+        return NextResponse.json(
+            { error: "Attachment not found" },
+            { status: 404 }
+        );
+    }
+
+    return NextResponse.json({
+        url: await signAttachmentUrl(attachment.file_url),
+        fileName: attachment.file_name,
+        fileType: attachment.file_type,
+        fileSize: attachment.file_size,
+    });
 }

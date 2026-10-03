@@ -17,6 +17,9 @@ import {
   searchPrescriptionsForPharmacy,
   markPrescriptionDispensed,
 } from "@/lib/prescriptions";
+import { mockFetchOnce, lastFetch } from "../helpers/mockFetch";
+
+global.fetch = jest.fn();
 
 // Mock supabase
 const mockSupabaseChain = {
@@ -57,63 +60,33 @@ describe("Prescriptions Unit Tests", () => {
     });
   });
 
+  // Prescription details are encrypted at rest; writes go through
+  // /api/clinical/prescriptions.
   describe("createPrescription()", () => {
-    it("should create prescription successfully", async () => {
-      const mockPrescription = {
-        id: "rx123",
-        medication_name: "Aspirin",
-        dosage: "100mg",
-        status: "active",
-      };
-      mockSupabaseChain.single.mockResolvedValueOnce({
-        data: mockPrescription,
-        error: null,
-      });
-
+    it("POSTs the prescription to the encrypting API", async () => {
+      mockFetchOnce({ prescription: { id: "rx123", medication_name: "Amoxicillin" } }, 201);
       const result = await createPrescription(
         {
           appointment_id: "apt123",
           patient_id: "patient123",
           doctor_id: "doctor123",
-          medication_name: "Aspirin",
-          dosage: "100mg",
-          frequency: "Once daily",
+          medication_name: "Amoxicillin",
+          dosage: "500mg",
+          frequency: "3 times daily",
           duration: "7 days",
-          start_date: "2026-01-01",
-          prescribed_date: "2026-01-01",
-          status: "active",
-        },
+        } as any,
         "doctor123",
       );
-
       expect(result.success).toBe(true);
-      expect(result.data).toBeDefined();
+      expect(result.data).toMatchObject({ id: "rx123" });
+      expect(lastFetch()).toMatchObject({ url: "/api/clinical/prescriptions", method: "POST" });
+      expect(lastFetch().body.medication_name).toBe("Amoxicillin");
     });
 
-    it("should handle creation error", async () => {
-      mockSupabaseChain.single.mockResolvedValueOnce({
-        data: null,
-        error: { message: "Insert failed" },
-      });
-
-      const result = await createPrescription(
-        {
-          appointment_id: "apt123",
-          patient_id: "patient123",
-          doctor_id: "doctor123",
-          medication_name: "Aspirin",
-          dosage: "100mg",
-          frequency: "Once daily",
-          duration: "7 days",
-          start_date: "2026-01-01",
-          prescribed_date: "2026-01-01",
-          status: "active",
-        },
-        "doctor123",
-      );
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+    it("returns the server error", async () => {
+      mockFetchOnce({ error: "Could not create prescription" }, 403);
+      const result = await createPrescription({} as any, "d");
+      expect(result).toEqual({ success: false, error: "Could not create prescription" });
     });
   });
 
@@ -177,78 +150,47 @@ describe("Prescriptions Unit Tests", () => {
   });
 
   describe("getPatientPrescriptions()", () => {
-    it("should return patient prescriptions", async () => {
-      const mockPrescriptions = [
-        { id: "rx1", medication_name: "Aspirin" },
-        { id: "rx2", medication_name: "Ibuprofen" },
-      ];
-      mockSupabaseChain.order.mockResolvedValueOnce({
-        data: mockPrescriptions,
-        error: null,
+    it("fetches decrypted prescriptions and adds doctor details", async () => {
+      mockFetchOnce({
+        prescriptions: [
+          { id: "rx1", medication_name: "Aspirin", doctors: { first_name: "Jane", last_name: "Smith", specialization: "Cardiology" } },
+        ],
       });
-
       const result = await getPatientPrescriptions("patient123");
-
-      expect(Array.isArray(result)).toBe(true);
+      expect(lastFetch().url).toBe("/api/clinical/prescriptions?patientId=patient123");
+      expect(result[0]).toMatchObject({ medication_name: "Aspirin", doctor_name: "Dr. Jane Smith" });
     });
 
-    it("should return empty array on error", async () => {
-      mockSupabaseChain.order.mockResolvedValueOnce({
-        data: null,
-        error: { message: "Query failed" },
-      });
-
-      const result = await getPatientPrescriptions("patient123");
-
-      expect(result).toEqual([]);
+    it("returns an empty list on error", async () => {
+      mockFetchOnce({ error: "x" }, 500);
+      expect(await getPatientPrescriptions("patient123")).toEqual([]);
     });
   });
 
   describe("getAppointmentPrescriptions()", () => {
-    it("should return prescriptions for appointment", async () => {
-      mockSupabaseChain.order.mockResolvedValueOnce({
-        data: [{ id: "rx1" }],
-        error: null,
-      });
-
-      const result = await getAppointmentPrescriptions("apt123");
-
-      expect(Array.isArray(result)).toBe(true);
+    it("fetches prescriptions for the appointment", async () => {
+      mockFetchOnce({ prescriptions: [] });
+      expect(await getAppointmentPrescriptions("apt123")).toEqual([]);
+      expect(lastFetch().url).toBe("/api/clinical/prescriptions?appointmentId=apt123");
     });
   });
 
   describe("updatePrescriptionStatus()", () => {
-    it("should update status successfully", async () => {
-      mockSupabaseChain.single.mockResolvedValueOnce({
-        data: { id: "rx123", status: "completed" },
-        error: null,
-      });
-
-      const result = await updatePrescriptionStatus(
-        "rx123",
-        "completed",
-        "doctor123",
-      );
-
+    it("PATCHes the new status", async () => {
+      mockFetchOnce({ success: true });
+      const result = await updatePrescriptionStatus("rx123", "completed", "doctor123");
       expect(result.success).toBe(true);
+      expect(lastFetch()).toEqual({
+        url: "/api/clinical/prescriptions",
+        method: "PATCH",
+        body: { id: "rx123", status: "completed" },
+      });
     });
 
-
-
-    it("should include notes when provided", async () => {
-      mockSupabaseChain.single.mockResolvedValueOnce({
-        data: { id: "rx123" },
-        error: null,
-      });
-
-      await updatePrescriptionStatus(
-        "rx123",
-        "discontinued",
-        "doctor123",
-        "Patient allergic",
-      );
-
-      expect(mockSupabaseChain.update).toHaveBeenCalled();
+    it("includes notes when provided", async () => {
+      mockFetchOnce({ success: true });
+      await updatePrescriptionStatus("rx123", "discontinued", "doctor123", "Side effects");
+      expect(lastFetch().body).toEqual({ id: "rx123", status: "discontinued", notes: "Side effects" });
     });
   });
 
@@ -324,17 +266,11 @@ describe("Prescriptions Unit Tests", () => {
   });
 
   describe("markPrescriptionDispensed()", () => {
-    it("should mark prescription as dispensed", async () => {
-      mockSupabaseChain.single.mockResolvedValueOnce({
-        data: { id: "rx123", status: "completed" },
-        error: null,
-      });
-
-      const result = await markPrescriptionDispensed("rx123", "staff123");
-
+    it("asks the server to dispense (staff cannot set arbitrary status)", async () => {
+      mockFetchOnce({ success: true });
+      const result = await markPrescriptionDispensed("rx123", "staff1", "Given 14 tablets");
       expect(result.success).toBe(true);
+      expect(lastFetch().body).toEqual({ id: "rx123", dispense: true, notes: "Given 14 tablets" });
     });
-
-
   });
 });

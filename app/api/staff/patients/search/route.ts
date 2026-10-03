@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { guard } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await guard("staff");
+    if (auth instanceof Response) return auth;
+    const supabase = auth.supabase;
+
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get("q");
 
@@ -13,16 +17,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const searchTerm = query.trim().toLowerCase();
+    // Strip PostgREST filter syntax so input can't add conditions to .or().
+    const searchTerm = query.trim().toLowerCase().replace(/[^\p{L}\p{N}@.\s-]/gu, "");
 
     // Search patients by name, phone, email, or patient_id
     const { data: patients, error } = await supabase
-      .from("patients")
+      // Masked view: staff see partial contact details only.
+      .from("patient_directory")
       .select(
-        "id, patient_id, first_name, last_name, email, phone, date_of_birth, gender, address, city, state, created_at",
+        "id, patient_id, first_name, last_name, email, phone, date_of_birth, gender, address, city, state",
       )
       .or(
-        `first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,patient_id.ilike.%${searchTerm}%`,
+        `first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,patient_id.ilike.%${searchTerm}%`,
       )
       .order("first_name")
       .limit(20);

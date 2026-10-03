@@ -3,7 +3,7 @@
  * Tests audit logging functions
  */
 
-import { logAction, getAllLogs, getPatientAccessLogs } from "@/lib/logging";
+import { logAction, getAllLogs } from "@/lib/logging";
 
 // Mock global fetch
 const mockFetch = jest.fn();
@@ -150,37 +150,6 @@ describe("Logging Unit Tests", () => {
             await expect(getAllLogs()).rejects.toThrow("Failed to fetch audit logs");
         });
     });
-
-    describe("getPatientAccessLogs()", () => {
-        it("should fetch logs for specific patient", async () => {
-            mockFetch.mockResolvedValueOnce({
-                ok: true,
-                json: () => Promise.resolve({ logs: [] })
-            });
-
-            await getPatientAccessLogs("P001");
-
-            expect(mockFetch).toHaveBeenCalledWith("/api/audit/logs?patientId=P001&limit=100");
-        });
-
-        it("should return patient logs array", async () => {
-            const mockLogs = [{ id: "1", resource_id: "P001" }];
-            mockFetch.mockResolvedValueOnce({
-                ok: true,
-                json: () => Promise.resolve({ logs: mockLogs })
-            });
-
-            const result = await getPatientAccessLogs("P001");
-
-            expect(result).toEqual(mockLogs);
-        });
-
-        it("should throw error on failed request", async () => {
-            mockFetch.mockResolvedValueOnce({
-                ok: false
-            });
-
-            await expect(getPatientAccessLogs("P001")).rejects.toThrow("Failed to fetch patient access logs");
-        });
-    });
+    // Patient access history is served by the my_record_access_log() RPC;
+    // see __tests__/access-control.
 });

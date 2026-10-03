@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabase-admin";
+import { guard } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
+  const auth = await guard("admin", "patient");
+  if (auth instanceof Response) return auth;
+
   const { searchParams } = new URL(request.url);
   const limit = parseInt(searchParams.get("limit") || "50");
-  const patientId = searchParams.get("patientId");
+  // Patients may only see activity on their own records.
+  const patientId =
+    auth.role === "patient" ? auth.businessId : searchParams.get("patientId");
 
   let query = supabase
     .from("access_logs")

@@ -4,12 +4,13 @@
  * User Stories: 10577, 10578, 10580, 10583, 10585
  */
 
-// Mock supabase
+// Mock the service-role client (security monitoring runs server-side only,
+// after the API route has authorized the admin).
 const mockFrom = jest.fn();
 const mockRpc = jest.fn();
 
-jest.mock("@/lib/supabase", () => ({
-  supabase: {
+jest.mock("@/lib/supabase-admin", () => ({
+  supabaseAdmin: {
     from: (...args: any[]) => mockFrom(...args),
     rpc: (...args: any[]) => mockRpc(...args),
   },

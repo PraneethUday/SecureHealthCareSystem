@@ -4,178 +4,152 @@
 
 /**
  * API Route Tests for app/api/audit/route.ts and app/api/audit/logs/route.ts
- * Tests audit logging API endpoints
+ *
+ * The caller's identity comes from the session, never from the request, so
+ * these tests focus on that: unauthenticated calls are refused, and a
+ * user_id/user_role in the body cannot change who the entry is recorded for.
  */
 
-import { NextRequest } from "next/server";
+jest.mock("@/lib/supabase/server", () => require("../helpers/serverAuthMock"));
 
-// Mock supabase
 const mockInsert = jest.fn();
-const mockSelect = jest.fn();
-const mockFrom = jest.fn();
-const mockOrder = jest.fn();
-const mockLimit = jest.fn();
-const mockEq = jest.fn();
-const mockIn = jest.fn();
-const mockOr = jest.fn();
-const mockMaybeSingle = jest.fn();
+const mockQuery = jest.fn();
 
-// Create a chainable mock that supports all methods
-const createChainableMock = (resolveValue = { data: [], error: null }) => {
-  const chainable: any = {
-    select: jest.fn(() => chainable),
-    order: jest.fn(() => chainable),
-    limit: jest.fn(() => chainable),
-    eq: jest.fn(() => chainable),
-    in: jest.fn(() => chainable),
-    or: jest.fn(() => Promise.resolve({ data: [], error: null })),
-    maybeSingle: jest.fn(() => Promise.resolve({ data: null, error: null })),
-    then: (resolve: any) => resolve(resolveValue),
-  };
-  return chainable;
+// Chainable query that records every filter applied to it.
+const chain = (): any => {
+  const calls: any[] = [];
+  const c: any = new Proxy(
+    {},
+    {
+      get(_, prop) {
+        if (prop === "then") {
+          mockQuery(calls);
+          return (resolve: any) => resolve({ data: [], error: null });
+        }
+        if (prop === "maybeSingle") {
+          return () => {
+            mockQuery(calls);
+            return Promise.resolve({ data: null, error: null });
+          };
+        }
+        return (...args: any[]) => {
+          calls.push([prop, ...args]);
+          return c;
+        };
+      },
+    },
+  );
+  return c;
 };
 
-jest.mock("@/lib/supabase", () => ({
-  supabase: {
-    from: jest.fn((table: string) => {
-      mockFrom(table);
-      return {
-        insert: jest.fn((data) => {
-          mockInsert(data);
-          return Promise.resolve({ error: null });
-        }),
-        select: jest.fn(() => createChainableMock()),
-      };
-    }),
+jest.mock("@/lib/supabase-admin", () => ({
+  supabaseAdmin: {
+    from: jest.fn(() => ({
+      insert: (row: any) => {
+        mockInsert(row);
+        return Promise.resolve({ error: null });
+      },
+      select: () => chain(),
+    })),
   },
 }));
 
-// Import routes after mocking
 import { POST } from "@/app/api/audit/route";
 import { GET } from "@/app/api/audit/logs/route";
+import { setCurrentUser } from "../helpers/serverAuthMock";
 
-// Helper to create mock request
-function createMockRequest(body: any, method: string = "POST"): Request {
-  return new Request("http://localhost:3000/api/audit", {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
+const post = (body: any, headers: Record<string, string> = {}) =>
+  POST(
+    new Request("http://localhost:3000/api/audit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify(body),
+    }),
+  );
 
-function createMockGetRequest(params: Record<string, string> = {}): Request {
+const get = (params: Record<string, string> = {}) => {
   const url = new URL("http://localhost:3000/api/audit/logs");
-  Object.entries(params).forEach(([key, value]) => {
-    url.searchParams.set(key, value);
-  });
-  return new Request(url.toString(), { method: "GET" });
-}
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  return GET(new Request(url.toString()));
+};
 
 describe("Audit API Route Tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    setCurrentUser(null);
   });
 
   describe("POST /api/audit", () => {
-    it("should create audit log successfully", async () => {
-      const body = {
-        user_id: "user123",
-        user_role: "patient",
-        action: "login_success",
-        resource_type: "auth",
-      };
-
-      const request = createMockRequest(body);
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.ok).toBe(true);
+    it("rejects unauthenticated callers", async () => {
+      const res = await post({ action: "login_success" });
+      expect(res.status).toBe(401);
+      expect(mockInsert).not.toHaveBeenCalled();
     });
 
-    it("should include timestamp in log", async () => {
-      const body = {
-        user_id: "user123",
-        user_role: "doctor",
-        action: "view_record",
-        resource_type: "medical_record",
-        resource_id: "rec123",
-      };
-
-      const request = createMockRequest(body);
-      await POST(request);
-
-      // Verify insert was called
-      expect(mockInsert).toHaveBeenCalled();
+    it("records the entry for the signed-in user", async () => {
+      setCurrentUser({ role: "doctor", businessId: "D001" });
+      const res = await post({ action: "view_record", resource_type: "medical_record", resource_id: "rec123" });
+      expect(res.status).toBe(200);
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: "D001",
+          user_role: "doctor",
+          action: "view_record",
+          resource_id: "rec123",
+          timestamp: expect.any(String),
+        }),
+      );
     });
 
-    it("should handle optional fields", async () => {
-      const body = {
-        user_id: "user123",
-        user_role: "admin",
-        action: "delete_user",
-        resource_type: "user",
-        resource_id: "user456",
-        ip_address: "192.168.1.1",
-        user_agent: "Mozilla/5.0",
-      };
-
-      const request = createMockRequest(body);
-      const response = await POST(request);
-
-      expect(response.status).toBe(200);
+    it("ignores a spoofed user_id/user_role in the body", async () => {
+      setCurrentUser({ role: "patient", businessId: "P001" });
+      await post({ user_id: "admin", user_role: "admin", action: "delete_user" });
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({ user_id: "P001", user_role: "patient" }),
+      );
     });
 
-    it("should handle all user roles", async () => {
-      const roles = ["admin", "patient", "doctor", "nurse", "staff"];
-
-      for (const role of roles) {
-        const body = {
-          user_id: `${role}123`,
-          user_role: role,
-          action: "test_action",
-        };
-
-        const request = createMockRequest(body);
-        const response = await POST(request);
-
-        expect(response.status).toBe(200);
-      }
+    it("takes IP and user agent from the request, not the body", async () => {
+      setCurrentUser({ role: "nurse", businessId: "N001" });
+      await post(
+        { action: "x", ip_address: "6.6.6.6", user_agent: "forged" },
+        { "x-forwarded-for": "10.0.0.7", "user-agent": "Mozilla/5.0" },
+      );
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({ ip_address: "10.0.0.7", user_agent: "Mozilla/5.0" }),
+      );
     });
   });
 
   describe("GET /api/audit/logs", () => {
-    it("should fetch logs with default limit", async () => {
-      const request = createMockGetRequest();
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data).toHaveProperty("logs");
-      expect(Array.isArray(data.logs)).toBe(true);
+    it("rejects unauthenticated callers", async () => {
+      expect((await get()).status).toBe(401);
     });
 
-    it("should fetch logs with custom limit", async () => {
-      const request = createMockGetRequest({ limit: "100" });
-      const response = await GET(request);
-
-      expect(response.status).toBe(200);
+    it.each(["doctor", "nurse", "staff"])("forbids %s", async (role) => {
+      setCurrentUser({ role });
+      expect((await get()).status).toBe(403);
     });
 
-    it("should filter logs by patientId", async () => {
-      const request = createMockGetRequest({ patientId: "P001" });
-      const response = await GET(request);
-
-      expect(response.status).toBe(200);
+    it("requires an MFA-verified session for admins", async () => {
+      setCurrentUser({ role: "admin", aal: "aal1" });
+      expect((await get()).status).toBe(403);
     });
 
-    it("should handle UUID patient IDs", async () => {
-      const request = createMockGetRequest({
-        patientId: "123e4567-e89b-12d3-a456-426614174000",
-      });
-      const response = await GET(request);
+    it("returns logs to an admin", async () => {
+      setCurrentUser({ role: "admin" });
+      const res = await get({ limit: "100" });
+      expect(res.status).toBe(200);
+      expect(Array.isArray((await res.json()).logs)).toBe(true);
+    });
 
-      expect(response.status).toBe(200);
+    it("scopes a patient to their own records whatever patientId they send", async () => {
+      setCurrentUser({ role: "patient", businessId: "P001" });
+      const res = await get({ patientId: "P002" });
+      expect(res.status).toBe(200);
+      const filters = mockQuery.mock.calls.flatMap(([calls]) => calls);
+      expect(filters).toContainEqual(["eq", "patient_id", "P001"]);
+      expect(filters).not.toContainEqual(["eq", "patient_id", "P002"]);
     });
   });
 });

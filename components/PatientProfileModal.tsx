@@ -30,10 +30,9 @@ export default function PatientProfileModal({
   useEffect(() => {
     async function loadProfile() {
       try {
+        // Masked for the caller's role and written to the audit chain.
         const { data, error } = await supabase
-          .from("patients")
-          .select("*")
-          .eq("id", patientId)
+          .rpc("get_patient_profile", { p_patient_id: patientId })
           .single();
 
         if (error) throw error;

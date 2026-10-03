@@ -1,359 +1,142 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { guard } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { REPORTS_BUCKET, reportObjectPath, signReportUrl } from "@/lib/medical-report-storage";
+
+const MAX_SIZE = 50 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
+  const auth = await guard("nurse", "doctor", "patient");
+  if (auth instanceof Response) return auth;
+
   try {
     const formData = await request.formData();
-
     const patientId = formData.get("patientId") as string;
     const reportType = formData.get("reportType") as string;
     const reportName = formData.get("reportName") as string;
     const description = formData.get("description") as string;
     const reportDate = formData.get("reportDate") as string;
     const notes = formData.get("notes") as string;
-    const uploadedByUserId = formData.get("uploadedByUserId") as string;
-    const uploadedByRole = formData.get("uploadedByRole") as string;
     const file = formData.get("file") as File;
 
-    console.log("📤 [Upload Report] Request received:", {
-      patientId,
-      reportType,
-      reportName,
-      fileSize: file?.size,
-    });
-
-    // Validation
-    if (
-      !patientId ||
-      !reportType ||
-      !reportName ||
-      !uploadedByUserId ||
-      !uploadedByRole ||
-      !file
-    ) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
-      );
+    if (!patientId || !reportType || !reportName || !file) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json({ error: "File size exceeds 50MB limit" }, { status: 400 });
     }
 
-    // Get patient UUID from patient_id
-    const { data: patientData, error: patientError } = await supabase
+    // RLS decides whether this caller may see (and so upload for) the patient.
+    const { data: patient } = await auth.supabase
       .from("patients")
       .select("id")
       .eq("patient_id", patientId)
-      .single();
-
-    if (patientError || !patientData) {
-      console.error("❌ [Upload Report] Patient not found:", patientId);
+      .maybeSingle();
+    if (!patient) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 
-    const patientUUID = patientData.id;
+    const safeName = file.name.replace(/[^\w.-]/g, "_");
+    const objectPath = `${patient.id}/${Date.now()}_${safeName}`;
 
-    // Check file size (max 50MB)
-    const maxSize = 50 * 1024 * 1024;
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { error: "File size exceeds 50MB limit" },
-        { status: 400 },
-      );
-    }
-
-    // Upload file to Supabase Storage
-    const fileName = `${patientId}/${Date.now()}_${file.name}`;
-    const fileBuffer = await file.arrayBuffer();
-
-    console.log("☁️  [Upload Report] Uploading to storage:", fileName);
-
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from("medical-reports")
-      .upload(fileName, fileBuffer, {
-        contentType: file.type,
-        upsert: false,
-      });
-
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(REPORTS_BUCKET)
+      .upload(objectPath, await file.arrayBuffer(), { contentType: file.type, upsert: false });
     if (uploadError) {
-      console.error("❌ [Upload Report] Storage error:", uploadError);
-      return NextResponse.json(
-        { error: `Failed to upload file: ${uploadError.message}` },
-        { status: 500 },
-      );
+      console.error("[Upload Report] Storage error:", uploadError.message);
+      return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from("medical-reports")
-      .getPublicUrl(fileName);
-
-    console.log("✅ [Upload Report] File uploaded successfully");
-
-    // Create database record
-    const { data: reportData, error: dbError } = await supabase
+    // The insert runs as the caller, so the insert policy is checked too.
+    const { data: report, error: dbError } = await auth.supabase
       .from("medical_reports")
-      .insert([
-        {
-          patient_id: patientUUID,
-          uploaded_by_user_id: uploadedByUserId,
-          uploaded_by_role: uploadedByRole,
-          report_type: reportType,
-          report_name: reportName,
-          description: description || null,
-          file_url: urlData.publicUrl,
-          file_name: file.name,
-          file_size: file.size,
-          file_type: file.type,
-          report_date: reportDate || new Date().toISOString().split("T")[0],
-          notes: notes || null,
-        },
-      ])
+      .insert({
+        patient_id: patient.id,
+        uploaded_by_user_id: auth.profileId,
+        uploaded_by_role: auth.role,
+        report_type: reportType,
+        report_name: reportName,
+        description: description || null,
+        file_url: objectPath,
+        file_name: file.name,
+        file_size: file.size,
+        file_type: file.type,
+        report_date: reportDate || new Date().toISOString().split("T")[0],
+        notes: notes || null,
+      })
       .select()
       .single();
 
     if (dbError) {
-      console.error("❌ [Upload Report] Database error:", dbError);
-      // Try to delete the uploaded file
-      await supabase.storage.from("medical-reports").remove([fileName]);
-      return NextResponse.json(
-        { error: `Failed to save report: ${dbError.message}` },
-        { status: 500 },
-      );
+      console.error("[Upload Report] Database error:", dbError.message);
+      await supabaseAdmin.storage.from(REPORTS_BUCKET).remove([objectPath]);
+      return NextResponse.json({ error: "Failed to save report" }, { status: 403 });
     }
 
-    console.log("✅ [Upload Report] Report saved to database:", reportData.id);
-
-    return NextResponse.json({
-      success: true,
-      report: reportData,
-    });
-  } catch (error: any) {
-    console.error("❌ [Upload Report] Exception:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: true, report });
+  } catch (error) {
+    console.error("[Upload Report] Exception:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await guard();
+  if (auth instanceof Response) return auth;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const patientId = searchParams.get("patientId");
     const reportType = searchParams.get("reportType");
-    const doctorId = searchParams.get("doctorId");
 
-    console.log("🔍 [Get Reports] Params:", {
-      patientId,
-      reportType,
-      doctorId,
-    });
+    let query = auth.supabase
+      .from("medical_reports")
+      .select("*, patients:patient_directory!inner (patient_id, first_name, last_name, email)")
+      .order("report_date", { ascending: false });
 
-    // If doctorId is provided, we need to verify the doctor has an appointment with the patient
-    if (doctorId && patientId) {
-      // Get patient UUID from patient_id
-      const { data: patientData, error: patientError } = await supabase
+    if (patientId) {
+      const { data: patient } = await auth.supabase
         .from("patients")
         .select("id")
         .eq("patient_id", patientId)
-        .single();
-
-      if (patientError || !patientData) {
-        console.log("⚠️ [Get Reports] Patient not found:", patientId);
-        return NextResponse.json({ reports: [] });
-      }
-
-      // Get doctor UUID from doctor_id
-      const { data: doctorData, error: doctorError } = await supabase
-        .from("doctors")
-        .select("id")
-        .eq("doctor_id", doctorId)
-        .single();
-
-      if (doctorError || !doctorData) {
-        console.log("⚠️ [Get Reports] Doctor not found:", doctorId);
-        return NextResponse.json(
-          { error: "Doctor not found" },
-          { status: 404 },
-        );
-      }
-
-      // Check if the doctor has any appointment with this patient
-      const { data: appointmentData, error: appointmentError } = await supabase
-        .from("appointments")
-        .select("id")
-        .eq("doctor_id", doctorData.id)
-        .eq("patient_id", patientData.id)
-        .limit(1);
-
-      if (appointmentError) {
-        console.error(
-          "❌ [Get Reports] Error checking appointments:",
-          appointmentError,
-        );
-        return NextResponse.json(
-          { error: "Failed to verify appointment" },
-          { status: 500 },
-        );
-      }
-
-      if (!appointmentData || appointmentData.length === 0) {
-        console.log(
-          "🚫 [Get Reports] No appointment found between doctor and patient",
-        );
+        .maybeSingle();
+      if (!patient) {
         return NextResponse.json(
           {
-            error:
-              "Access denied. You can only view reports for patients who have booked an appointment with you.",
+            error: "Access denied. You can only view reports for patients in your care.",
             accessDenied: true,
           },
           { status: 403 },
         );
       }
-
-      console.log(
-        "✅ [Get Reports] Appointment verified, doctor can access patient reports",
-      );
+      query = query.eq("patient_id", patient.id);
     }
-
-    let query = supabase
-      .from("medical_reports")
-      .select(
-        `
-        *,
-        patients!inner (
-          patient_id,
-          first_name,
-          last_name,
-          email
-        )
-      `,
-      )
-      .order("report_date", { ascending: false });
-
-    if (patientId) {
-      // Get patient UUID
-      const { data: patientData, error: patientError } = await supabase
-        .from("patients")
-        .select("id")
-        .eq("patient_id", patientId)
-        .single();
-
-      if (patientError || !patientData) {
-        console.log("⚠️ [Get Reports] Patient not found:", patientId);
-        return NextResponse.json({ reports: [] });
-      }
-
-      query = query.eq("patient_id", patientData.id);
-    }
-
-    // If doctorId is provided without patientId, only show reports for patients with appointments
-    if (doctorId && !patientId) {
-      // Get doctor UUID
-      const { data: doctorData, error: doctorError } = await supabase
-        .from("doctors")
-        .select("id")
-        .eq("doctor_id", doctorId)
-        .single();
-
-      if (doctorError || !doctorData) {
-        console.log("⚠️ [Get Reports] Doctor not found:", doctorId);
-        return NextResponse.json({ reports: [] });
-      }
-
-      // Get all patient IDs that have appointments with this doctor
-      const { data: appointmentsData, error: appointmentsError } =
-        await supabase
-          .from("appointments")
-          .select("patient_id")
-          .eq("doctor_id", doctorData.id);
-
-      if (appointmentsError) {
-        console.error(
-          "❌ [Get Reports] Error fetching appointments:",
-          appointmentsError,
-        );
-        return NextResponse.json({ reports: [] });
-      }
-
-      // Get unique patient IDs
-      const patientIds = [
-        ...new Set(appointmentsData?.map((apt) => apt.patient_id) || []),
-      ];
-
-      if (patientIds.length === 0) {
-        console.log(
-          "📭 [Get Reports] No patients with appointments for this doctor",
-        );
-        return NextResponse.json({ reports: [] });
-      }
-
-      // Filter reports to only include patients with appointments
-      query = query.in("patient_id", patientIds);
-    }
-
     if (reportType && reportType !== "all") {
       query = query.eq("report_type", reportType);
     }
 
+    // RLS limits this to reports the caller is allowed to see.
     const { data, error } = await query;
-
     if (error) {
-      console.error("❌ [Get Reports] Error:", error);
-      return NextResponse.json(
-        { error: `Failed to fetch reports: ${error.message}` },
-        { status: 500 },
-      );
+      console.error("[Get Reports] Error:", error.message);
+      return NextResponse.json({ error: "Failed to fetch reports" }, { status: 500 });
     }
 
-    console.log("✅ [Get Reports] Found:", data?.length || 0, "reports");
-
-    // Transform data and generate signed URLs for file access
-    const reportsWithSignedUrls = await Promise.all(
-      (data || []).map(async (report: any) => {
-        let signedUrl = report.file_url;
-
-        try {
-          // Extract the file path from the storage URL
-          const urlParts = report.file_url.split("/medical-reports/");
-          const filePath = urlParts[1] || report.file_name;
-
-          // Generate signed URL (valid for 1 hour)
-          const { data: signedUrlData, error: urlError } =
-            await supabase.storage
-              .from("medical-reports")
-              .createSignedUrl(filePath, 3600);
-
-          if (signedUrlData?.signedUrl && !urlError) {
-            signedUrl = signedUrlData.signedUrl;
-          } else {
-            console.warn(
-              "⚠️ Could not generate signed URL for:",
-              filePath,
-              urlError,
-            );
-          }
-        } catch (err) {
-          console.error("Error generating signed URL:", err);
-        }
-
-        return {
-          ...report,
-          file_url: signedUrl,
-          patient_id: report.patients?.patient_id || "",
-          patient_name: report.patients
-            ? `${report.patients.first_name} ${report.patients.last_name}`
-            : "Unknown Patient",
-          patient_email: report.patients?.email || "",
-        };
-      }),
+    const reports = await Promise.all(
+      (data ?? []).map(async (report: any) => ({
+        ...report,
+        file_url: await signReportUrl(reportObjectPath(report.file_url, report.file_name), 3600),
+        patient_id: report.patients?.patient_id || "",
+        patient_name: report.patients
+          ? `${report.patients.first_name} ${report.patients.last_name}`
+          : "Unknown Patient",
+        patient_email: report.patients?.email || "",
+      })),
     );
 
-    return NextResponse.json({ reports: reportsWithSignedUrls });
-  } catch (error: any) {
-    console.error("❌ [Get Reports] Exception:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ reports });
+  } catch (error) {
+    console.error("[Get Reports] Exception:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

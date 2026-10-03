@@ -17,6 +17,13 @@ jest.mock("@supabase/supabase-js", () => ({
     }))
 }));
 
+// lib/chat runs server-side as the signed-in user.
+jest.mock("server-only", () => ({}));
+jest.mock("@/lib/supabase/server", () => ({
+    createServerSupabase: async () => require("@/lib/supabase").supabase,
+}));
+jest.mock("@/lib/supabase-admin", () => ({ supabaseAdmin: { storage: { from: jest.fn() } } }));
+
 jest.mock("@/lib/logging", () => ({
     logAction: jest.fn().mockResolvedValue(undefined)
 }));
@@ -92,8 +99,6 @@ describe("Epic 6: Telemedicine & Secure Communication", () => {
                 error: null
             });
             
-            // Note: chat module might skip encryption if process.env.CHAT_ENCRYPTION_KEY is unset
-            // So we just check that the functionality runs
             const sent = await sendMessage("converId1", "P001", "patient", "Hello Doctor!");
             if (!sent.success) {
                 console.error("SendMessage error:", sent);
@@ -102,10 +107,10 @@ describe("Epic 6: Telemedicine & Secure Communication", () => {
             expect(sent.success).toBe(true);
             expect(mockInsert).toHaveBeenCalled();
             
-            const insertArgs = mockInsert.mock.calls[0] ? mockInsert.mock.calls[0][0] : null;
-            if(insertArgs) {
-                expect(typeof (insertArgs as any).content).toBe("string");
-            }
+            // What reaches the database is ciphertext, never the message.
+            const insertArgs = mockInsert.mock.calls[0][0] as any;
+            expect(insertArgs.content).not.toContain("Hello Doctor!");
+            expect(insertArgs.content).toMatch(/^[0-9a-f]{24}:[0-9a-f]{32}:[0-9a-f]+$/);
         });
 
         it("should decrypt messages correctly only for intended recipients", async () => {

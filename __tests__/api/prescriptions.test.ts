@@ -3,226 +3,124 @@
  */
 
 /**
- * API Route Tests for app/api/prescriptions/search/route.ts
- * Tests prescription search endpoint
+ * API Route Tests for app/api/prescriptions/search/route.ts (pharmacy search)
+ *
+ * Patients are looked up with the caller's own client (RLS limits them to
+ * patients the caller serves) and prescriptions come back decrypted from
+ * lib/clinical/records, which is mocked here.
  */
 
 import { NextRequest } from "next/server";
 
-// Mock data state - can be modified by tests
-let mockQueryResult: any = { data: [], error: null };
-let mockSingleResult: any = { data: null, error: null };
-let mockOrResult: any = { data: [], error: null };
+jest.mock("@/lib/supabase/server", () => require("../helpers/serverAuthMock"));
 
-// Create a chainable mock
-const createChainableMock = () => {
-  const chain: any = {
-    select: jest.fn(() => chain),
-    eq: jest.fn(() => chain),
-    or: jest.fn(() => Promise.resolve(mockOrResult)),
-    in: jest.fn(() => chain),
-    order: jest.fn(() => chain),
-    single: jest.fn(() => Promise.resolve(mockSingleResult)),
-    then: (resolve: any) => resolve(mockQueryResult),
-  };
-  return chain;
-};
-
-jest.mock("@/lib/supabase", () => ({
-  supabase: {
-    from: jest.fn(() => createChainableMock()),
-  },
+const mockList = jest.fn();
+jest.mock("@/lib/clinical/records", () => ({
+  listPrescriptions: (...args: any[]) => mockList(...args),
+  ClinicalError: class extends Error {},
+}));
+jest.mock("@/lib/clinical/respond", () => ({
+  clinicalError: () => Response.json({ error: "Internal server error" }, { status: 500 }),
 }));
 
-// Import route
+let patientsResult: any = { data: [], error: null };
+const patientQuery: any = {
+  select: jest.fn(() => patientQuery),
+  limit: jest.fn(() => patientQuery),
+  eq: jest.fn(() => patientQuery),
+  or: jest.fn(() => patientQuery),
+  then: (resolve: any) => resolve(patientsResult),
+};
+const mockClient = { from: jest.fn(() => patientQuery) };
+
 import { GET } from "@/app/api/prescriptions/search/route";
+import { setCurrentUser } from "../helpers/serverAuthMock";
+
+const search = (params: Record<string, string>) =>
+  GET(new NextRequest(`http://localhost:3000/api/prescriptions/search?${new URLSearchParams(params)}`));
 
 describe("Prescriptions Search API Route Tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset mock data
-    mockQueryResult = { data: [], error: null };
-    mockSingleResult = { data: null, error: null };
-    mockOrResult = { data: [], error: null };
+    patientsResult = { data: [], error: null };
+    mockList.mockResolvedValue([]);
+    setCurrentUser({ role: "staff", supabase: mockClient });
   });
 
-  describe("GET /api/prescriptions/search", () => {
-    it("should return empty array when no prescriptions found", async () => {
-      mockQueryResult = { data: [], error: null };
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/prescriptions/search",
-      );
-
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.prescriptions).toEqual([]);
+  describe("authorization", () => {
+    it("rejects unauthenticated callers", async () => {
+      setCurrentUser(null);
+      expect((await search({ patientId: "P001" })).status).toBe(401);
     });
 
-    it("should search by patient ID", async () => {
-      mockSingleResult = { data: { id: "uuid-123" }, error: null };
-      mockQueryResult = {
-        data: [
-          {
-            id: "rx1",
-            medication_name: "Aspirin",
-            doctors: { first_name: "John", last_name: "Smith" },
-            patients: {
-              patient_id: "P001",
-              first_name: "Jane",
-              last_name: "Doe",
-            },
-          },
-        ],
-        error: null,
-      };
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/prescriptions/search?patientId=P001",
-      );
-
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(Array.isArray(data.prescriptions)).toBe(true);
+    it.each(["patient", "admin"])("forbids %s", async (role) => {
+      setCurrentUser({ role, supabase: mockClient });
+      expect((await search({ patientId: "P001" })).status).toBe(403);
     });
 
-    it("should return empty array for non-existent patient ID", async () => {
-      mockSingleResult = { data: null, error: { message: "Not found" } };
+    it("requires an MFA-verified session for staff", async () => {
+      setCurrentUser({ role: "staff", aal: "aal1", supabase: mockClient });
+      expect((await search({ patientId: "P001" })).status).toBe(403);
+    });
+  });
 
-      const request = new NextRequest(
-        "http://localhost:3000/api/prescriptions/search?patientId=INVALID",
-      );
-
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.prescriptions).toEqual([]);
+  describe("search", () => {
+    it("returns an empty list when no search criteria are given", async () => {
+      const res = await search({});
+      expect(await res.json()).toEqual({ prescriptions: [] });
+      expect(mockList).not.toHaveBeenCalled();
     });
 
-    it("should search by patient name", async () => {
-      mockOrResult = { data: [{ id: "uuid-123" }], error: null };
-      mockQueryResult = { data: [], error: null };
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/prescriptions/search?patientName=John",
-      );
-
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(Array.isArray(data.prescriptions)).toBe(true);
+    it("searches by patient ID through the caller's RLS-scoped client", async () => {
+      patientsResult = { data: [{ id: "uuid-1" }], error: null };
+      await search({ patientId: "P001", status: "active" });
+      expect(patientQuery.eq).toHaveBeenCalledWith("patient_id", "P001");
+      expect(mockList).toHaveBeenCalledWith(mockClient, { patientId: "uuid-1", status: "active" });
     });
 
-    it("should return empty for no matching patient names", async () => {
-      mockOrResult = { data: [], error: null };
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/prescriptions/search?patientName=NonExistent",
-      );
-
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.prescriptions).toEqual([]);
+    it("returns empty when the patient is not visible to the caller", async () => {
+      const res = await search({ patientId: "P999" });
+      expect(await res.json()).toEqual({ prescriptions: [] });
+      expect(mockList).not.toHaveBeenCalled();
     });
 
-    it("should filter by status", async () => {
-      mockQueryResult = {
-        data: [{ id: "rx1", status: "active", patients: {}, doctors: {} }],
-        error: null,
-      };
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/prescriptions/search?status=active",
-      );
-
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
+    it("searches by name", async () => {
+      patientsResult = { data: [{ id: "a" }, { id: "b" }], error: null };
+      await search({ patientName: "Arun" });
+      expect(patientQuery.or).toHaveBeenCalledWith("first_name.ilike.%Arun%,last_name.ilike.%Arun%");
+      expect(mockList).toHaveBeenCalledTimes(2);
     });
 
-    it("should not filter when status is 'all'", async () => {
-      mockQueryResult = { data: [], error: null };
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/prescriptions/search?status=all",
-      );
-
-      const response = await GET(request);
-
-      expect(response.status).toBe(200);
+    it("strips PostgREST filter syntax from the name (filter injection)", async () => {
+      patientsResult = { data: [], error: null };
+      await search({ patientName: "x%,id.neq.(0),first_name.ilike.*" });
+      const filter = patientQuery.or.mock.calls[0][0] as string;
+      expect(filter).toBe("first_name.ilike.%xidneq0firstnameilike%,last_name.ilike.%xidneq0firstnameilike%");
     });
 
-    it("should combine patientId and status filters", async () => {
-      mockSingleResult = { data: { id: "uuid-123" }, error: null };
-      mockQueryResult = { data: [], error: null };
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/prescriptions/search?patientId=P001&status=active",
-      );
-
-      const response = await GET(request);
-
-      expect(response.status).toBe(200);
+    it("returns 500 when the patient lookup fails", async () => {
+      patientsResult = { data: null, error: { message: "boom" } };
+      expect((await search({ patientId: "P001" })).status).toBe(500);
     });
 
-    it("should handle database errors", async () => {
-      mockQueryResult = { data: null, error: { message: "Database error" } };
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/prescriptions/search",
-      );
-
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(500);
-      expect(data.error).toContain("Failed");
-    });
-
-    it("should transform prescription data correctly", async () => {
-      mockQueryResult = {
-        data: [
-          {
-            id: "rx1",
-            medication_name: "Aspirin",
-            dosage: "100mg",
-            doctors: {
-              first_name: "John",
-              last_name: "Smith",
-              specialization: "Cardiology",
-            },
-            patients: {
-              patient_id: "P001",
-              first_name: "Jane",
-              last_name: "Doe",
-              email: "jane@example.com",
-              phone_number: "1234567890",
-            },
-          },
-        ],
-        error: null,
-      };
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/prescriptions/search",
-      );
-
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.prescriptions[0].doctor_name).toBe("Dr. John Smith");
-      expect(data.prescriptions[0].patient_name).toBe("Jane Doe");
-      expect(data.prescriptions[0].patient_id).toBe("P001");
+    it("adds display fields to decrypted prescriptions", async () => {
+      patientsResult = { data: [{ id: "uuid-1" }], error: null };
+      mockList.mockResolvedValue([
+        {
+          id: "rx1",
+          medication_name: "Aspirin",
+          doctors: { first_name: "Jane", last_name: "Smith", specialization: "Cardiology" },
+          patients: { patient_id: "P001", first_name: "Arun", last_name: "K", email: "a***@email.com", phone_number: "XXXXXX3101" },
+        },
+      ]);
+      const { prescriptions } = await (await search({ patientId: "P001" })).json();
+      expect(prescriptions[0]).toMatchObject({
+        medication_name: "Aspirin",
+        patient_id: "P001",
+        doctor_name: "Dr. Jane Smith",
+        patient_name: "Arun K",
+        patient_phone: "XXXXXX3101",
+      });
     });
   });
 });

@@ -1,4 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
+import "server-only";
+import { createServerSupabase } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import crypto from "crypto";
 
 // Types for chat system
@@ -33,78 +35,66 @@ export interface ChatAttachment {
     created_at: string;
 }
 
-// Encryption utilities using AES-256-GCM
-// NOTE: For development, encryption is disabled because no persistent CHAT_ENCRYPTION_KEY is set
-const ENCRYPTION_KEY = process.env.CHAT_ENCRYPTION_KEY;
+// Chat messages are encrypted with AES-256-GCM before they reach the
+// database. This fails closed: with no valid key the server refuses to send
+// or read messages rather than storing plaintext.
 const ALGORITHM = "aes-256-gcm";
+export const UNREADABLE_MESSAGE = "[This message could not be decrypted]";
 
-/**
- * Encrypt message content (disabled for now - returns plain text)
- */
-export function encryptMessage(text: string): string {
-    // Skip encryption if no key is configured
-    if (!ENCRYPTION_KEY) {
-        return text;
+export class ChatEncryptionConfigError extends Error {}
+
+function chatKey(): Buffer {
+    const hex = process.env.CHAT_ENCRYPTION_KEY;
+    if (!hex || !/^[0-9a-fA-F]{64}$/.test(hex)) {
+        throw new ChatEncryptionConfigError(
+            "CHAT_ENCRYPTION_KEY must be 64 hex characters (32 bytes). Refusing to handle chat messages without encryption.",
+        );
     }
+    return Buffer.from(hex, "hex");
+}
 
-    const iv = crypto.randomBytes(16);
-    const key = Buffer.from(ENCRYPTION_KEY.slice(0, 64), "hex");
+/** Throws ChatEncryptionConfigError if the key is missing or malformed. */
+export function assertChatEncryptionConfigured(): void {
+    chatKey();
+}
+
+/** Encrypt message content. Format: iv:authTag:ciphertext (hex). */
+export function encryptMessage(text: string): string {
+    const key = chatKey();
+    const iv = crypto.randomBytes(12);
     const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
-
-    let encrypted = cipher.update(text, "utf8", "hex");
-    encrypted += cipher.final("hex");
-
-    const authTag = cipher.getAuthTag();
-
-    // Format: iv:authTag:encryptedData
-    return `${iv.toString("hex")}:${authTag.toString("hex")}:${encrypted}`;
+    const encrypted = Buffer.concat([cipher.update(text, "utf8"), cipher.final()]);
+    return `${iv.toString("hex")}:${cipher.getAuthTag().toString("hex")}:${encrypted.toString("hex")}`;
 }
 
 /**
- * Decrypt message content
+ * Decrypt message content. Rows written before encryption was enforced are
+ * plain text and are returned unchanged; anything that fails
+ * authentication is replaced, never returned as raw ciphertext.
  */
 export function decryptMessage(encryptedText: string): string {
-    try {
-        const parts = encryptedText.split(":");
-        if (parts.length !== 3) {
-            // If not encrypted format, return as-is (plain text message)
-            return encryptedText;
-        }
-
-        // If no encryption key is configured, return as-is
-        if (!ENCRYPTION_KEY) {
-            return encryptedText;
-        }
-
-        const iv = Buffer.from(parts[0], "hex");
-        const authTag = Buffer.from(parts[1], "hex");
-        const encrypted = parts[2];
-
-        const key = Buffer.from(ENCRYPTION_KEY.slice(0, 64), "hex");
-        const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
-        decipher.setAuthTag(authTag);
-
-        let decrypted = decipher.update(encrypted, "hex", "utf8");
-        decrypted += decipher.final("utf8");
-
-        return decrypted;
-    } catch {
-        // Return original if decryption fails
+    const key = chatKey();
+    const parts = encryptedText.split(":");
+    // iv and tag are always present; the ciphertext of "" is empty.
+    const looksEncrypted =
+        parts.length === 3 &&
+        /^[0-9a-f]{24,32}$/i.test(parts[0]) &&
+        /^[0-9a-f]{32}$/i.test(parts[1]) &&
+        /^[0-9a-f]*$/i.test(parts[2]);
+    if (!looksEncrypted) {
         return encryptedText;
     }
+    try {
+        const decipher = crypto.createDecipheriv(ALGORITHM, key, Buffer.from(parts[0], "hex"));
+        decipher.setAuthTag(Buffer.from(parts[1], "hex"));
+        return Buffer.concat([
+            decipher.update(Buffer.from(parts[2], "hex")),
+            decipher.final(),
+        ]).toString("utf8");
+    } catch {
+        return UNREADABLE_MESSAGE;
+    }
 }
-
-
-// Supabase client factory
-function getSupabaseClient() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
-        process.env.SUPABASE_SERVICE_ROLE_KEY ||
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-        "placeholder-key";
-    return createClient(supabaseUrl, supabaseKey);
-}
-
 
 /**
  * Get or create a conversation for an appointment
@@ -114,7 +104,8 @@ export async function getOrCreateConversation(
     patientId: string,
     doctorId: string
 ): Promise<{ success: boolean; conversation?: ChatConversation; error?: string }> {
-    const supabase = getSupabaseClient();
+    // Acts as the signed-in user, so chat RLS applies.
+    const supabase = await createServerSupabase();
 
     // First try to get existing conversation (use maybeSingle to avoid error when not found)
     const { data: existing } = await supabase
@@ -162,7 +153,8 @@ export async function getOrCreateConversation(
 export async function getConversation(
     conversationId: string
 ): Promise<{ success: boolean; conversation?: ChatConversation; error?: string }> {
-    const supabase = getSupabaseClient();
+    // Acts as the signed-in user, so chat RLS applies.
+    const supabase = await createServerSupabase();
 
     const { data, error } = await supabase
         .from("chat_conversations")
@@ -183,7 +175,8 @@ export async function getConversation(
 export async function getConversationByAppointment(
     appointmentId: string
 ): Promise<{ success: boolean; conversation?: ChatConversation; error?: string }> {
-    const supabase = getSupabaseClient();
+    // Acts as the signed-in user, so chat RLS applies.
+    const supabase = await createServerSupabase();
 
     const { data, error } = await supabase
         .from("chat_conversations")
@@ -207,7 +200,8 @@ export async function sendMessage(
     senderRole: "patient" | "doctor",
     content: string
 ): Promise<{ success: boolean; message?: ChatMessage; error?: string }> {
-    const supabase = getSupabaseClient();
+    // Acts as the signed-in user, so chat RLS applies.
+    const supabase = await createServerSupabase();
 
     // Encrypt the message content
     const encryptedContent = encryptMessage(content);
@@ -242,7 +236,8 @@ export async function getMessages(
     limit: number = 50,
     offset: number = 0
 ): Promise<{ success: boolean; messages?: ChatMessage[]; error?: string }> {
-    const supabase = getSupabaseClient();
+    // Acts as the signed-in user, so chat RLS applies.
+    const supabase = await createServerSupabase();
 
     const { data: messages, error } = await supabase
         .from("chat_messages")
@@ -258,12 +253,19 @@ export async function getMessages(
         return { success: false, error: error.message };
     }
 
-    // Decrypt messages
-    const decryptedMessages = messages.map((msg: any) => ({
-        ...msg,
-        content: decryptMessage(msg.content),
-        attachments: msg.chat_attachments || [],
-    }));
+    // Decrypt messages; attachments get short-lived signed URLs.
+    const decryptedMessages = await Promise.all(
+        messages.map(async (msg: any) => ({
+            ...msg,
+            content: decryptMessage(msg.content),
+            attachments: await Promise.all(
+                (msg.chat_attachments || []).map(async (a: ChatAttachment) => ({
+                    ...a,
+                    file_url: await signAttachmentUrl(a.file_url),
+                })),
+            ),
+        })),
+    );
 
     return { success: true, messages: decryptedMessages };
 }
@@ -275,7 +277,8 @@ export async function markMessagesAsRead(
     conversationId: string,
     userId: string
 ): Promise<{ success: boolean; error?: string }> {
-    const supabase = getSupabaseClient();
+    // Acts as the signed-in user, so chat RLS applies.
+    const supabase = await createServerSupabase();
 
     const { error } = await supabase
         .from("chat_messages")
@@ -301,7 +304,8 @@ export async function getUnreadCount(
     conversationId: string,
     userId: string
 ): Promise<{ success: boolean; count?: number; error?: string }> {
-    const supabase = getSupabaseClient();
+    // Acts as the signed-in user, so chat RLS applies.
+    const supabase = await createServerSupabase();
 
     const { count, error } = await supabase
         .from("chat_messages")
@@ -327,7 +331,8 @@ export async function createAttachment(
     fileSize: number,
     fileUrl: string
 ): Promise<{ success: boolean; attachment?: ChatAttachment; error?: string }> {
-    const supabase = getSupabaseClient();
+    // Acts as the signed-in user, so chat RLS applies.
+    const supabase = await createServerSupabase();
 
     const { data, error } = await supabase
         .from("chat_attachments")
@@ -351,31 +356,44 @@ export async function createAttachment(
 /**
  * Upload file to Supabase Storage
  */
+export const CHAT_BUCKET = "chat-attachments";
+
+/**
+ * Upload a file into a conversation's folder in the private bucket. The
+ * conversation must be visible to the caller under RLS first; the upload
+ * itself uses the service role. Returns the object path (not a URL);
+ * getMessages signs short-lived URLs on read.
+ */
 export async function uploadChatFile(
     file: File,
     conversationId: string
 ): Promise<{ success: boolean; url?: string; error?: string }> {
-    const supabase = getSupabaseClient();
+    const conversation = await getConversation(conversationId);
+    if (!conversation.success || !conversation.conversation) {
+        return { success: false, error: "Conversation not found" };
+    }
 
-    const fileExt = file.name.split(".").pop();
+    const fileExt = file.name.split(".").pop()?.replace(/[^\w]/g, "") || "bin";
     const fileName = `${conversationId}/${Date.now()}-${crypto.randomBytes(8).toString("hex")}.${fileExt}`;
 
-    const { data, error } = await supabase.storage
-        .from("chat-attachments")
-        .upload(fileName, file, {
-            cacheControl: "3600",
+    const { data, error } = await supabaseAdmin.storage
+        .from(CHAT_BUCKET)
+        .upload(fileName, await file.arrayBuffer(), {
+            contentType: file.type,
             upsert: false,
         });
 
     if (error) {
         return { success: false, error: error.message };
     }
+    return { success: true, url: data.path };
+}
 
-    const { data: urlData } = supabase.storage
-        .from("chat-attachments")
-        .getPublicUrl(data.path);
-
-    return { success: true, url: urlData.publicUrl };
+export async function signAttachmentUrl(path: string): Promise<string> {
+    // Legacy rows hold a full public URL; new rows hold the object path.
+    const objectPath = path.includes(`/${CHAT_BUCKET}/`) ? path.split(`/${CHAT_BUCKET}/`)[1] : path;
+    const { data } = await supabaseAdmin.storage.from(CHAT_BUCKET).createSignedUrl(objectPath, 3600);
+    return data?.signedUrl ?? "";
 }
 
 // Allowed file types for medical reports

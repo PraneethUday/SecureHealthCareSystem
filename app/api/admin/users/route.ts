@@ -1,3 +1,4 @@
+import { guard } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { logAction } from "@/lib/logging";
@@ -8,22 +9,12 @@ import { logAction } from "@/lib/logging";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const adminId = searchParams.get("adminId");
     const role = searchParams.get("role"); // Optional filter by role
 
     // Validate admin authorization
-    if (!adminId || adminId !== "admin") {
-      await logAction({
-        userId: adminId || "unknown",
-        userRole: "admin",
-        action: "unauthorized_users_view_attempt",
-        status: "failure",
-      });
-      return NextResponse.json(
-        { error: "Unauthorized. Admin access required." },
-        { status: 403 },
-      );
-    }
+    const auth = await guard("admin");
+    if (auth instanceof Response) return auth;
+    const adminId = auth.businessId;
 
     let allUsers: any[] = [];
 
@@ -146,17 +137,13 @@ export async function GET(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const adminId = searchParams.get("adminId");
     const userId = searchParams.get("userId");
     const role = searchParams.get("role");
 
     // Validate admin authorization
-    if (!adminId || adminId !== "admin") {
-      return NextResponse.json(
-        { error: "Unauthorized. Admin access required." },
-        { status: 403 },
-      );
-    }
+    const auth = await guard("admin");
+    if (auth instanceof Response) return auth;
+    const adminId = auth.businessId;
 
     if (!userId || !role) {
       return NextResponse.json(
@@ -173,11 +160,22 @@ export async function DELETE(request: NextRequest) {
       role === "doctor" ? "doctors" : role === "nurse" ? "nurses" : "staff";
     const idField = `${role}_id`;
 
+    const { data: existing } = await supabaseAdmin
+      .from(table)
+      .select("auth_user_id")
+      .eq(idField, userId)
+      .maybeSingle();
+
     // Delete the user
     const { error } = await supabaseAdmin
       .from(table)
       .delete()
       .eq(idField, userId);
+
+    // Remove their login too, or the auth account would outlive the profile.
+    if (!error && existing?.auth_user_id) {
+      await supabaseAdmin.auth.admin.deleteUser(existing.auth_user_id);
+    }
 
     if (error) {
       console.error(`Error deleting ${role}:`, error);
